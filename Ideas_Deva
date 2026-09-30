@@ -1,0 +1,2230 @@
+# Build Specification: Private Daily Class Memory App
+
+## 1. PROJECT OVERVIEW
+
+Build a production-ready mobile-first social memory application for schools, colleges, friend groups, clubs, and private communities.
+
+The core concept:
+
+> Every member takes or uploads exactly one photo every day. All authorized members of the group can see everyone's daily photo. Over time, the app builds a private, chronological collection of shared memories that can eventually become a digital yearbook.
+
+The product should feel:
+
+* Fun
+* Modern
+* Youthful
+* Private
+* Simple
+* Photo-first
+* Nostalgic
+* Social without becoming another public social network
+
+The application must be designed so that the frontend can be completely redesigned later without requiring major backend changes.
+
+---
+
+# 2. IMPORTANT ARCHITECTURE REQUIREMENT
+
+Use a strongly separated architecture.
+
+Create these top-level folders:
+
+```text
+/
+├── frontend/
+├── backend/
+├── database/
+├── shared/
+├── docs/
+├── tests/
+├── scripts/
+├── .env.example
+├── README.md
+└── docker-compose.yml
+```
+
+## frontend/
+
+Everything related to UI and client-side application logic.
+
+```text
+frontend/
+├── src/
+│   ├── components/
+│   ├── screens/
+│   ├── layouts/
+│   ├── navigation/
+│   ├── hooks/
+│   ├── services/
+│   ├── api/
+│   ├── state/
+│   ├── theme/
+│   ├── config/
+│   ├── utils/
+│   ├── types/
+│   └── assets/
+├── public/
+└── tests/
+```
+
+### Frontend design requirement
+
+Make every visual component independently editable.
+
+Do NOT put large amounts of UI directly inside screens.
+
+For example:
+
+```text
+screens/
+    HomeScreen
+    MemoriesScreen
+    ProfileScreen
+    ClassScreen
+    YearbookScreen
+```
+
+should compose reusable components such as:
+
+```text
+components/
+    PhotoCard
+    PhotoGrid
+    DailyPrompt
+    UploadButton
+    ReactionBar
+    StreakCard
+    MemberAvatar
+    Calendar
+    MemoryTimeline
+    ClassHeader
+    EmptyState
+    LoadingState
+    ErrorState
+    Modal
+    BottomSheet
+    ConfirmationDialog
+```
+
+The goal is that changing the entire visual design later should require editing frontend components/theme rather than rewriting business logic.
+
+---
+
+# 3. BACKEND
+
+Use a clean API/service architecture.
+
+```text
+backend/
+├── src/
+│   ├── controllers/
+│   ├── services/
+│   ├── repositories/
+│   ├── routes/
+│   ├── middleware/
+│   ├── auth/
+│   ├── storage/
+│   ├── notifications/
+│   ├── moderation/
+│   ├── jobs/
+│   ├── validators/
+│   ├── config/
+│   ├── utils/
+│   └── types/
+├── tests/
+└── migrations/
+```
+
+Separate:
+
+```text
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+```
+
+Controllers should not contain business logic.
+
+Business rules must live in services.
+
+---
+
+# 4. DATABASE
+
+Keep database schema, migrations, seed data, indexes, policies, and database documentation separate.
+
+```text
+database/
+├── migrations/
+├── seeds/
+├── policies/
+├── functions/
+├── schema/
+└── README.md
+```
+
+Use a relational database such as PostgreSQL.
+
+Recommended backend/storage architecture:
+
+* PostgreSQL for application data
+* Private object storage for photos
+* Authentication provider/service
+* Signed URLs for private image access
+* Push notification service
+* Background jobs for scheduled operations
+
+The storage implementation should be abstracted behind a storage service so that the storage provider can be changed later.
+
+Example:
+
+```text
+StorageService
+├── uploadImage()
+├── createSignedUrl()
+├── deleteImage()
+├── processImage()
+└── getImageMetadata()
+```
+
+Do not tightly couple application code to one storage provider.
+
+---
+
+# 5. CORE ENTITIES
+
+Create these primary entities.
+
+## User
+
+```text
+User
+- id
+- username
+- display_name
+- avatar_url
+- email/phone depending on auth implementation
+- created_at
+- updated_at
+- last_active_at
+- account_status
+```
+
+## Class / Community
+
+Use a generic `groups` or `communities` concept internally so the product can eventually support more than schools.
+
+```text
+Group
+- id
+- name
+- description
+- group_type
+- academic_year
+- invite_code
+- invite_link
+- owner_id
+- created_at
+- updated_at
+- status
+```
+
+Possible group types:
+
+```text
+school_class
+college_class
+friend_group
+club
+team
+custom
+```
+
+## Membership
+
+```text
+GroupMember
+- id
+- group_id
+- user_id
+- role
+- status
+- joined_at
+- left_at
+```
+
+Roles:
+
+```text
+owner
+admin
+member
+moderator
+```
+
+## Daily Post
+
+```text
+Post
+- id
+- group_id
+- user_id
+- photo_path
+- thumbnail_path
+- caption
+- prompt_id
+- post_date
+- created_at
+- updated_at
+- status
+```
+
+A database constraint must prevent a user from having more than one active daily post per group/date.
+
+Conceptually:
+
+```text
+UNIQUE(group_id, user_id, post_date)
+```
+
+---
+
+# 6. PHOTO STORAGE AND PRIVACY
+
+Photos must NEVER be stored in a publicly accessible bucket.
+
+Use:
+
+```text
+Private Storage
+       ↓
+Backend authorization
+       ↓
+Temporary signed URL
+       ↓
+Frontend
+```
+
+The frontend must never receive permanent public image URLs.
+
+When a user requests a photo:
+
+1. Authenticate the user.
+2. Verify group membership.
+3. Verify that the user has permission to view the photo.
+4. Generate a short-lived signed URL.
+5. Return the URL to the frontend.
+6. URL expires after a configurable period.
+
+Use configurable values such as:
+
+```text
+SIGNED_URL_EXPIRATION_SECONDS=300
+```
+
+Do not hard-code this.
+
+---
+
+# 7. PHOTO UPLOAD WORKFLOW
+
+## User workflow
+
+```text
+Open app
+    ↓
+Today's photo status
+    ↓
+Take Photo / Choose Photo
+    ↓
+Preview
+    ↓
+Optional crop
+    ↓
+Optional caption
+    ↓
+Upload
+    ↓
+Image processing
+    ↓
+Private storage
+    ↓
+Create database post
+    ↓
+Post appears in today's class feed
+```
+
+## Image processing
+
+Before storage:
+
+* Resize large images
+* Generate optimized display version
+* Generate thumbnail
+* Strip EXIF metadata
+* Remove GPS metadata
+* Validate MIME type
+* Validate file size
+* Reject unsupported formats
+* Prevent malicious file uploads
+
+Support common formats such as:
+
+```text
+JPEG
+PNG
+WEBP
+HEIC if platform supports conversion
+```
+
+Do not expose original metadata to other users.
+
+---
+
+# 8. ONE PHOTO PER DAY RULE
+
+This is the central product rule.
+
+Each member can have:
+
+```text
+1 active photo
+per group
+per calendar day
+```
+
+The exact timezone must be based on the group's configured timezone.
+
+Group settings:
+
+```text
+timezone
+daily_post_cutoff_time
+allow_gallery_upload
+allow_photo_replacement
+```
+
+Default:
+
+```text
+one photo per day
+photo replacement allowed before cutoff
+```
+
+If the user already posted:
+
+```text
+You already added today's memory.
+```
+
+Show:
+
+```text
+View Photo
+Replace Photo
+Delete Photo
+```
+
+if those actions are allowed.
+
+---
+
+# 9. DAILY PROMPTS
+
+Create a daily prompt system.
+
+Database:
+
+```text
+Prompt
+- id
+- text
+- category
+- active
+- created_by
+- created_at
+```
+
+Examples:
+
+```text
+What made you laugh today?
+Show your view right now.
+What's on your desk?
+What are you eating?
+Something blue.
+Today's chaos.
+Your commute.
+Best moment today.
+Something you don't want to forget.
+```
+
+The prompt system must support:
+
+* Global prompts
+* Group-specific prompts
+* Scheduled prompts
+* Random prompts
+* Admin-created prompts
+
+Display the prompt prominently on the daily upload screen.
+
+---
+
+# 10. HOME / TODAY SCREEN
+
+The main screen should show:
+
+```text
+Today's date
+
+Today's prompt
+
+[ ADD TODAY'S PHOTO ]
+
+Your posting status
+
+Class posting progress
+27 / 32 posted
+
+Class streak
+
+Today's class photos
+```
+
+The interface should make the primary action obvious:
+
+> Add today's photo
+
+Do not overload the home screen.
+
+---
+
+# 11. CLASS FEED
+
+The daily feed displays all photos submitted by group members.
+
+Features:
+
+* Responsive photo grid
+* Full-screen photo viewer
+* User name
+* Avatar
+* Timestamp/date
+* Reactions
+* Optional caption
+* Report option
+
+Allow the layout to be changed easily.
+
+Do not hard-code the feed layout into business logic.
+
+---
+
+# 12. PHOTO REACTIONS
+
+Initial reactions:
+
+```text
+❤️
+😂
+🔥
+😭
+💀
+👀
+🫡
+```
+
+Users can toggle reactions.
+
+Database:
+
+```text
+Reaction
+- id
+- post_id
+- user_id
+- reaction_type
+- created_at
+```
+
+Constraint:
+
+```text
+one reaction of each type per user per post
+```
+
+Allow reaction types to be configured later.
+
+Do not implement public popularity rankings in the MVP.
+
+---
+
+# 13. MEMORY TIMELINE
+
+Create a chronological memory archive.
+
+Users can browse:
+
+```text
+Today
+Yesterday
+This Week
+This Month
+September
+August
+July
+...
+```
+
+Calendar view:
+
+```text
+September 2026
+
+Mon Tue Wed Thu Fri Sat Sun
+                         1
+2   3   4   5   6   7   8
+...
+```
+
+Selecting a date displays that day's group photos.
+
+Monthly view should show photo thumbnails.
+
+---
+
+# 14. INDIVIDUAL PROFILE
+
+Profile should display:
+
+```text
+Avatar
+Display name
+Username
+
+Current streak
+Total memories
+Joined date
+
+Memory calendar
+Photo history
+```
+
+Users can browse their own previous posts.
+
+Other members should only see information allowed by privacy settings.
+
+---
+
+# 15. GROUP / CLASS PAGE
+
+Display:
+
+```text
+Group name
+Academic year
+Member count
+Current group streak
+Total memories
+Today's posting progress
+```
+
+Members list:
+
+```text
+All Members
+Admins
+Moderators
+```
+
+Admins can manage:
+
+* Group name
+* Group image
+* Description
+* Academic year
+* Daily prompt
+* Posting cutoff
+* Timezone
+* Membership
+* Moderation
+* Invite settings
+
+---
+
+# 16. JOIN GROUP
+
+Support:
+
+### Invite link
+
+Example:
+
+```text
+app.com/join/ABC123
+```
+
+### Invite code
+
+```text
+ABC123
+```
+
+### QR code
+
+Generate QR code for group invitation.
+
+Security requirements:
+
+* Codes should be revocable.
+* Admin can regenerate invite code.
+* Optional approval mode.
+* Prevent brute-force invite-code attempts.
+* Expiring invite links should be supported.
+
+---
+
+# 17. STREAKS
+
+## Individual streak
+
+Count consecutive days where the user posted.
+
+Example:
+
+```text
+🔥 24 day streak
+```
+
+## Group streak
+
+Count consecutive days where the group satisfies the configured participation threshold.
+
+Example:
+
+```text
+🔥 Class streak: 31 days
+
+28 / 32 posted today
+```
+
+Make participation threshold configurable.
+
+Example:
+
+```text
+minimum_participation_percentage = 70
+```
+
+Do not make streak logic dependent on frontend calculations.
+
+Calculate it on the backend.
+
+---
+
+# 18. NOTIFICATIONS
+
+Implement push notifications.
+
+Notification types:
+
+### Daily reminder
+
+```text
+📸 Today's memory is waiting.
+```
+
+### Class activity
+
+```text
+24 classmates have posted today.
+```
+
+### Streak
+
+```text
+🔥 Your 30-day streak is alive.
+```
+
+### Group streak
+
+```text
+Your class just reached a 50-day streak.
+```
+
+Users must be able to control notification preferences.
+
+Settings:
+
+```text
+daily_reminder
+class_activity
+reactions
+streaks
+yearbook
+time_capsule
+```
+
+Never spam users.
+
+---
+
+# 19. FRIEND GROUPS
+
+Allow members to create subgroups inside a main group.
+
+Examples:
+
+```text
+Bench Gang
+Football Team
+Bus Gang
+Study Group
+Project Team
+```
+
+Entity:
+
+```text
+Subgroup
+- id
+- group_id
+- name
+- description
+- creator_id
+- created_at
+```
+
+Subgroups can optionally have their own photo feed.
+
+Keep this feature modular so it can be disabled for an initial launch.
+
+---
+
+# 20. MYSTERY PHOTO
+
+Allow admins to enable a weekly mystery photo.
+
+Workflow:
+
+```text
+System randomly selects eligible photo
+        ↓
+Hide author's identity
+        ↓
+Members guess who posted it
+        ↓
+Voting/guessing period closes
+        ↓
+Reveal author
+```
+
+Database entities:
+
+```text
+MysteryPhoto
+MysteryGuess
+```
+
+Do not expose the answer before the reveal time.
+
+---
+
+# 21. PHOTO ROULETTE
+
+Create a random discovery feature.
+
+User taps:
+
+```text
+🎲 Surprise Me
+```
+
+System returns a random eligible photo from the group.
+
+Avoid showing:
+
+* Deleted photos
+* Reported/hidden photos
+* Private photos
+* Photos the user isn't authorized to see
+
+---
+
+# 22. WEEKLY CLASS AWARDS
+
+Create optional automated weekly highlights.
+
+Examples:
+
+```text
+Most Consistent
+Most Reacted
+Most Creative
+Best Moment
+Most Unexpected
+```
+
+Important:
+
+Do NOT create appearance-based rankings or systems that encourage judging people's bodies, attractiveness, popularity, or social worth.
+
+Awards should focus on participation, creativity, memories, or fun.
+
+Allow admins to disable awards.
+
+---
+
+# 23. THEN VS NOW
+
+Allow the system to pair photos over time.
+
+Example:
+
+```text
+September 1
+      ↓
+October 1
+```
+
+or:
+
+```text
+30 DAYS AGO
+      ↓
+TODAY
+```
+
+Users can optionally participate.
+
+The frontend should display:
+
+```text
+[ OLD PHOTO ] → [ NEW PHOTO ]
+```
+
+---
+
+# 24. TIME CAPSULE
+
+Users can create locked messages.
+
+Example:
+
+```text
+Message
+"Where do you think you'll be in 5 years?"
+
+Unlock date:
+2031-09-30
+```
+
+Entity:
+
+```text
+TimeCapsule
+- id
+- group_id
+- user_id
+- content
+- created_at
+- unlock_at
+- status
+```
+
+Content must remain inaccessible until the unlock time.
+
+Support:
+
+* Individual capsules
+* Group capsules
+* Graduation capsule
+
+---
+
+# 25. MEMORY MAP
+
+Optional location-based memory feature.
+
+IMPORTANT:
+
+Location sharing must be explicitly opt-in.
+
+Never expose precise location by default.
+
+If enabled:
+
+```text
+Photo
+    ↓
+Optional location
+    ↓
+Privacy-safe approximate location
+    ↓
+Memory map
+```
+
+Strip precise GPS coordinates from normal photo metadata.
+
+Allow users to remove location information.
+
+---
+
+# 26. MUSIC / PHOTO SOUNDTRACK
+
+Allow users to associate a song with a photo through a licensed music API/provider where legally permitted.
+
+Do not upload or redistribute copyrighted music files.
+
+Store:
+
+```text
+song_id
+provider
+song_title
+artist
+cover_art_url
+```
+
+The app should only use legally permitted APIs/preview mechanisms.
+
+Make the music provider an abstraction:
+
+```text
+MusicProvider
+```
+
+so it can be replaced later.
+
+---
+
+# 27. AUTOMATIC MONTHLY RECAP
+
+At the end of each month, generate a recap.
+
+Example:
+
+```text
+SEPTEMBER 2026
+
+842 memories
+31 active members
+30 days
+28-day class streak
+
+Top moments
+...
+
+[ PLAY RECAP ]
+```
+
+Use selected photos based on configurable criteria.
+
+Do not expose sensitive or reported content.
+
+---
+
+# 28. AUTOMATIC YEARBOOK
+
+This is one of the major long-term features.
+
+At the end of the academic year:
+
+```text
+CLASS OF 2026
+
+32 people
+287 days
+8,492 memories
+
+September
+October
+November
+...
+```
+
+Generate:
+
+* Monthly highlights
+* Photo collages
+* Timeline
+* Member contributions
+* Class statistics
+* Favorite prompts
+* Group moments
+* Optional captions
+* End-of-year message
+* Downloadable digital yearbook
+
+Keep yearbook generation modular.
+
+---
+
+# 29. AUTOMATIC VIDEO RECAP
+
+Generate optional slideshow/video recaps.
+
+Possible periods:
+
+```text
+Week
+Month
+Semester
+Academic year
+```
+
+Example:
+
+```text
+OUR 2026
+
+8,492 photos
+32 classmates
+287 days
+```
+
+Use only photos the viewer is authorized to see.
+
+Make video generation a separate backend service/job.
+
+---
+
+# 30. “OUR STORY”
+
+Create a chronological narrative of the group's year.
+
+Example:
+
+```text
+OUR STORY
+
+September 1
+24 memories
+
+September 2
+28 memories
+
+September 3
+31 memories
+
+...
+
+September 30
+29 memories
+```
+
+This should become the central long-term memory experience.
+
+---
+
+# 31. PRIVACY AND SAFETY
+
+Implement privacy from the beginning.
+
+Required:
+
+* Private groups
+* Private image storage
+* Authentication
+* Authorization
+* Signed URLs
+* Report photo
+* Report user
+* Block user
+* Delete own content
+* Account deletion
+* Leave group
+* Admin moderation
+* Moderator role
+* Audit logging
+* Rate limiting
+* Upload validation
+* EXIF stripping
+* No public image URLs
+* No precise location exposure
+* Secure invite links
+* Session management
+* Abuse prevention
+
+If the application is intended for minors, design age-appropriate privacy and moderation controls and ensure the final deployment complies with applicable laws and platform policies.
+
+---
+
+# 32. MODERATION
+
+Create moderation entities:
+
+```text
+Report
+- id
+- reporter_id
+- target_type
+- target_id
+- reason
+- description
+- status
+- reviewed_by
+- reviewed_at
+- created_at
+```
+
+Possible reasons:
+
+```text
+harassment
+bullying
+nudity
+sexual_content
+violence
+hate
+spam
+privacy_violation
+other
+```
+
+Admin/moderator workflow:
+
+```text
+Report submitted
+      ↓
+Moderation queue
+      ↓
+Review
+      ↓
+Hide content / dismiss / warn / remove user
+      ↓
+Audit log
+```
+
+Never automatically permanently delete reported content solely from a client-side action.
+
+---
+
+# 33. ADMIN DASHBOARD
+
+Create a separate admin interface.
+
+Admin should be able to see:
+
+```text
+Group overview
+Members
+Daily participation
+Reports
+Posts
+Prompts
+Invite links
+Settings
+Moderation
+Statistics
+```
+
+Admin actions:
+
+* Remove member
+* Suspend member
+* Restore member
+* Delete post
+* Hide post
+* Create prompt
+* Change daily prompt
+* Change cutoff time
+* Configure streak threshold
+* Configure group settings
+* Regenerate invite code
+
+---
+
+# 34. SEARCH
+
+Allow authorized users to search:
+
+* Members
+* Dates
+* Captions
+* Memories
+
+Do not create global public search.
+
+Search must always respect group membership and privacy rules.
+
+---
+
+# 35. SETTINGS
+
+Create:
+
+```text
+Account
+Privacy
+Notifications
+Appearance
+Group settings
+Blocked users
+Data
+About
+```
+
+Account actions:
+
+```text
+Change display name
+Change avatar
+Delete account
+Export personal data
+Logout
+```
+
+Privacy:
+
+```text
+Who can see my profile
+Who can see my memories
+Location sharing
+```
+
+---
+
+# 36. DESIGN SYSTEM
+
+Create a centralized frontend theme.
+
+Example:
+
+```text
+frontend/src/theme/
+
+colors
+typography
+spacing
+radii
+shadows
+animations
+breakpoints
+```
+
+Do not hard-code colors throughout components.
+
+Use semantic tokens:
+
+```text
+background
+surface
+primary
+secondary
+text
+muted
+danger
+success
+```
+
+Create reusable components.
+
+The entire frontend should be replaceable without touching API/business logic.
+
+---
+
+# 37. API DESIGN
+
+Use REST or another clearly documented API architecture.
+
+Group endpoints logically:
+
+```text
+/api/auth
+/api/users
+/api/groups
+/api/members
+/api/posts
+/api/photos
+/api/reactions
+/api/prompts
+/api/streaks
+/api/memories
+/api/subgroups
+/api/mystery
+/api/time-capsules
+/api/yearbook
+/api/notifications
+/api/reports
+/api/admin
+```
+
+Document every endpoint.
+
+For each endpoint document:
+
+```text
+Method
+Path
+Authentication
+Permissions
+Request
+Response
+Errors
+Example
+```
+
+Generate an API specification in:
+
+```text
+docs/api.md
+```
+
+or OpenAPI format.
+
+---
+
+# 38. ERROR HANDLING
+
+Use consistent API errors.
+
+Example:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "DAILY_POST_ALREADY_EXISTS",
+    "message": "You already posted today's photo."
+  }
+}
+```
+
+Create centralized error handling.
+
+Frontend should translate backend error codes into user-friendly messages.
+
+Never display raw database errors to users.
+
+---
+
+# 39. SECURITY
+
+Implement:
+
+* Authentication
+* Authorization
+* Input validation
+* Rate limiting
+* Secure cookies/tokens as appropriate
+* CSRF protection where relevant
+* CORS configuration
+* SQL injection protection
+* XSS protection
+* File upload validation
+* File size limits
+* MIME verification
+* Private storage
+* Signed URLs
+* Audit logs
+* Secure secrets
+* Environment variables
+* No secrets in frontend code
+
+Create:
+
+```text
+.env.example
+```
+
+Never commit real secrets.
+
+---
+
+# 40. PERFORMANCE
+
+The application must be designed for many groups and thousands/millions of photos.
+
+Use:
+
+* Image thumbnails
+* Lazy loading
+* Pagination
+* Cursor-based pagination where appropriate
+* CDN-compatible image delivery
+* Caching
+* Database indexes
+* Background processing
+* Optimized queries
+* Virtualized lists where needed
+
+Never load an entire year's photo collection in one API request.
+
+---
+
+# 41. DATABASE INDEXES
+
+Create indexes for common queries:
+
+```text
+posts(group_id, post_date)
+posts(user_id, post_date)
+posts(group_id, created_at)
+reactions(post_id)
+group_members(group_id, user_id)
+group_members(user_id)
+reports(status)
+time_capsules(unlock_at)
+```
+
+Add unique constraints where necessary.
+
+---
+
+# 42. BACKGROUND JOBS
+
+Create scheduled jobs for:
+
+```text
+Daily prompt assignment
+Daily reminder notifications
+Streak calculation
+Weekly mystery photo
+Weekly awards
+Monthly recap
+Yearbook generation
+Time capsule unlocking
+Cleanup of expired signed URL metadata if applicable
+```
+
+Jobs must be idempotent.
+
+If a job runs twice, it should not create duplicate records or duplicate notifications.
+
+---
+
+# 43. FRONTEND STATE MANAGEMENT
+
+Separate server state from local UI state.
+
+Server state examples:
+
+```text
+current user
+group
+members
+today's posts
+memory timeline
+reactions
+notifications
+```
+
+UI state:
+
+```text
+modal open
+selected photo
+theme
+navigation state
+upload progress
+```
+
+Do not duplicate server state unnecessarily.
+
+---
+
+# 44. OFFLINE / POOR NETWORK SUPPORT
+
+At minimum:
+
+* Show upload progress
+* Retry failed uploads
+* Preserve an upload temporarily if network fails
+* Show clear offline state
+* Prevent duplicate uploads
+
+If feasible, support background upload retry.
+
+---
+
+# 45. ACCESSIBILITY
+
+Support:
+
+* Dynamic text sizing
+* Screen readers
+* Proper labels
+* Keyboard navigation where applicable
+* Adequate contrast
+* Reduced-motion preference
+* Accessible touch targets
+* Meaningful error messages
+
+---
+
+# 46. ANALYTICS
+
+Add privacy-conscious product analytics.
+
+Track events such as:
+
+```text
+account_created
+group_created
+group_joined
+photo_upload_started
+photo_uploaded
+photo_upload_failed
+daily_prompt_viewed
+reaction_added
+memory_viewed
+streak_started
+streak_continued
+yearbook_viewed
+yearbook_generated
+time_capsule_created
+```
+
+Do not collect unnecessary sensitive data.
+
+Do not track precise location unless the user explicitly enables the memory-map feature.
+
+---
+
+# 47. TESTING
+
+Create unit tests for:
+
+* One-photo-per-day rule
+* Group membership
+* Authorization
+* Signed URL access
+* Streak calculation
+* Invite code validation
+* Time capsule unlock
+* Reaction limits
+* Moderation
+* Post deletion
+* Notification preferences
+
+Integration tests:
+
+```text
+Create account
+→ create group
+→ join group
+→ upload photo
+→ view feed
+→ react
+→ view memory
+```
+
+Security tests:
+
+```text
+Non-member cannot access group photo
+Non-member cannot create group post
+Expired signed URL rejected
+User cannot modify another user's post
+User cannot bypass one-photo-per-day rule
+Deleted user loses access
+```
+
+---
+
+# 48. SEED DATA
+
+Create development seed data.
+
+Example:
+
+```text
+Demo Group:
+Class 12-A
+
+Demo users:
+Alice
+Bob
+Charlie
+David
+Emma
+```
+
+Create sample:
+
+* Posts
+* Reactions
+* Prompts
+* Members
+* Streaks
+
+Do not use real people's information.
+
+---
+
+# 49. ENVIRONMENT CONFIGURATION
+
+Support:
+
+```text
+development
+staging
+production
+```
+
+Use environment variables for:
+
+```text
+DATABASE_URL
+AUTH configuration
+STORAGE configuration
+SIGNED_URL_EXPIRATION
+PUSH_NOTIFICATION configuration
+MUSIC_PROVIDER configuration
+VIDEO_GENERATION configuration
+APP_URL
+API_URL
+```
+
+Never hard-code provider credentials.
+
+---
+
+# 50. DOCUMENTATION
+
+Create:
+
+```text
+README.md
+
+docs/
+├── architecture.md
+├── api.md
+├── database.md
+├── authentication.md
+├── storage.md
+├── permissions.md
+├── notifications.md
+├── moderation.md
+├── deployment.md
+├── frontend-customization.md
+└── feature-roadmap.md
+```
+
+`frontend-customization.md` must specifically explain:
+
+* Where to change colors
+* Where to change fonts
+* Where to change navigation
+* Where to change screens
+* Where to change cards
+* Where to change animations
+* Where to change icons
+* Where to change spacing
+* Where to change the overall theme
+
+---
+
+# 51. FRONTEND CUSTOMIZATION PRINCIPLE
+
+The frontend must be treated as a replaceable presentation layer.
+
+Use:
+
+```text
+UI
+ ↓
+Hooks / View Models
+ ↓
+API Services
+ ↓
+Backend
+```
+
+Do not do:
+
+```text
+Screen
+ ↓
+Direct database access
+```
+
+Do not mix:
+
+* API calls
+* database logic
+* authentication logic
+* image storage logic
+* business rules
+
+inside visual components.
+
+Example:
+
+Bad:
+
+```text
+PhotoCard
+    ↓
+Database query
+    ↓
+Storage request
+    ↓
+Permission calculation
+```
+
+Good:
+
+```text
+PhotoCard
+    ↓
+receives Post data
+    ↓
+renders UI
+```
+
+Business logic lives elsewhere.
+
+---
+
+# 52. CONFIGURABLE PRODUCT SETTINGS
+
+Create a centralized configuration system for:
+
+```text
+MAX_PHOTO_SIZE
+ALLOWED_IMAGE_TYPES
+DAILY_POST_LIMIT
+POST_REPLACEMENT_ENABLED
+POST_CUTOFF_TIME
+SIGNED_URL_DURATION
+STREAK_THRESHOLD
+NOTIFICATION_TIME
+REACTION_TYPES
+FEATURE_FLAGS
+```
+
+Use feature flags for optional features:
+
+```text
+ENABLE_SUBGROUPS
+ENABLE_MYSTERY_PHOTO
+ENABLE_PHOTO_ROULETTE
+ENABLE_TIME_CAPSULE
+ENABLE_MEMORY_MAP
+ENABLE_MUSIC
+ENABLE_YEARBOOK
+ENABLE_VIDEO_RECAP
+ENABLE_WEEKLY_AWARDS
+```
+
+This allows features to be enabled gradually.
+
+---
+
+# 53. MVP PRIORITY
+
+Build in this order.
+
+## Phase 1: Foundation
+
+```text
+Authentication
+User profile
+Groups
+Membership
+Private storage
+Database
+API architecture
+```
+
+## Phase 2: Core loop
+
+```text
+Daily photo
+One-photo-per-day enforcement
+Today's feed
+Photo viewer
+Reactions
+Daily prompts
+Notifications
+```
+
+## Phase 3: Memory
+
+```text
+Calendar
+Timeline
+Profile history
+Group statistics
+Individual streak
+Group streak
+```
+
+## Phase 4: Social
+
+```text
+Subgroups
+Photo roulette
+Mystery photo
+Weekly awards
+```
+
+## Phase 5: Long-term memories
+
+```text
+Then vs Now
+Time capsules
+Memory map
+Monthly recap
+Yearbook
+Video recap
+Our Story
+```
+
+---
+
+# 54. IMPORTANT PRODUCT PRINCIPLE
+
+Do not turn this into a clone of a public social network.
+
+The main experience should remain:
+
+```text
+ONE PERSON
+      ↓
+ONE PHOTO
+      ↓
+ONE DAY
+      ↓
+ONE SHARED CLASS MEMORY
+      ↓
+AN ENTIRE YEAR OF MEMORIES
+```
+
+Avoid unnecessary:
+
+* Followers
+* Public profiles
+* Public likes
+* Infinite public feed
+* Influencer mechanics
+* Engagement bait
+* Appearance rankings
+
+The value of the app is the **shared private archive**.
+
+---
+
+# 55. PRIMARY USER JOURNEY
+
+A first-time user should be able to:
+
+```text
+Install app
+    ↓
+Create account
+    ↓
+Enter/join class
+    ↓
+See today's prompt
+    ↓
+Take photo
+    ↓
+Upload
+    ↓
+See classmates' photos
+    ↓
+React
+    ↓
+Receive tomorrow's reminder
+    ↓
+Return next day
+```
+
+This journey must be extremely simple.
+
+---
+
+# 56. MAIN NAVIGATION
+
+Use a simple navigation structure:
+
+```text
+TODAY
+MEMORIES
+CLASS
+YEARBOOK
+PROFILE
+```
+
+The navigation itself must be a reusable component and easy to replace.
+
+---
+
+# 57. UI SCREEN INVENTORY
+
+Create separate screens/components for:
+
+```text
+SplashScreen
+OnboardingScreen
+LoginScreen
+SignupScreen
+CreateGroupScreen
+JoinGroupScreen
+HomeScreen
+UploadPhotoScreen
+PhotoPreviewScreen
+PhotoViewerScreen
+MemoriesScreen
+CalendarScreen
+DayMemoriesScreen
+ClassScreen
+MemberListScreen
+ProfileScreen
+SettingsScreen
+NotificationsScreen
+AdminDashboard
+ModerationScreen
+SubgroupsScreen
+MysteryPhotoScreen
+PhotoRouletteScreen
+TimeCapsuleScreen
+MemoryMapScreen
+MonthlyRecapScreen
+YearbookScreen
+YearbookViewerScreen
+```
+
+Not every advanced screen needs to be fully implemented in the first release, but create the architecture so they can be added without restructuring the project.
+
+---
+
+# 58. DESIGN DIRECTION
+
+The initial design should feel:
+
+* Warm
+* Modern
+* Playful
+* Nostalgic
+* Photo-focused
+* Minimal
+* Mobile-first
+
+Use rounded cards, smooth transitions, subtle animations, large imagery, and clean typography.
+
+Do not make it look like a corporate school-management application.
+
+The design should communicate:
+
+> “These are our memories.”
+
+rather than:
+
+> “Please complete today's attendance requirement.”
+
+---
+
+# 59. DELIVERABLES
+
+The coding agent must produce:
+
+1. Complete source code
+2. Frontend
+3. Backend
+4. Database schema
+5. Database migrations
+6. Authentication
+7. Private photo storage
+8. API
+9. Core UI
+10. Admin system
+11. Tests
+12. Seed data
+13. Documentation
+14. Environment configuration
+15. Deployment instructions
+16. Feature flags
+17. Clean reusable components
+
+---
+
+# 60. CODE QUALITY REQUIREMENTS
+
+Write maintainable production-quality code.
+
+Requirements:
+
+* Strong typing where supported
+* Clear naming
+* Small reusable functions
+* No duplicated business logic
+* No hard-coded secrets
+* No unnecessary dependencies
+* Centralized configuration
+* Centralized theme
+* Centralized API client
+* Proper loading states
+* Proper empty states
+* Proper error states
+* Proper validation
+* Proper authorization
+* Tests for critical business rules
+
+Do not create giant files containing hundreds or thousands of lines.
+
+If a file becomes too large, split it into logical modules.
+
+---
+
+# 61. DO NOT MAKE THESE ARCHITECTURAL MISTAKES
+
+Do NOT:
+
+* Store images directly in PostgreSQL
+* Make the image bucket public
+* Put secret API keys in frontend code
+* Trust frontend authorization
+* Put business rules inside UI components
+* Put SQL directly inside frontend code
+* Hard-code feature availability
+* Hard-code colors throughout the UI
+* Hard-code API URLs
+* Build the entire app inside one file
+* Create a monolithic backend
+* Skip database constraints
+* Skip server-side validation
+* Skip moderation
+* Skip account deletion
+* Skip image metadata stripping
+
+---
+
+# 62. DEVELOPMENT PROCESS
+
+Before writing the implementation:
+
+1. Inspect the repository.
+2. Determine the existing stack.
+3. Create the architecture described above.
+4. Document technology choices.
+5. Create database schema and migrations.
+6. Implement authentication.
+7. Implement authorization.
+8. Implement private storage.
+9. Implement core API.
+10. Implement the frontend.
+11. Implement tests.
+12. Run tests.
+13. Fix errors.
+14. Run lint/type checks.
+15. Build production bundles.
+16. Document setup and deployment.
+
+Do not generate fake functionality.
+
+If an external service is unavailable, create a clean abstraction/interface and a development implementation rather than pretending the integration works.
+
+---
+
+# 63. FINAL ACCEPTANCE CRITERIA
+
+The application is considered functionally complete for MVP when:
+
+### Authentication
+
+* A user can create an account.
+* A user can log in/out.
+* A user can edit their profile.
+
+### Groups
+
+* A user can create a group.
+* A user can join using an invite.
+* A group can have admins and members.
+* Admins can remove members.
+
+### Photos
+
+* A member can upload one photo per day.
+* Duplicate daily posts are prevented server-side.
+* Images are stored privately.
+* Images are served using temporary signed URLs.
+* EXIF/GPS metadata is stripped.
+* Users can delete their own photos.
+
+### Feed
+
+* Members can see authorized classmates' photos.
+* Users can react.
+* Users can report inappropriate content.
+
+### Memories
+
+* Users can browse previous days.
+* Users can browse a calendar.
+* Users can view their own photo history.
+
+### Notifications
+
+* Users can receive daily reminders.
+* Notification preferences can be changed.
+
+### Safety
+
+* Non-members cannot access group photos.
+* Users cannot modify other users' posts.
+* Users can report content.
+* Admins can moderate content.
+* Account deletion works.
+
+### Architecture
+
+* Frontend and backend are completely separated.
+* Database is separately organized.
+* Storage provider is abstracted.
+* UI components are reusable.
+* Theme is centralized.
+* API is documented.
+* Environment variables are documented.
+* Critical business rules have automated tests.
+
+---
+
+# 64. IMPORTANT FINAL INSTRUCTION TO THE AI CODING AGENT
+
+Do not simply generate a visual prototype.
+
+Build the application as a real, maintainable product with:
+
+```text
+Frontend
++
+Backend
++
+Database
++
+Private Object Storage
++
+Authentication
++
+Authorization
++
+Notifications
++
+Moderation
++
+Testing
++
+Documentation
+```
+
+Prioritize the daily photo loop first.
+
+Every architectural decision must preserve the ability to completely redesign the frontend later.
+
+The frontend is a replaceable layer.
+
+The backend/API and database should remain stable even if the entire visual design is replaced.
+
+Build the system so that another developer can open the repository six months later, understand the architecture quickly, replace the UI, add a feature, change the storage provider, or modify the database without having to reverse-engineer a tangled codebase.
+
+Start with a working MVP, but structure the codebase so all advanced features listed above can be added incrementally without architectural rewrites.
