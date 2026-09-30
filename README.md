@@ -1,4 +1,4 @@
-# Camera App
+# MEMORA
 
 An Expo web/mobile frontend, Express backend, and Supabase/PostgreSQL database. Run commands below from PowerShell at the project root unless a step says otherwise.
 
