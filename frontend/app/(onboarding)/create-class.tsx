@@ -9,17 +9,20 @@ import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { useClass } from '@/hooks/useClass';
 
 export default function CreateClassScreen() {
-  const [name, setName] = useState('12-A');
-  const [school, setSchool] = useState('Northfield Academy');
-  const [year, setYear] = useState('2026');
+  const currentYear = new Date().getFullYear();
+  const [name, setName] = useState('');
+  const [school, setSchool] = useState('');
+  const [year, setYear] = useState(String(currentYear));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createClassLocally, refreshClasses } = useClass();
 
   const handleCreate = async () => {
-    if (!supabase) {
-      setErrorMessage('Configure Supabase in frontend/.env before creating a class.');
+    if (!name.trim()) {
+      setErrorMessage('Please enter a class name.');
       return;
     }
 
@@ -27,26 +30,35 @@ export default function CreateClassScreen() {
     setErrorMessage(null);
 
     try {
-      const { data, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !data.session) throw new Error('Sign in before creating a class.');
+      if (supabase) {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !data.session)
+          throw new Error('Sign in before creating a cloud class.');
 
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-      const response = await fetch(`${backendUrl}/api/classes`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${data.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          schoolName: school.trim() || undefined,
-          academicYear: Number(year),
-        }),
-      });
+        const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+        const response = await fetch(`${backendUrl}/api/classes`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            schoolName: school.trim() || undefined,
+            academicYear: Number(year) || currentYear,
+          }),
+        });
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message ?? 'Could not create class.');
-      router.replace('/(tabs)/home');
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message ?? 'Could not create class.');
+        await refreshClasses();
+        router.replace('/(tabs)/circle');
+        return;
+      }
+
+      // Offline / Local Mode creation
+      await createClassLocally(name.trim(), school.trim(), Number(year) || currentYear);
+      router.replace('/(tabs)/circle');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not create class.');
       setIsSubmitting(false);
@@ -57,32 +69,59 @@ export default function CreateClassScreen() {
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.kicker}>Create class</Text>
-        <Text style={styles.title}>Build a private digital yearbook</Text>
+        <Text style={styles.kicker}>CREATE CIRCLE</Text>
+        <Text style={styles.title}>Start a private digital yearbook</Text>
+        <Text style={styles.subtitle}>
+          Create a shared space for your class, cohort, or friend group to post daily memories
+          together.
+        </Text>
 
         <Card style={styles.card} variant="editorial">
-          <Text style={styles.fieldLabel}>Class name</Text>
-          <TextInput value={name} onChangeText={setName} style={styles.input} />
+          <Text style={styles.fieldLabel}>Class or Group Name</Text>
+          <TextInput
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              if (errorMessage) setErrorMessage(null);
+            }}
+            placeholder="e.g. Class 12-A, Biology Dept, Senior Cohort"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+          />
 
-          <Text style={styles.fieldLabel}>School</Text>
-          <TextInput value={school} onChangeText={setSchool} style={styles.input} />
+          <Text style={styles.fieldLabel}>School / Organization (Optional)</Text>
+          <TextInput
+            value={school}
+            onChangeText={setSchool}
+            placeholder="e.g. Oakridge Academy"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+          />
 
-          <Text style={styles.fieldLabel}>Academic year</Text>
-          <TextInput value={year} onChangeText={setYear} style={styles.input} />
+          <Text style={styles.fieldLabel}>Graduation or Academic Year</Text>
+          <TextInput
+            value={year}
+            onChangeText={setYear}
+            keyboardType="number-pad"
+            maxLength={4}
+            placeholder="2026"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+          />
 
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
           <Button
-            title={isSubmitting ? 'Creating class…' : 'Create class'}
+            title={isSubmitting ? 'Creating class…' : 'Create Class Circle'}
             onPress={handleCreate}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !name.trim()}
             variant="accent"
           />
         </Card>
 
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Want to join instead?</Text>
+          <Text style={styles.footerText}>Already have an invite code?</Text>
           <Button
-            title="Join class"
+            title="Join an existing class"
             variant="secondary"
             onPress={() => router.push('/(onboarding)/join-class')}
           />
@@ -108,41 +147,47 @@ const styles = StyleSheet.create({
   title: {
     ...typography.serif.title,
     color: colors.textPrimary,
-    marginVertical: spacing.md,
+    marginVertical: spacing.sm,
+  },
+  subtitle: {
+    ...typography.sans.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
   },
   input: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: 0.5,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     color: colors.textPrimary,
-    ...typography.body,
-  },
-  footerRow: {
-    marginTop: spacing.xl,
-    gap: spacing.md,
+    ...typography.sans.body,
   },
   errorMessage: {
-    ...typography.footnote,
+    ...typography.sans.caption,
     color: colors.error,
     marginBottom: spacing.md,
   },
+  footerRow: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   footerText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
-    textAlign: 'center',
   },
 });

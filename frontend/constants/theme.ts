@@ -1,70 +1,103 @@
-// Memora Design System - Dark iOS × Gothic Y2K × Chrome Aesthetic
+// Memora Design System — Dark + Translucent + Y2K + Gothic + iOS
+// A private digital memory archive from an alternate early-2000s future.
+
+// ============================================================================
+// COLOR SYSTEM
+// ============================================================================
 
 export const colors = {
-  // Backgrounds
-  background: '#09090C', // Primary - near black
-  backgroundSecondary: '#101116', // Secondary - slightly lighter
-  backgroundTertiary: '#14151A', // Tertiary - for subtle differentiation
+  // ── Background Hierarchy ──────────────────────────────────────────────
+  // Deep, atmospheric dark surfaces
+  background: '#08080C',        // Primary app background — near black with subtle blue
+  backgroundElevated: '#0D0D12', // Elevated surfaces (cards, panels)
+  backgroundOverlay: '#111116',  // Overlays, modals, sheets
 
-  // Surfaces
-  surface: '#171820', // Default card/surface
-  surfaceElevated: '#1D1E27', // Elevated surfaces (modals, sheets)
-  surfaceOverlay: '#22232C', // Overlay surfaces
-  surfaceWarm: '#1A1B22', // Warm surface (legacy)
+  // ── Surface Materials (Alpha-based for translucency) ──────────────────
+  // Material 01 — Background (opaque)
+  surfaceBackground: 'rgba(8, 8, 12, 0.98)',
 
-  // Chrome (metallic accents)
-  chromeDark: '#555963', // Dark chrome - borders, inactive
-  chrome: '#BFC3CC', // Standard chrome - primary metallic
-  chromeHighlight: '#F1F2F5', // Chrome highlight - bright accents
-  chromeGlow: 'rgba(191, 195, 204, 0.15)', // Subtle chrome glow
+  // Material 02 — Navigation (slightly translucent)
+  surfaceNavigation: 'rgba(13, 13, 18, 0.88)',
 
-  // Legacy color names (for backward compatibility)
-  primary: '#BFC3CC', // Maps to chrome
-  primaryLight: '#D4D8DD',
-  primarySoft: '#E8EBEE',
-  primaryUltraSoft: '#F1F2F5',
-  accent: '#B84F7D', // Wine/pink accent
-  accentLight: '#C875A0',
-  accentSoft: 'rgba(184, 79, 125, 0.12)',
-  text: '#F4F2F5',
-  textPrimary: '#F4F2F5',
-  textSecondary: '#96949E',
-  textTertiary: '#65646D',
-  textMuted: '#65646D',
-  textInverse: '#09090C',
-  textOnPrimary: '#09090C',
-  textOnChrome: '#09090C',
-  border: '#2A2C35',
-  borderSoft: '#1F2028',
-  divider: '#252630',
-  dividerSoft: '#1A1B22',
+  // Material 03 — Floating (search, contextual controls)
+  surfaceFloating: 'rgba(17, 17, 22, 0.78)',
+
+  // Material 04 — Modal/Sheet (stronger separation)
+  surfaceModal: 'rgba(17, 17, 22, 0.92)',
+
+  // Material 05 — Overlay (highest focus)
+  surfaceOverlay: 'rgba(8, 8, 12, 0.96)',
+
+  // ── Text Hierarchy ───────────────────────────────────────────────────
+  textPrimary: '#F5F3F7',        // Primary content — warm off-white
+  textSecondary: '#A8A4AE',      // Secondary content
+  textMuted: '#68646F',          // Metadata, captions, disabled
+  textInverse: '#08080C',        // On accent/chrome surfaces
+
+  // ── Borders (extremely subtle) ────────────────────────────────────────
+  borderHairline: 'rgba(255, 255, 255, 0.04)',
+  borderSubtle: 'rgba(255, 255, 255, 0.06)',
+  borderDefault: 'rgba(255, 255, 255, 0.08)',
+  borderEmphasized: 'rgba(255, 255, 255, 0.12)',
+
+  // ── Accent Palette (restrained, hardware-inspired) ────────────────────
+  // Icy blue — primary interactive accent
+  accent: '#7A9FD8',
+  accentSoft: 'rgba(122, 159, 216, 0.12)',
+  accentSubtle: 'rgba(122, 159, 216, 0.06)',
+  accentDeep: '#4A75B8',
+
+  // Pale lavender — secondary atmospheric accent
+  accentLavender: '#B8A8D8',
+  accentLavenderSoft: 'rgba(184, 168, 216, 0.10)',
+  accentLavenderSubtle: 'rgba(184, 168, 216, 0.05)',
+
+  // Silver/chrome — Y2K hardware references
+  chrome: '#C8CCD4',
+  chromeDim: '#8A8E98',
+  chromeDark: '#4A4E58',
+  chromeHighlight: '#E8EBF0',
+  chromeGlow: 'rgba(200, 204, 212, 0.08)',
+
+  // ── Status Colors (muted, not neon) ──────────────────────────────────
+  success: '#5A8A6E',
+  successSoft: 'rgba(90, 138, 110, 0.12)',
+  warning: '#B8A05A',
+  warningSoft: 'rgba(184, 160, 90, 0.12)',
+  error: '#C05A5A',
+  errorSoft: 'rgba(192, 90, 90, 0.12)',
+
+  // ── Legacy aliases (for gradual migration) ───────────────────────────
+  surface: '#111116',
+  surfaceElevated: '#16161C',
+  backgroundSecondary: '#0D0D12',
+  backgroundTertiary: '#111116',
+  border: 'rgba(255, 255, 255, 0.06)',
+  borderSoft: 'rgba(255, 255, 255, 0.04)',
+  borderLight: 'rgba(255, 255, 255, 0.08)',
+  divider: 'rgba(255, 255, 255, 0.05)',
+  dividerSoft: 'rgba(255, 255, 255, 0.03)',
+  text: '#F5F3F7',
+  textTertiary: '#68646F',
+  textOnChrome: '#08080C',
   shadow: 'rgba(0, 0, 0, 0.4)',
   shadowStrong: 'rgba(0, 0, 0, 0.6)',
-  overlay: 'rgba(9, 9, 12, 0.8)',
-  overlayLight: 'rgba(9, 9, 12, 0.4)',
-  overlayStrong: 'rgba(9, 9, 12, 0.95)',
-
-  // Status
-  success: '#2E7D4A',
-  successSoft: '#1A3D2A',
-  warning: '#B8860B',
-  warningSoft: '#3D3510',
-  error: '#C0392B',
-  errorSoft: '#3D1A1A',
-
-  // Additional legacy colors
-
-  accentDeep: '#651F42',
-  accentSoftGlow: '#C875A0',
-  accentGlow: 'rgba(184, 79, 125, 0.25)',
-  coolHighlight: '#8EA6C5',
-  coolGlow: 'rgba(142, 166, 197, 0.15)',
-  borderChrome: '#4A4E58',
-  borderHighlight: '#6E7380',
-  accentSubtle: 'rgba(184, 79, 125, 0.12)',
-  patternTint: 'rgba(184, 79, 125, 0.03)',
-  patternTintCool: 'rgba(142, 166, 197, 0.02)',
+  overlay: 'rgba(8, 8, 12, 0.8)',
+  overlayLight: 'rgba(8, 8, 12, 0.4)',
+  overlayStrong: 'rgba(8, 8, 12, 0.95)',
+  accentLight: '#9AB8E8',
+  accentGlow: 'rgba(122, 159, 216, 0.15)',
+  coolHighlight: '#B8A8D8',
+  coolGlow: 'rgba(184, 168, 216, 0.10)',
+  borderChrome: 'rgba(255, 255, 255, 0.08)',
+  borderHighlight: 'rgba(255, 255, 255, 0.12)',
+  patternTint: 'rgba(122, 159, 216, 0.03)',
+  patternTintCool: 'rgba(184, 168, 216, 0.02)',
 };
+
+// ============================================================================
+// SPACING SYSTEM
+// ============================================================================
 
 export const spacing = {
   xs: 4,
@@ -78,16 +111,26 @@ export const spacing = {
   massive: 64,
 };
 
+// ============================================================================
+// RADIUS HIERARCHY
+// Small controls: 8px | Buttons: 10px | Cards: 14px | Large panels: 18px | Sheets/modals: 22px+
+// ============================================================================
+
 export const radius = {
-  xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
-  xxl: 32,
-  round: 999,
+  xs: 8,      // Small controls, chips, badges
+  sm: 10,     // Buttons, inputs
+  md: 14,     // Cards, standard panels
+  lg: 18,     // Large panels, hero sections
+  xl: 22,     // Sheets, modals, major containers
+  xxl: 28,    // Full-screen sheets, immersive views
+  round: 999, // Pills, circular elements
+  full: 999,
   circle: 9999,
 };
+
+// ============================================================================
+// BORDER WIDTHS
+// ============================================================================
 
 export const borders = {
   hairline: 0.5,
@@ -95,6 +138,11 @@ export const borders = {
   medium: 1.5,
   thick: 2,
 };
+
+// ============================================================================
+// SHADOWS / DEPTH
+// Soft depth rather than obvious shadows. Avoid excessive floating-card effects.
+// ============================================================================
 
 export const shadows = {
   none: {
@@ -104,75 +152,79 @@ export const shadows = {
     shadowRadius: 0,
     elevation: 0,
   },
+
+  // Subtle depth for cards at rest
   xs: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 1,
   },
+
   sm: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
+
   md: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
   },
+
   lg: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 5,
   },
+
   xl: {
     shadowColor: colors.shadowStrong,
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 8,
   },
-  // Chrome-specific shadows (subtle metallic reflection)
+
+  // Chrome-specific subtle reflection (Y2K hardware)
   chrome: {
     shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
+
   chromeLg: {
     shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 3,
   },
+
+  // Accent glow — used extremely sparingly for active/focus states
   glowSm: {
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     elevation: 0,
   },
+
   glowMd: {
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 0,
-  },
-  glowLg: {
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     elevation: 0,
   },
 };
@@ -180,64 +232,79 @@ export const shadows = {
 // Web-compatible shadow styles
 export const webShadows = {
   none: { boxShadow: 'none' },
-  xs: { boxShadow: '0 1px 2px rgba(0, 0, 0, 0.15)' },
-  sm: { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' },
-  md: { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.25)' },
-  lg: { boxShadow: '0 8px 16px rgba(0, 0, 0, 0.3)' },
-  xl: { boxShadow: '0 16px 24px rgba(0, 0, 0, 0.35)' },
-  chrome: { boxShadow: '0 2px 4px rgba(191, 195, 204, 0.08)' },
-  chromeLg: { boxShadow: '0 8px 16px rgba(191, 195, 204, 0.08)' },
-  glowSm: { boxShadow: '0 0 8px rgba(184, 79, 125, 0.3)' },
-  glowMd: { boxShadow: '0 0 16px rgba(184, 79, 125, 0.25)' },
-  glowLg: { boxShadow: '0 0 24px rgba(184, 79, 125, 0.2)' },
+  xs: { boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
+  sm: { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' },
+  md: { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.12)' },
+  lg: { boxShadow: '0 8px 16px rgba(0, 0, 0, 0.15)' },
+  xl: { boxShadow: '0 16px 24px rgba(0, 0, 0, 0.18)' },
+  chrome: { boxShadow: '0 1px 2px rgba(200, 204, 212, 0.05)' },
+  chromeLg: { boxShadow: '0 4px 8px rgba(200, 204, 212, 0.05)' },
+  glowSm: { boxShadow: '0 0 6px rgba(122, 159, 216, 0.15)' },
+  glowMd: { boxShadow: '0 0 12px rgba(122, 159, 216, 0.12)' },
+  glowLg: { boxShadow: '0 0 20px rgba(122, 159, 216, 0.08)' },
   chromeReflection: {
-    boxShadow: 'inset 0 1px 0 rgba(191, 195, 204, 0.1), 0 1px 0 rgba(0, 0, 0, 0.3)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 0 rgba(0, 0, 0, 0.2)',
   },
 };
 
+// ============================================================================
+// BLUR / MATERIAL SYSTEM
+// Five material levels for hierarchical translucency
+// ============================================================================
+
 export const blur = {
   none: 0,
-  light: 10,
-  medium: 20,
-  heavy: 40,
-  chrome: 30,
+  light: 12,      // Material 02 — Navigation
+  medium: 24,     // Material 03 — Floating
+  heavy: 40,      // Material 04 — Modal
+  intense: 60,    // Material 05 — Overlay
 };
+
+// ============================================================================
+// OPACITY VALUES
+// ============================================================================
 
 export const opacity = {
-  disabled: 0.4,
-  pressed: 0.85,
+  disabled: 0.35,
+  pressed: 0.8,
   hover: 0.9,
-  overlay: 0.85,
-  pattern: 0.04,
-  patternAccent: 0.06,
-  chromeReflection: 0.1,
-  chromeHighlight: 0.15,
+  overlay: 0.88,
+  pattern: 0.025,
+  patternAccent: 0.04,
+  chromeReflection: 0.06,
+  chromeHighlight: 0.1,
 };
 
-// Typography - iOS-style sans + editorial serif + technical mono
+// ============================================================================
+// TYPOGRAPHY
+// Primary: System (SF Pro / Roboto) — UI, navigation, controls, metadata
+// Secondary: Georgia (serif) — Major headings, memory titles, editorial moments
+// Technical: Menlo (mono) — IDs, timestamps, technical metadata
+// ============================================================================
+
 export const typography = {
-  // Sans-serif (System) - for UI, navigation, controls, buttons, metadata, labels
+  // ── Sans-Serif (System) ──────────────────────────────────────────────
   sans: {
     display: {
       fontFamily: 'System',
       fontSize: 36,
       fontWeight: '700' as const,
       lineHeight: 44,
-      letterSpacing: -0.5,
+      letterSpacing: -0.6,
     },
     title: {
       fontFamily: 'System',
       fontSize: 28,
       fontWeight: '700' as const,
       lineHeight: 36,
-      letterSpacing: -0.3,
+      letterSpacing: -0.4,
     },
     title2: {
       fontFamily: 'System',
       fontSize: 22,
       fontWeight: '700' as const,
       lineHeight: 30,
-      letterSpacing: -0.2,
+      letterSpacing: -0.3,
     },
     title3: {
       fontFamily: 'System',
@@ -287,26 +354,26 @@ export const typography = {
       fontSize: 12,
       fontWeight: '500' as const,
       lineHeight: 16,
-      letterSpacing: 0.2,
+      letterSpacing: 0.3,
     },
     caption2: {
       fontFamily: 'System',
       fontSize: 11,
       fontWeight: '500' as const,
       lineHeight: 14,
-      letterSpacing: 0.3,
+      letterSpacing: 0.4,
     },
     micro: {
       fontFamily: 'System',
       fontSize: 10,
-      fontWeight: '500' as const,
+      fontWeight: '600' as const,
       lineHeight: 12,
-      letterSpacing: 0.5,
+      letterSpacing: 0.6,
       textTransform: 'uppercase' as const,
     },
   },
 
-  // Serif (Georgia) - for emotional content: major headings, memory titles, dates
+  // ── Serif (Georgia) — Editorial / Atmospheric ────────────────────────
   serif: {
     display: {
       fontFamily: 'Georgia',
@@ -362,7 +429,7 @@ export const typography = {
     },
   },
 
-  // Serif Italic - for quotes, captions, emotional text
+  // ── Serif Italic — Quotes, captions, emotional text ──────────────────
   serifItalic: {
     title: {
       fontFamily: 'Georgia',
@@ -395,7 +462,7 @@ export const typography = {
     },
   },
 
-  // Monospace - for technical: memory IDs, timestamps, camera metadata
+  // ── Monospace (Menlo) — Technical metadata ───────────────────────────
   mono: {
     title: {
       fontFamily: 'Menlo',
@@ -409,46 +476,46 @@ export const typography = {
       fontSize: 12,
       fontWeight: '400' as const,
       lineHeight: 16,
-      letterSpacing: 0.3,
+      letterSpacing: 0.4,
     },
     caption: {
       fontFamily: 'Menlo',
       fontSize: 11,
       fontWeight: '400' as const,
       lineHeight: 14,
-      letterSpacing: 0.2,
+      letterSpacing: 0.3,
     },
     micro: {
       fontFamily: 'Menlo',
       fontSize: 10,
-      fontWeight: '400' as const,
+      fontWeight: '500' as const,
       lineHeight: 12,
       letterSpacing: 0.5,
       textTransform: 'uppercase' as const,
     },
   },
 
-  // Legacy flat structure (for backward compatibility)
+  // ── Legacy flat structure (backward compatibility) ───────────────────
   display: {
     fontFamily: 'System',
     fontSize: 36,
     fontWeight: '700' as const,
     lineHeight: 44,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   title: {
     fontFamily: 'System',
     fontSize: 28,
     fontWeight: '700' as const,
     lineHeight: 36,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   title2: {
     fontFamily: 'System',
     fontSize: 22,
     fontWeight: '700' as const,
     lineHeight: 30,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   title3: {
     fontFamily: 'System',
@@ -498,16 +565,20 @@ export const typography = {
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 16,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   caption2: {
     fontFamily: 'System',
     fontSize: 11,
     fontWeight: '500' as const,
     lineHeight: 14,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
 };
+
+// ============================================================================
+// LAYOUT CONSTANTS
+// ============================================================================
 
 export const layout = {
   screenPadding: spacing.lg,
@@ -520,19 +591,28 @@ export const layout = {
   safeAreaBottom: 34,
 };
 
+// ============================================================================
+// ANIMATION / MOTION
+// 150–250ms normal transitions. Subtle spring-like easing.
+// ============================================================================
+
 export const animation = {
   fast: 120,
   normal: 220,
   slow: 320,
   spring: {
-    damping: 18,
+    damping: 20,
     stiffness: 180,
   },
   springGentle: {
-    damping: 22,
+    damping: 24,
     stiffness: 140,
   },
 };
+
+// ============================================================================
+// BREAKPOINTS
+// ============================================================================
 
 export const breakpoints = {
   phone: 0,
@@ -540,58 +620,78 @@ export const breakpoints = {
   desktop: 1024,
 };
 
-// Background pattern configuration
+// ============================================================================
+// BACKGROUND PATTERN CONFIGURATION
+// Extremely subtle atmospheric symbols (Y2K nostalgia, gothic atmosphere)
+// ============================================================================
+
 export const backgroundPattern = {
   symbols: ['star', 'sparkle', 'cross', 'heart', 'diamond', 'moon'],
-  defaultOpacity: 0.03,
-  defaultDensity: 0.8,
+  defaultOpacity: 0.025,
+  defaultDensity: 0.6,
   defaultScale: 1,
   defaultRotation: 0,
 };
 
+// ============================================================================
+// EFFECT PRESETS (reusable material combinations)
+// ============================================================================
+
 export const effects = {
-  chromeBorder: {
+  // Material 02 — Navigation surface
+  surfaceNavigation: {
+    backgroundColor: colors.surfaceNavigation,
     borderWidth: borders.hairline,
-    borderColor: colors.chromeDark,
+    borderColor: colors.borderSubtle,
   },
-  chromeBorderActive: {
+
+  // Material 03 — Floating surface
+  surfaceFloating: {
+    backgroundColor: colors.surfaceFloating,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderDefault,
+  },
+
+  // Material 04 — Modal/Sheet surface
+  surfaceModal: {
+    backgroundColor: colors.surfaceModal,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderEmphasized,
+  },
+
+  // Material 05 — Overlay surface
+  surfaceOverlay: {
+    backgroundColor: colors.surfaceOverlay,
     borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    borderColor: colors.borderEmphasized,
   },
-  accentBorder: {
+
+  // Subtle chrome accent border (Y2K hardware)
+  chromeAccent: {
     borderWidth: borders.hairline,
+    borderColor: colors.chromeGlow,
+  },
+
+  // Active/focus accent border
+  accentBorder: {
+    borderWidth: borders.thin,
     borderColor: colors.accent,
   },
-  accentBorderActive: {
-    borderWidth: borders.thin,
-    borderColor: colors.accentSoft,
-  },
-  glassSurface: {
-    backgroundColor: 'rgba(23, 24, 32, 0.85)',
-    backdropFilter: 'blur(20px)',
-  },
+
+  // Glass surface for web (backdrop-filter)
   glassSurfaceWeb: {
-    backgroundColor: 'rgba(23, 24, 32, 0.85)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-  },
-  glowAccent: {
-    shadowColor: colors.accentGlow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 0,
-  },
-  glowChrome: {
-    shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 0,
+    backgroundColor: 'rgba(17, 17, 22, 0.78)',
+    backdropFilter: 'blur(24px) saturate(120%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(120%)',
+    borderWidth: borders.hairline,
+    borderColor: colors.borderDefault,
   },
 };
 
-// Component variant configurations
+// ============================================================================
+// COMPONENT VARIANT CONFIGURATIONS
+// ============================================================================
+
 export const variants = {
   memoryCard: {
     editorial: { aspectRatio: 4 / 5, imageRadius: radius.xl, padding: spacing.lg, gap: spacing.md },
@@ -600,12 +700,29 @@ export const variants = {
     immersive: { aspectRatio: 3 / 4, imageRadius: 0, padding: 0, gap: spacing.lg },
   },
   button: {
-    primary: { backgroundColor: colors.chrome, color: colors.textOnChrome },
-    primaryPressed: { backgroundColor: colors.chromeHighlight },
-    secondary: { backgroundColor: colors.surfaceElevated, borderColor: colors.chromeDark },
-    ghost: { backgroundColor: 'transparent', borderColor: colors.border },
+    primary: { backgroundColor: colors.chromeDim, color: colors.textPrimary, borderColor: colors.chrome },
+    primaryPressed: { backgroundColor: colors.chrome },
+    secondary: { backgroundColor: colors.backgroundElevated, borderColor: colors.borderDefault },
+    ghost: { backgroundColor: 'transparent', borderColor: colors.borderSubtle },
     accent: { backgroundColor: colors.accent, color: colors.textInverse },
     accentPressed: { backgroundColor: colors.accentDeep },
     destructive: { backgroundColor: colors.errorSoft, borderColor: colors.error },
+    chrome: { backgroundColor: colors.chrome, color: colors.textInverse },
+  },
+  input: {
+    default: {
+      backgroundColor: colors.backgroundElevated,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSubtle,
+      color: colors.textPrimary,
+    },
+    focused: {
+      borderColor: colors.accent,
+      borderWidth: borders.thin,
+    },
+    error: {
+      borderColor: colors.error,
+      borderWidth: borders.thin,
+    },
   },
 };

@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import Svg, { Path, SvgProps } from 'react-native-svg';
+import { ViewStyle, TextStyle } from 'react-native';
 
 // Import all icon SVGs
 import HomeIcon from '@/assets/icons/home.svg';

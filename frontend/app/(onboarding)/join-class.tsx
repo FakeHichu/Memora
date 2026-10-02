@@ -5,41 +5,84 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { useClass } from '@/hooks/useClass';
 
 export default function JoinClassScreen() {
-  const [code, setCode] = useState('7K9A-PQ2T');
+  const [code, setCode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { joinClass } = useClass();
 
-  const handleJoin = () => {
-    router.replace('/(tabs)/home');
+  const handleJoin = async () => {
+    if (!code.trim()) {
+      setErrorMessage('Please enter an invite code.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    const result = await joinClass(code);
+    setIsSubmitting(false);
+
+    if (result.success) {
+      router.replace('/(tabs)/circle');
+    } else {
+      setErrorMessage(result.message);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.kicker}>Join class</Text>
-        <Text style={styles.title}>Enter your class code</Text>
+        <Text style={styles.kicker}>JOIN CIRCLE</Text>
+        <Text style={styles.title}>Enter your invite code</Text>
+        <Text style={styles.subtitle}>
+          Memora groups are private. Enter the 8-character code shared by your class admin.
+        </Text>
 
         <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class join code</Text>
           <TextInput
             value={code}
-            onChangeText={setCode}
+            onChangeText={(text) => {
+              setCode(text);
+              if (errorMessage) setErrorMessage(null);
+            }}
             autoCapitalize="characters"
             style={styles.input}
-            placeholder="ABCD-1234"
+            placeholder="e.g. 7K9A-PQ2T"
+            placeholderTextColor={colors.textMuted}
           />
 
-          <Button title="Join class" onPress={handleJoin} variant="accent" />
+          {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+
+          <Button
+            title={isSubmitting ? 'Verifying code…' : 'Join class'}
+            onPress={handleJoin}
+            disabled={isSubmitting || !code.trim()}
+            variant="accent"
+          />
         </Card>
 
         <View style={styles.helperWrap}>
           <Text style={styles.helperTitle}>Private by design</Text>
           <Text style={styles.helperText}>
-            The backend verifies the join code and checks class membership before granting access.
+            Only members with this code can see photos and classmate posts. Nothing is ever indexed
+            or public.
           </Text>
+        </View>
+
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Need to start a new class instead?</Text>
+          <Button
+            title="Create a class"
+            variant="secondary"
+            onPress={() => router.push('/(onboarding)/create-class')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -62,35 +105,49 @@ const styles = StyleSheet.create({
   title: {
     ...typography.serif.title,
     color: colors.textPrimary,
-    marginVertical: spacing.md,
+    marginVertical: spacing.sm,
+  },
+  subtitle: {
+    ...typography.sans.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: 0.5,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     color: colors.textPrimary,
     ...typography.mono.body,
+    fontSize: 18,
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  errorMessage: {
+    ...typography.sans.caption,
+    color: colors.error,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
   helperWrap: {
     marginTop: spacing.xl,
     borderRadius: radius.lg,
     backgroundColor: colors.accentSubtle,
-    borderWidth: 0.5,
-    borderColor: 'rgba(184, 79, 125, 0.2)',
+    borderWidth: borders.hairline,
+    borderColor: 'rgba(122, 159, 216, 0.15)',
     padding: spacing.lg,
   },
   helperTitle: {
@@ -99,7 +156,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   helperText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  footerRow: {
+    marginTop: spacing.xxl,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  footerText: {
+    ...typography.sans.body,
+    color: colors.textMuted,
   },
 });

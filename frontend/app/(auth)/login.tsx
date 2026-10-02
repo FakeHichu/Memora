@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { signInWithEmail } from '@/lib/supabase/auth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
@@ -152,12 +152,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.chromeDark,
-    borderWidth: 1,
+    borderWidth: borders.thin,
     borderColor: colors.chrome,
   },
   brandMarkText: {
-    ...typography.title2,
-    color: colors.textOnChrome,
+    ...typography.serif.title2,
+    color: colors.textInverse,
     fontWeight: '700',
   },
   brandName: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textSecondary,
   },
   card: {
@@ -191,36 +191,36 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   localMessage: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textSecondary,
   },
   fieldLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: colors.backgroundSecondary,
-    borderWidth: 0.5,
-    borderColor: colors.borderChrome,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
     color: colors.textPrimary,
-    ...typography.body,
+    ...typography.sans.body,
   },
   link: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.accent,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: spacing.lg,
   },
   errorMessage: {
-    ...typography.footnote,
+    ...typography.sans.footnote,
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -231,11 +231,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   privacyNote: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textAlign: 'center',
   },

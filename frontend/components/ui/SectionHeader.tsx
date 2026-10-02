@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   subtitle: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.textMuted,
     marginTop: 2,
   },
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   actionLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.accent,
     fontWeight: '600',
     textTransform: 'uppercase',

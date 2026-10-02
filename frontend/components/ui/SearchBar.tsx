@@ -12,6 +12,7 @@ type SearchBarProps = {
   onClear?: () => void;
   style?: ViewStyle;
   autoFocus?: boolean;
+  floating?: boolean;
 };
 
 export function SearchBar({
@@ -22,11 +23,12 @@ export function SearchBar({
   onClear,
   style,
   autoFocus = false,
+  floating = false,
 }: SearchBarProps) {
   const hasText = value.length > 0;
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, floating && styles.containerFloating, style]}>
       <View style={styles.inputWrapper}>
         <Icon name="search" size={18} color={colors.textMuted} style={styles.icon} />
         <TextInput
@@ -57,12 +59,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
+  containerFloating: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFloating,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderDefault,
     borderRadius: radius.round,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
@@ -72,7 +78,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textPrimary,
     paddingVertical: spacing.sm,
     minHeight: 44,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-import { colors, spacing, typography, radius } from '@/constants/theme';
+import { colors, spacing, typography, radius, borders } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
 
 type EmptyStateProps = {
@@ -24,7 +24,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={[styles.container, style]}>
-      {icon && <Icon name={icon as any} size={48} color={colors.textMuted} opacity={0.3} />}
+      {icon && <Icon name={icon as any} size={48} color={colors.textMuted} opacity={0.25} />}
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
       {action && (
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   message: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
     textAlign: 'center',
     maxWidth: 280,
@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     backgroundColor: colors.accentSubtle,
-    borderWidth: 0.5,
-    borderColor: 'rgba(184, 79, 125, 0.2)',
+    borderWidth: borders.hairline,
+    borderColor: 'rgba(122, 159, 216, 0.15)',
     borderRadius: radius.round,
   },
   actionLabel: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.accent,
     fontWeight: '600',
   },

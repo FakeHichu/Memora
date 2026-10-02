@@ -84,7 +84,7 @@ export default function SearchScreen() {
       >
         <AppHeader title="Search" subtitle="Find your memories" />
 
-        {/* Search Bar */}
+        {/* Floating Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
             <Icon name="search" size={20} color={colors.textMuted} style={styles.searchIcon} />
@@ -186,9 +186,9 @@ const styles = StyleSheet.create({
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFloating,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderDefault,
     borderRadius: radius.round,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
     minHeight: 48,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   loadingText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   emptyState: {

@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: spacing.lg,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
   },
   header: {
     flexDirection: 'row',
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   actionLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.accent,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   rowPressed: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
   },
   rowDestructive: {},
   rowLeft: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   rowValue: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textPrimary,
     marginTop: 1,
   },

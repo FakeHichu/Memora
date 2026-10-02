@@ -47,9 +47,9 @@ export function BackgroundPattern({
       color: string;
     }[] = [];
 
-    const gridSize = 60 / density; // Base grid spacing
-    const cols = Math.ceil(400 / gridSize);
-    const rows = Math.ceil(800 / gridSize);
+    const gridSize = 80 / density; // Base grid spacing - more sparse
+    const cols = Math.ceil(440 / gridSize);
+    const rows = Math.ceil(900 / gridSize);
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -60,27 +60,27 @@ export function BackgroundPattern({
           return x - Math.floor(x);
         };
 
-        // Skip some positions for organic feel
+        // Skip some positions for organic feel - more restraint
         if (rand(seed * 1.7) > density) continue;
 
         // Position with jitter
-        const x = col * gridSize + (rand(seed * 2.3) - 0.5) * gridSize * 0.6;
-        const y = row * gridSize + (rand(seed * 3.1) - 0.5) * gridSize * 0.6;
+        const x = col * gridSize + (rand(seed * 2.3) - 0.5) * gridSize * 0.5;
+        const y = row * gridSize + (rand(seed * 3.1) - 0.5) * gridSize * 0.5;
 
-        // Skip center area (content zone) - roughly middle 60%
-        const centerX = 200;
-        const centerY = 400;
+        // Skip center area (content zone) - roughly middle 65%
+        const centerX = 220;
+        const centerY = 450;
         const distFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-        if (distFromCenter < 180) continue;
+        if (distFromCenter < 200) continue;
 
         const symbolIndex = Math.floor(rand(seed * 4.7) * symbols.length);
-        const rotation = (rand(seed * 5.3) - 0.5) * 30 * scale;
-        const baseSize = 12 + rand(seed * 6.1) * 16;
+        const rotation = (rand(seed * 5.3) - 0.5) * 20 * scale; // Less rotation
+        const baseSize = 10 + rand(seed * 6.1) * 12;
         const size = baseSize * scale;
-        const baseOpacity = opacity * (0.5 + rand(seed * 7.1) * 0.5);
+        const baseOpacity = opacity * (0.4 + rand(seed * 7.1) * 0.4);
 
-        // Occasionally use accent color
-        const useAccent = accentIntensity > 0 && rand(seed * 8.3) < accentIntensity * 0.15;
+        // Occasionally use accent color (very rare)
+        const useAccent = accentIntensity > 0 && rand(seed * 8.3) < accentIntensity * 0.08;
         const color = useAccent ? colors.accentSoft : colors.chrome;
 
         elements.push({
@@ -166,14 +166,14 @@ const styles = StyleSheet.create({
   },
   symbol: {
     position: 'absolute',
-    fontWeight: '300',
+    fontWeight: '200',
     fontFamily: 'System',
     includeFontPadding: false,
     textAlign: 'center',
   },
   symbolWeb: {
     position: 'absolute',
-    fontWeight: '300',
+    fontWeight: '200',
     fontFamily: 'System',
     textAlign: 'center',
     userSelect: 'none',

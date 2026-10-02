@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, radius, typography, animation } from '@/constants/theme';
+import { colors, spacing, radius, typography, animation, borders } from '@/constants/theme';
 
 import { Icon } from '@/components/ui/Icons';
 
@@ -24,6 +24,7 @@ type PhotoViewerProps = {
   style?: ViewStyle;
 };
 
+/* eslint-disable react-hooks/refs */
 export function PhotoViewer({ source, onClose, title, date, caption, style }: PhotoViewerProps) {
   const fadeAnim = React.useRef(new Animated.Value(0));
   const scaleAnim = React.useRef(new Animated.Value(0.95));
@@ -50,6 +51,7 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
         useNativeDriver: true,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const close = () => {
@@ -70,15 +72,18 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
   };
 
   return (
-    // eslint-disable-next-line react-hooks/refs
     <Animated.View style={[styles.overlay, { opacity: fadeAnim.current }]}>
       <Pressable onPress={close} style={styles.backdrop} accessibilityLabel="Close photo viewer" />
 
       <Animated.View
-        // eslint-disable-next-line react-hooks/refs
         style={[
+          {
+            transform: [
+              { scale: scaleAnim.current },
+              { translateY: slideAnim.current },
+            ],
+          },
           styles.container,
-          { transform: [{ scale: scaleAnim.current }, { translateY: slideAnim.current }] },
           style,
         ]}
       >
@@ -139,19 +144,14 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 44,
     height: 44,
-    borderRadius: radius.circle,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(191, 195, 204, 0.2)',
+    borderRadius: radius.round,
+    backgroundColor: 'rgba(8, 8, 12, 0.7)',
+    borderWidth: borders.hairline,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-end',
     marginRight: spacing.sm,
-  },
-  closeIcon: {
-    fontSize: 20,
-    color: colors.textPrimary,
-    fontWeight: '300',
   },
   image: {
     width: '100%',
@@ -165,11 +165,11 @@ const styles = StyleSheet.create({
     right: 0,
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
-    backgroundColor: 'rgba(9, 9, 12, 0.9)',
+    backgroundColor: 'rgba(8, 8, 12, 0.92)',
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(191, 195, 204, 0.1)',
+    borderTopWidth: borders.hairline,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
   },
   title: {
     ...typography.serif.title2,

@@ -11,12 +11,15 @@ export default function IndexScreen() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color={colors.primary} />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
 
-  return <Redirect href={hasSupabaseConfig && session ? '/(tabs)/home' : '/(auth)/login'} />;
+  // If Supabase is configured and user is logged in, or if using local mode, go to home
+  const targetRoute = !hasSupabaseConfig || session ? '/(tabs)/home' : '/(auth)/login';
+
+  return <Redirect href={targetRoute} />;
 }
 
 const styles = StyleSheet.create({

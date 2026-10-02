@@ -1,15 +1,24 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, layout } from '@/constants/theme';
-import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
+import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import {
+  getLocalPhotoPosts,
+  getTodayPost,
+  hasPostedToday,
+  setPhotoDraft,
+  toggleLocalPhotoReaction,
+  type LocalPhotoPost,
+} from '@/lib/photo-draft';
+import { defaultPrompts } from '@/constants/prompts';
 import { MemoryCard } from '@/components/ui/MemoryCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AppHeader } from '@/components/ui/AppHeader';
+import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
@@ -19,6 +28,13 @@ function getGreeting(): string {
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
+}
+
+function getTodayPrompt(): string {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+  );
+  return defaultPrompts[dayOfYear % defaultPrompts.length];
 }
 
 function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
@@ -47,39 +63,55 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
 
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
+  const todayPrompt = getTodayPrompt();
 
-      getLocalPhotoPosts()
-        .then((savedPosts) => {
-          if (isActive) {
-            setPosts(savedPosts);
-            setIsLoading(false);
-          }
-        })
-        .catch(() => {
-          if (isActive) {
-            setPosts([]);
-            setIsLoading(false);
-          }
-        });
+  const loadPosts = useCallback(() => {
+    let isActive = true;
 
-      return () => {
-        isActive = false;
-      };
-    }, []),
-  );
+    getLocalPhotoPosts()
+      .then((savedPosts) => {
+        if (isActive) {
+          setPosts(savedPosts);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setPosts([]);
+          setIsLoading(false);
+        }
+      });
 
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useFocusEffect(loadPosts);
+
+  const postedToday = hasPostedToday(posts);
+  const todayMemory = getTodayPost(posts);
   const onThisDayMemories = getOnThisDayMemories(posts);
   const featuredMemory = onThisDayMemories[0];
 
+  const handleCaptureWithPrompt = () => {
+    setPhotoDraft('', todayPrompt);
+    router.push('/(tabs)/create');
+  };
+
+  const handleReact = async (postId: string, emoji: string) => {
+    const updated = await toggleLocalPhotoReaction(postId, emoji);
+    if (updated) {
+      setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+    }
+  };
+
   const filteredPosts = posts.filter((post) => {
     if (selectedFilter === 'All') return true;
-    return true;
+    return post.category === selectedFilter;
   });
 
-  const recentPosts = filteredPosts.slice(0, 6);
+  const recentPosts = filteredPosts.slice(0, 8);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -94,6 +126,46 @@ export default function HomeScreen() {
             accessibilityLabel: 'Search memories',
           }}
         />
+
+        {/* Daily Prompt Hero Section */}
+        <View style={styles.promptHeroCard}>
+          <View style={styles.promptHeader}>
+            <View style={styles.promptTag}>
+              <View style={[styles.promptDot, postedToday && styles.promptDotCompleted]} />
+              <Text style={styles.promptTagText}>TODAY'S PROMPT</Text>
+            </View>
+            <Text style={styles.streakBadge}>{postedToday ? '🔥 Posted Today' : '⏳ Pending'}</Text>
+          </View>
+
+          <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
+
+          {postedToday && todayMemory ? (
+            <View style={styles.todayMemoryWrapper}>
+              <Text style={styles.todayMemoryLabel}>YOUR MOMENT TODAY</Text>
+              <MemoryCard
+                memory={todayMemory}
+                density="editorial"
+                aspectRatio={16 / 9}
+                onPress={() => router.push(`/post/${todayMemory.id}`)}
+                showMetadata={true}
+                showReactions={true}
+                onReact={(emoji) => handleReact(todayMemory.id, emoji)}
+              />
+            </View>
+          ) : (
+            <View style={styles.promptActionWrapper}>
+              <Text style={styles.promptSubtext}>
+                Take or upload exactly one photo today to keep your daily streak alive.
+              </Text>
+              <Button
+                title="Capture Today's Photo"
+                variant="accent"
+                onPress={handleCaptureWithPrompt}
+                style={styles.promptButton}
+              />
+            </View>
+          )}
+        </View>
 
         {/* On This Day Section */}
         {featuredMemory && (
@@ -115,6 +187,8 @@ export default function HomeScreen() {
               onPress={() => router.push(`/post/${featuredMemory.id}`)}
               showMetadata={false}
               showMemoryId={true}
+              showReactions={true}
+              onReact={(emoji) => handleReact(featuredMemory.id, emoji)}
             />
           </View>
         )}
@@ -141,8 +215,10 @@ export default function HomeScreen() {
           </View>
         ) : recentPosts.length === 0 ? (
           <EmptyState
-            title="Start with one moment"
-            message="Photos you take will appear here, organized by time and place."
+            title={
+              selectedFilter === 'All' ? 'Start with one moment' : `No ${selectedFilter} memories`
+            }
+            message="Photos you take will appear here, organized by time and category."
             icon="camera"
             action={{
               label: 'Create a memory',
@@ -151,15 +227,17 @@ export default function HomeScreen() {
             style={styles.emptyState}
           />
         ) : (
-          <View style={styles.memoryGrid}>
-            {recentPosts.map((post, index) => (
+          <View style={styles.memoriesFeed}>
+            {recentPosts.map((post) => (
               <MemoryCard
                 key={post.id}
                 memory={post}
-                density={index === 0 ? 'editorial' : 'compact'}
-                aspectRatio={index === 0 ? 4 / 5 : 1}
+                density="timeline"
+                aspectRatio={4 / 3}
                 onPress={() => router.push(`/post/${post.id}`)}
-                showMemoryId={index === 0}
+                showMemoryId={true}
+                showReactions={true}
+                onReact={(emoji) => handleReact(post.id, emoji)}
               />
             ))}
           </View>
@@ -182,33 +260,85 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingBottom: spacing.xxxl + layout.tabBarHeight,
   },
+  promptHeroCard: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    padding: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xxl,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
+  },
+  promptHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  promptTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  promptDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.warning,
+  },
+  promptDotCompleted: {
+    backgroundColor: colors.success,
+  },
+  promptTagText: {
+    ...typography.mono.micro,
+    color: colors.accent,
+    letterSpacing: 0.8,
+    fontWeight: '700',
+  },
+  streakBadge: {
+    ...typography.sans.caption2,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    backgroundColor: colors.backgroundElevated,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.round,
+  },
+  promptQuestion: {
+    ...typography.serif.title3,
+    color: colors.textPrimary,
+    lineHeight: 26,
+    marginBottom: spacing.md,
+  },
+  promptSubtext: {
+    ...typography.sans.caption,
+    color: colors.textMuted,
+    marginBottom: spacing.md,
+  },
+  promptActionWrapper: {
+    paddingTop: spacing.xs,
+  },
+  promptButton: {
+    width: '100%',
+  },
+  todayMemoryWrapper: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  todayMemoryLabel: {
+    ...typography.mono.micro,
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+  },
   onThisDaySection: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-    borderRadius: radius.xxl,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-    borderWidth: 0.5,
-    borderColor: colors.borderChrome,
-    ...Platform.select({
-      web: { boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' },
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 4,
-      },
-    }),
   },
   onThisDayHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.borderSoft,
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   onThisDayLabel: {
     flexDirection: 'row',
@@ -222,25 +352,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   onThisDayLabelText: {
-    ...typography.caption,
+    ...typography.mono.micro,
     color: colors.accent,
+    letterSpacing: 0.8,
     fontWeight: '700',
-    letterSpacing: 1,
   },
   onThisDayYearsAgo: {
-    ...typography.serif.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
   },
-  memoryGrid: {
+  memoriesFeed: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   loadingState: {
     paddingVertical: spacing.xxl,
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
   },
   loadingText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   emptyState: {
@@ -248,6 +379,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
   },
   bottomSpacer: {
-    height: spacing.huge,
+    height: 40,
   },
 });

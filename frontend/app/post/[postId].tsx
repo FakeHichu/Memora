@@ -3,41 +3,59 @@ import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
+  Alert,
+  Animated,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
-  Animated,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
-import { getLocalPhotoPost, type LocalPhotoPost } from '@/lib/photo-draft';
+import {
+  deleteLocalPhotoPost,
+  getLocalPhotoPost,
+  toggleLocalPhotoReaction,
+  updateLocalPhotoCaption,
+  type LocalPhotoPost,
+} from '@/lib/photo-draft';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { IconButton } from '@/components/ui/IconButton';
+import { ReactionBar } from '@/components/ui/ReactionBar';
+import { Button } from '@/components/ui/Button';
 
 export default function PostDetailScreen() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const [post, setPost] = useState<LocalPhotoPost | null>(null);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedCaption, setEditedCaption] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [headerOpacity] = useState(new Animated.Value(1));
   const scrollY = useRef(new Animated.Value(0));
 
+  const loadPost = useCallback(() => {
+    if (!postId) return;
+    getLocalPhotoPost(postId).then((savedPost) => {
+      if (savedPost) {
+        setPost(savedPost);
+        setEditedCaption(savedPost.caption);
+      }
+    });
+  }, [postId]);
+
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
-      getLocalPhotoPost(postId).then((savedPost) => {
-        if (isActive) setPost(savedPost);
-      });
-      return () => {
-        isActive = false;
-      };
-    }, [postId]),
+      loadPost();
+    }, [loadPost]),
   );
 
   const date = post ? new Date(post.createdAt) : null;
@@ -70,15 +88,68 @@ export default function PostDetailScreen() {
   }, [headerOpacity, scrollY]);
 
   const handleEdit = () => {
-    console.log('Edit memory:', post?.id);
+    setIsEditing(true);
+  };
+
+  const handleSaveCaption = async () => {
+    if (!post) return;
+    setIsSaving(true);
+    try {
+      const updated = await updateLocalPhotoCaption(post.id, editedCaption.trim());
+      if (updated) {
+        setPost(updated);
+        setIsEditing(false);
+      }
+    } catch {
+      Alert.alert('Error', 'Could not update memory caption.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = () => {
-    console.log('Delete memory:', post?.id);
+    if (!post) return;
+    Alert.alert(
+      'Delete Memory?',
+      'This will permanently remove this photo and memory from your journal.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await deleteLocalPhotoPost(post.id);
+            if (success) {
+              router.back();
+            } else {
+              Alert.alert('Error', 'Could not delete the memory.');
+            }
+          },
+        },
+      ],
+    );
   };
 
-  const handleShare = () => {
-    console.log('Share memory:', post?.id);
+  const handleShare = async () => {
+    if (!post) return;
+    try {
+      await Share.share({
+        message: post.caption
+          ? `Memora Memory: "${post.caption}" (${formattedDate})`
+          : `Memora Memory from ${formattedDate}`,
+        url: post.uri,
+      });
+    } catch {
+      // user dismissed
+    }
+  };
+
+  const handleReact = async (emoji: string) => {
+    if (!post) return;
+    const updated = await toggleLocalPhotoReaction(post.id, emoji);
+    if (updated) {
+      setPost(updated);
+    }
   };
 
   return (
@@ -155,33 +226,78 @@ export default function PostDetailScreen() {
               </View>
             </View>
 
-            {/* Memory Title & Caption */}
-            <View style={styles.memoryContent}>
-              <Text style={styles.memoryTitle} numberOfLines={2}>
-                {post.caption || 'Untitled memory'}
-              </Text>
-              {post.caption && <Text style={styles.memoryCaption}>{post.caption}</Text>}
+            {/* Prompt Tag */}
+            {post.prompt && (
+              <View style={styles.promptBanner}>
+                <Text style={styles.promptKicker}>DAILY PROMPT</Text>
+                <Text style={styles.promptText}>"{post.prompt}"</Text>
+              </View>
+            )}
+
+            {/* Reactions Bar */}
+            <View style={styles.reactionsSection}>
+              <Text style={styles.sectionKicker}>REACTIONS</Text>
+              <ReactionBar
+                reactions={post.reactions}
+                userReaction={post.userReaction}
+                onReact={handleReact}
+              />
             </View>
 
-            {/* Metadata */}
+            {/* Memory Caption or Edit View */}
+            <View style={styles.memoryContent}>
+              <Text style={styles.sectionKicker}>CAPTION</Text>
+              {isEditing ? (
+                <View style={styles.editContainer}>
+                  <TextInput
+                    value={editedCaption}
+                    onChangeText={setEditedCaption}
+                    style={styles.captionInput}
+                    multiline
+                    maxLength={280}
+                    placeholder="Add a caption..."
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  <View style={styles.editActions}>
+                    <Button
+                      title="Cancel"
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => {
+                        setEditedCaption(post.caption);
+                        setIsEditing(false);
+                      }}
+                    />
+                    <Button
+                      title={isSaving ? 'Saving…' : 'Save'}
+                      variant="accent"
+                      size="sm"
+                      onPress={handleSaveCaption}
+                      disabled={isSaving}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.memoryCaption}>
+                  {post.caption || 'No caption added for this memory.'}
+                </Text>
+              )}
+            </View>
+
+            {/* Details & Tags */}
             <View style={styles.metadata}>
               <View style={styles.metadataSection}>
-                <Text style={styles.metadataLabel}>People</Text>
-                <Text style={styles.metadataValue}>You · Alex · Sam</Text>
+                <Text style={styles.metadataLabel}>Category</Text>
+                <Text style={styles.metadataValue}>{post.category || 'General'}</Text>
               </View>
               <View style={styles.metadataDivider} />
               <View style={styles.metadataSection}>
-                <Text style={styles.metadataLabel}>Location</Text>
-                <Text style={styles.metadataValue}>Marina Beach</Text>
-              </View>
-              <View style={styles.metadataDivider} />
-              <View style={styles.metadataSection}>
-                <Text style={styles.metadataLabel}>Time</Text>
+                <Text style={styles.metadataLabel}>Recorded</Text>
                 <Text style={styles.metadataValue}>{timeString}</Text>
               </View>
             </View>
 
-            {/* Bottom spacer for tab bar */}
+            {/* Bottom spacer for layout */}
             <View style={styles.bottomSpacer} />
           </View>
         )}
@@ -224,10 +340,10 @@ const styles = StyleSheet.create({
   emptyHero: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
   },
   emptyHeroText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   expandHint: {
@@ -236,100 +352,149 @@ const styles = StyleSheet.create({
     right: spacing.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    backgroundColor: 'rgba(9, 9, 12, 0.7)',
+    backgroundColor: 'rgba(8, 8, 12, 0.7)',
     borderRadius: radius.round,
     borderWidth: borders.hairline,
-    borderColor: 'rgba(191, 195, 204, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   expandHintText: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textPrimary,
   },
   detailsContainer: {
     backgroundColor: colors.background,
     borderTopLeftRadius: radius.xxl,
     borderTopRightRadius: radius.xxl,
-    marginTop: -radius.xxl,
-    paddingHorizontal: spacing.lg,
+    marginTop: -spacing.xl,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-    gap: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    borderTopWidth: borders.hairline,
+    borderColor: colors.borderSoft,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
   },
   dateBlock: {
-    gap: spacing.xs,
+    flex: 1,
   },
   memoryId: {
     ...typography.mono.micro,
     color: colors.accent,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1.1,
+    marginBottom: spacing.xs,
   },
   dateLabel: {
     ...typography.serif.title3,
     color: colors.textPrimary,
+    marginBottom: 2,
   },
   timeLabel: {
-    ...typography.mono.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
+  },
+  promptBanner: {
+    backgroundColor: colors.accentSubtle,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+  },
+  promptKicker: {
+    ...typography.mono.micro,
+    color: colors.accent,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  promptText: {
+    ...typography.sans.callout,
+    color: colors.textPrimary,
+    fontStyle: 'italic',
+  },
+  reactionsSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionKicker: {
+    ...typography.mono.micro,
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+    marginBottom: spacing.xs,
   },
   memoryContent: {
-    gap: spacing.md,
-  },
-  memoryTitle: {
-    ...typography.serif.title,
-    color: colors.textPrimary,
-    lineHeight: 38,
+    marginBottom: spacing.xl,
   },
   memoryCaption: {
-    ...typography.serifItalic.body,
-    color: colors.textSecondary,
-    lineHeight: 26,
+    ...typography.sans.body,
+    color: colors.textPrimary,
+    lineHeight: 24,
+    marginTop: spacing.xs,
+  },
+  editContainer: {
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  captionInput: {
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.textPrimary,
+    ...typography.sans.body,
+    minHeight: 80,
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
   },
   metadata: {
-    borderTopWidth: borders.hairline,
-    borderTopColor: colors.borderSoft,
-    paddingTop: spacing.lg,
-    gap: spacing.md,
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
   },
   metadataSection: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
   },
   metadataDivider: {
-    height: borders.hairline,
+    width: 1,
+    height: 24,
     backgroundColor: colors.borderSoft,
   },
   metadataLabel: {
-    ...typography.caption,
+    ...typography.sans.caption2,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginBottom: 2,
   },
   metadataValue: {
-    ...typography.body,
+    ...typography.sans.footnote,
     color: colors.textPrimary,
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: spacing.md,
+    fontWeight: '600',
   },
   bottomSpacer: {
-    height: spacing.huge,
+    height: 40,
   },
   floatingBack: {
     position: 'absolute',
-    top: spacing.lg + 50,
+    top: spacing.lg,
     left: spacing.lg,
-    zIndex: 100,
+    zIndex: 10,
   },
 });

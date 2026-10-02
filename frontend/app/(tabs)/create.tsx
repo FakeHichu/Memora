@@ -279,12 +279,12 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   backText: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.accent,
     fontWeight: '600',
   },
   stepLabel: {
-    ...typography.headline,
+    ...typography.sans.headline,
     color: colors.textPrimary,
   },
   landingContainer: {
@@ -310,14 +310,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
     ...Platform.select({
-      web: { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' },
+      web: { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.15,
         shadowRadius: 8,
         elevation: 2,
       },
@@ -338,21 +338,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    ...typography.headline,
+    ...typography.sans.headline,
     color: colors.textPrimary,
   },
   optionSubtitle: {
-    ...typography.subheadline,
+    ...typography.sans.subheadline,
     color: colors.textMuted,
     marginTop: 1,
   },
   photoPreviewContainer: {
     borderRadius: radius.xl,
     overflow: 'hidden',
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     aspectRatio: 3 / 4,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
   },
   photoPreview: {
     width: '100%',
@@ -363,10 +363,10 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
   },
   emptyPhotoText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   photoOptions: {
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   fieldLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -388,18 +388,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     color: colors.textPrimary,
-    ...typography.body,
+    ...typography.sans.body,
   },
   textInputMultiline: {
     paddingTop: spacing.md,
   },
   errorMessage: {
-    ...typography.footnote,
+    ...typography.sans.footnote,
     color: colors.error,
     marginTop: spacing.sm,
   },

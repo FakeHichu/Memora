@@ -90,9 +90,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     gap: spacing.md,
+    // Material 02 — Navigation surface
+    backgroundColor: colors.surfaceNavigation,
+    borderBottomWidth: borders.hairline,
+    borderBottomColor: colors.borderSubtle,
   },
   containerTransparent: {
     paddingBottom: spacing.sm,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0,
   },
   textContainer: {
     flex: 1,
@@ -100,28 +106,28 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   greeting: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.textMuted,
   },
   title: {
-    ...typography.title,
+    ...typography.serif.title2,
     color: colors.textPrimary,
     marginTop: spacing.xs,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.sans.callout,
     color: colors.textSecondary,
     marginTop: 1,
   },
   actionButton: {
     width: 44,
     height: 44,
-    borderRadius: radius.circle,
+    borderRadius: radius.round,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFloating,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderDefault,
     ...Platform.select({
       web: webShadows.xs,
       default: undefined,
@@ -136,19 +142,19 @@ const styles = StyleSheet.create({
     right: -2,
     minWidth: 18,
     height: 18,
-    borderRadius: radius.circle,
+    borderRadius: radius.round,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
-    ...typography.caption2,
+    ...typography.sans.caption2,
     color: colors.textInverse,
     fontWeight: '700',
   },
   bottomHairline: {
     height: borders.hairline,
-    backgroundColor: colors.borderSoft,
+    backgroundColor: colors.borderSubtle,
   },
 });

@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Clipboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
@@ -8,137 +8,238 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { MemoryCard } from '@/components/ui/MemoryCard';
-import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
+import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { Badge } from '@/components/ui/Badge';
+import {
+  getLocalPhotoPosts,
+  hasPostedToday,
+  toggleLocalPhotoReaction,
+  type LocalPhotoPost,
+} from '@/lib/photo-draft';
+import { useClass } from '@/hooks/useClass';
 
 export default function CircleScreen() {
+  const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
   const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
+  const loadPosts = useCallback(() => {
+    let isActive = true;
 
-      getLocalPhotoPosts()
-        .then((savedPosts) => {
-          if (isActive) {
-            setSharedPosts(savedPosts);
-            setIsLoading(false);
-          }
-        })
-        .catch(() => {
-          if (isActive) {
-            setSharedPosts([]);
-            setIsLoading(false);
-          }
-        });
+    getLocalPhotoPosts()
+      .then((savedPosts) => {
+        if (isActive) {
+          setSharedPosts(savedPosts);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setSharedPosts([]);
+          setIsLoading(false);
+        }
+      });
 
-      return () => {
-        isActive = false;
-      };
-    }, []),
-  );
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
-  const currentClass = {
-    name: '12-A',
-    school: 'Northfield Academy',
-    year: '2026',
-    memberCount: 24,
-    photoCount: sharedPosts.length,
+  useFocusEffect(loadPosts);
+
+  const userPostedToday = hasPostedToday(sharedPosts);
+
+  const handleCopyCode = () => {
+    if (activeClass?.join_code) {
+      Clipboard.setString(activeClass.join_code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2500);
+      Alert.alert('Code Copied', `Invite code "${activeClass.join_code}" copied to clipboard.`);
+    }
+  };
+
+  const handleReact = async (postId: string, emoji: string) => {
+    const updated = await toggleLocalPhotoReaction(postId, emoji);
+    if (updated) {
+      setSharedPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader title="Circle" subtitle="Our memories" />
-
-        {/* Class Info Card */}
-        <View style={styles.classCard}>
-          <View style={styles.classHeader}>
-            <View style={styles.classAvatar}>
-              <Text style={styles.classAvatarText}>{currentClass.name.split('-')[0]}</Text>
-            </View>
-            <View style={styles.classInfo}>
-              <Text style={styles.className}>{currentClass.name}</Text>
-              <Text style={styles.classSchool}>{currentClass.school}</Text>
-              <Text style={styles.classYear}>{currentClass.year}</Text>
-            </View>
-          </View>
-
-          <View style={styles.classStats}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{currentClass.memberCount}</Text>
-              <Text style={styles.statLabel}>Members</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{currentClass.photoCount}</Text>
-              <Text style={styles.statLabel}>Memories</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Shared Memories Section */}
-        <SectionHeader
-          title="Shared Memories"
-          subtitle={
-            sharedPosts.length > 0
-              ? `${sharedPosts.length} ${sharedPosts.length === 1 ? 'memory' : 'memories'}`
-              : 'No shared memories yet'
-          }
+        <AppHeader
+          title="Circle"
+          subtitle={activeClass ? activeClass.name : 'Shared class memories'}
         />
 
-        {isLoading ? (
-          <View style={styles.loadingState}>
-            <Text style={styles.loadingText}>Loading shared memories…</Text>
-          </View>
-        ) : sharedPosts.length === 0 ? (
-          <EmptyState
-            title="No shared memories yet"
-            message="When classmates post their daily photos, they'll appear here."
-            icon="users"
-            style={styles.emptyState}
-          />
-        ) : (
-          <View style={styles.sharedGrid}>
-            {sharedPosts.slice(0, 6).map((post, index) => (
-              <MemoryCard
-                key={post.id}
-                memory={post}
-                density="timeline"
-                aspectRatio={4 / 3}
-                onPress={() => router.push(`/post/${post.id}`)}
-                showMemoryId={true}
-              />
-            ))}
+        {/* If no class joined */}
+        {!isClassLoading && !activeClass && (
+          <View style={styles.noClassContainer}>
+            <EmptyState
+              title="No Circle Joined Yet"
+              message="Join an existing class using an invite code, or create a brand new private group for your classmates or friends."
+              icon="users"
+              action={{
+                label: 'Enter Invite Code',
+                onPress: () => router.push('/(onboarding)/join-class'),
+              }}
+              style={styles.emptyState}
+            />
+            <View style={styles.orRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.orLine} />
+            </View>
+            <Button
+              title="Create a New Class Circle"
+              variant="secondary"
+              onPress={() => router.push('/(onboarding)/create-class')}
+              style={styles.createButton}
+            />
           </View>
         )}
 
-        {/* Class Members Section */}
-        <SectionHeader title="Class Members" subtitle={`${currentClass.memberCount} members`} />
+        {/* Active Class Info Card */}
+        {activeClass && (
+          <>
+            <View style={styles.classCard}>
+              <View style={styles.classHeader}>
+                <View style={styles.classAvatar}>
+                  <Text style={styles.classAvatarText}>
+                    {activeClass.name.slice(0, 2).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.classInfo}>
+                  <Text style={styles.className}>{activeClass.name}</Text>
+                  <Text style={styles.classSchool}>
+                    {activeClass.school_name || 'Class Community'}
+                  </Text>
+                  <Text style={styles.classYear}>Class of {activeClass.academic_year}</Text>
+                </View>
 
-        <View style={styles.membersList}>
-          {Array.from({ length: Math.min(currentClass.memberCount, 8) }, (_, i) => (
-            <View key={i} style={styles.memberRow}>
-              <View style={styles.memberAvatar}>
-                <Text style={styles.memberAvatarText}>{String.fromCharCode(65 + i)}</Text>
+                {/* Invite code badge & button */}
+                <Pressable
+                  onPress={handleCopyCode}
+                  style={styles.codeButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Copy class invite code"
+                >
+                  <Text style={styles.codeLabel}>INVITE CODE</Text>
+                  <Text style={styles.codeValue}>{activeClass.join_code}</Text>
+                  <Text style={styles.copyHint}>{copiedCode ? '✓ Copied' : 'Tap to copy'}</Text>
+                </Pressable>
               </View>
-              <Text style={styles.memberName}>Classmate {i + 1}</Text>
-              <Badge
-                label={i === 0 ? 'Owner' : i < 3 ? 'Admin' : 'Member'}
-                tone={i === 0 ? 'accent' : i < 3 ? 'chrome' : 'subtle'}
+
+              {/* Class Switcher if multiple classes */}
+              {classes.length > 1 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.classSwitcher}
+                >
+                  {classes.map((cls) => (
+                    <Pressable
+                      key={cls.id}
+                      onPress={() => selectClass(cls.id)}
+                      style={[
+                        styles.classPill,
+                        cls.id === activeClass.id && styles.classPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.classPillText,
+                          cls.id === activeClass.id && styles.classPillTextActive,
+                        ]}
+                      >
+                        {cls.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+
+              <View style={styles.classStats}>
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{activeClass.member_count || 1}</Text>
+                  <Text style={styles.statLabel}>Members</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{sharedPosts.length}</Text>
+                  <Text style={styles.statLabel}>Memories</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{userPostedToday ? '🔥 Active' : 'Pending'}</Text>
+                  <Text style={styles.statLabel}>Today's Status</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Today's Circle Feed */}
+            <SectionHeader
+              title="Today in Your Circle"
+              subtitle={
+                userPostedToday
+                  ? 'All memories revealed for today'
+                  : 'Post your photo to unblur classmates'
+              }
+            />
+
+            {isLoading ? (
+              <View style={styles.loadingState}>
+                <Text style={styles.loadingText}>Loading circle memories…</Text>
+              </View>
+            ) : sharedPosts.length === 0 ? (
+              <EmptyState
+                title="No memories posted today yet"
+                message="Be the first one in your class to post today's memory!"
+                icon="camera"
+                action={{
+                  label: 'Post daily photo',
+                  onPress: () => router.push('/(tabs)/create'),
+                }}
+                style={styles.emptyState}
+              />
+            ) : (
+              <View style={styles.feedColumn}>
+                {sharedPosts.map((post) => (
+                  <MemoryCard
+                    key={post.id}
+                    memory={post}
+                    density="timeline"
+                    aspectRatio={4 / 3}
+                    onPress={() => router.push(`/post/${post.id}`)}
+                    showMemoryId={true}
+                    showReactions={true}
+                    onReact={(emoji) => handleReact(post.id, emoji)}
+                    isBlurred={!userPostedToday}
+                  />
+                ))}
+              </View>
+            )}
+
+            {/* Class Actions */}
+            <View style={styles.classActionsRow}>
+              <Button
+                title="Join another class"
+                variant="secondary"
                 size="sm"
+                onPress={() => router.push('/(onboarding)/join-class')}
+              />
+              <Button
+                title="Create a class"
+                variant="secondary"
+                size="sm"
+                onPress={() => router.push('/(onboarding)/create-class')}
               />
             </View>
-          ))}
-          {currentClass.memberCount > 8 && (
-            <View style={styles.seeAllMembers}>
-              <Text style={styles.seeAllText}>See all {currentClass.memberCount} members</Text>
-            </View>
-          )}
-        </View>
+          </>
+        )}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -157,6 +258,29 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingBottom: spacing.xxxl + layout.tabBarHeight,
   },
+  noClassContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+    gap: spacing.md,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.borderSoft,
+  },
+  orText: {
+    ...typography.sans.caption,
+    color: colors.textMuted,
+    fontWeight: '700',
+  },
+  createButton: {
+    width: '100%',
+  },
   classCard: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xl,
@@ -164,24 +288,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.xxl,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
   },
   classHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   classAvatar: {
-    width: 64,
-    height: 64,
+    width: 56,
+    height: 56,
     borderRadius: radius.xl,
     backgroundColor: colors.accentSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   classAvatarText: {
-    ...typography.title,
+    ...typography.serif.title,
     color: colors.accent,
     fontWeight: '700',
   },
@@ -189,22 +313,73 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   className: {
-    ...typography.serif.title2,
+    ...typography.serif.title3,
     color: colors.textPrimary,
   },
   classSchool: {
-    ...typography.subheadline,
+    ...typography.sans.subheadline,
     color: colors.textSecondary,
     marginTop: 1,
   },
   classYear: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     marginTop: 1,
   },
+  codeButton: {
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderDefault,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    alignItems: 'center',
+  },
+  codeLabel: {
+    ...typography.mono.micro,
+    color: colors.textMuted,
+    letterSpacing: 0.6,
+  },
+  codeValue: {
+    ...typography.mono.body,
+    fontWeight: '700',
+    color: colors.accent,
+    marginVertical: 1,
+  },
+  copyHint: {
+    ...typography.sans.caption2,
+    color: colors.textMuted,
+    fontSize: 9,
+  },
+  classSwitcher: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  classPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.round,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
+  },
+  classPillActive: {
+    backgroundColor: colors.accentSubtle,
+    borderColor: colors.accent,
+  },
+  classPillText: {
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+  },
+  classPillTextActive: {
+    color: colors.accent,
+    fontWeight: '700',
+  },
   classStats: {
     flexDirection: 'row',
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     borderTopWidth: borders.hairline,
     borderTopColor: colors.borderSoft,
   },
@@ -214,25 +389,22 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: borders.hairline,
-    height: 32,
+    height: 28,
     backgroundColor: colors.borderSoft,
   },
   statValue: {
-    ...typography.serif.title,
+    ...typography.serif.title3,
     color: colors.textPrimary,
     fontWeight: '700',
   },
   statLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     marginTop: 1,
   },
-  sharedGrid: {
+  feedColumn: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: spacing.lg,
     marginBottom: spacing.xl,
   },
   loadingState: {
@@ -241,58 +413,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   loadingText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   emptyState: {
     marginHorizontal: spacing.lg,
     paddingVertical: spacing.xxl,
   },
-  membersList: {
-    marginHorizontal: spacing.lg,
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  memberRow: {
+  classActionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
-  },
-  memberAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.circle,
-    backgroundColor: colors.accentSubtle,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  memberAvatarText: {
-    ...typography.headline,
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  memberName: {
-    ...typography.body,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  seeAllMembers: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-  },
-  seeAllText: {
-    ...typography.callout,
-    color: colors.accent,
-    fontWeight: '600',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
   bottomSpacer: {
-    height: spacing.huge,
+    height: 40,
   },
 });

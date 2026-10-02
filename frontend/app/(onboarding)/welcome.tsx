@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textSecondary,
   },
   card: {
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textPrimary,
   },
   listIcon: {
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   dividerText: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
   },
 });

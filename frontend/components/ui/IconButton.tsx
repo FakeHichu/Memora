@@ -40,7 +40,7 @@ export function IconButton({
 
   const iconColors = {
     default: colors.textPrimary,
-    chrome: colors.textOnChrome,
+    chrome: colors.textInverse,
     accent: colors.textInverse,
     ghost: colors.textSecondary,
     overlay: colors.textPrimary,
@@ -71,7 +71,7 @@ const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.circle,
+    borderRadius: radius.round,
     alignItems: 'center',
     justifyContent: 'center',
     ...baseShadow,
@@ -88,36 +88,41 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
   },
+  // Default — Floating surface
   variantDefault: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFloating,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderDefault,
   },
+  // Chrome — Chrome dim surface with chrome border
   variantChrome: {
     backgroundColor: colors.chromeDark,
     borderWidth: borders.thin,
     borderColor: colors.chrome,
   },
+  // Accent — Accent surface
   variantAccent: {
     backgroundColor: colors.accent,
     borderWidth: 0,
     ...shadows.glowSm,
   },
+  // Ghost — Transparent with subtle border
   variantGhost: {
     backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
   },
+  // Overlay — Dark translucent for on-content controls
   variantOverlay: {
-    backgroundColor: 'rgba(9, 9, 12, 0.6)',
+    backgroundColor: 'rgba(8, 8, 12, 0.6)',
     borderWidth: borders.hairline,
-    borderColor: 'rgba(191, 195, 204, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
   },
   disabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   icon: {
     fontWeight: '300',

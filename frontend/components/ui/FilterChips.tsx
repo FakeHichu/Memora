@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radius.round,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
     minHeight: 36,
     justifyContent: 'center',
   },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   label: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textSecondary,
   },
   labelSelected: {

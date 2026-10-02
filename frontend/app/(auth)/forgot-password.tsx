@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { resetPasswordForEmail } from '@/lib/supabase/auth';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
@@ -41,13 +41,15 @@ export default function ForgotPasswordScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             style={styles.input}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.textMuted}
           />
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
           <Button
             title={isSending ? 'Sending...' : 'Send reset link'}
             onPress={sendResetLink}
-            disabled={isSending}
+            disabled={isSending || !email.trim()}
             variant="accent"
             fullWidth
           />
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
@@ -91,22 +93,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    ...typography.caption,
+    ...typography.sans.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: colors.backgroundSecondary,
-    borderWidth: 0.5,
-    borderColor: colors.borderChrome,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
     color: colors.textPrimary,
-    ...typography.body,
+    ...typography.sans.body,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -116,16 +118,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerText: {
-    ...typography.body,
+    ...typography.sans.body,
     color: colors.textMuted,
   },
   link: {
-    ...typography.callout,
+    ...typography.sans.callout,
     color: colors.accent,
     fontWeight: '600',
   },
   message: {
-    ...typography.footnote,
+    ...typography.sans.footnote,
     color: colors.textSecondary,
     marginBottom: spacing.md,
   },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
-import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
+import { colors, radius, spacing, shadows, webShadows, borders, variants } from '@/constants/theme';
 
 type ButtonProps = {
   title: string;
@@ -89,7 +89,7 @@ const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -114,45 +114,52 @@ const styles = StyleSheet.create({
   fullWidth: {
     width: '100%',
   },
+  // Primary — Chrome dim surface with chrome border
   variantPrimary: {
-    backgroundColor: colors.chromeDark,
+    backgroundColor: variants.button.primary.backgroundColor,
     borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    borderColor: variants.button.primary.borderColor,
   },
+  // Secondary — Elevated surface with subtle border
   variantSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: borders.thin,
-    borderColor: colors.borderChrome,
-  },
-  variantGhost: {
-    backgroundColor: 'transparent',
+    backgroundColor: variants.button.secondary.backgroundColor,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: variants.button.secondary.borderColor,
   },
+  // Ghost — Transparent with subtle border
+  variantGhost: {
+    backgroundColor: variants.button.ghost.backgroundColor,
+    borderWidth: borders.hairline,
+    borderColor: variants.button.ghost.borderColor,
+  },
+  // Chrome — Full chrome surface
   variantChrome: {
-    backgroundColor: colors.chrome,
+    backgroundColor: variants.button.chrome.backgroundColor,
     borderWidth: 0,
   },
+  // Accent — Icy blue primary action
   variantAccent: {
-    backgroundColor: colors.accent,
+    backgroundColor: variants.button.accent.backgroundColor,
     borderWidth: 0,
     ...shadows.glowSm,
   },
+  // Destructive — Muted error tone
   variantDestructive: {
-    backgroundColor: colors.errorSoft,
+    backgroundColor: variants.button.destructive.backgroundColor,
     borderWidth: borders.hairline,
-    borderColor: colors.error,
+    borderColor: variants.button.destructive.borderColor,
   },
+  // Subtle — Accent tint for secondary actions
   variantSubtle: {
     backgroundColor: colors.accentSubtle,
     borderWidth: borders.hairline,
-    borderColor: 'rgba(184, 79, 125, 0.2)',
+    borderColor: 'rgba(122, 159, 216, 0.15)',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
   },
   disabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   label: {
     color: colors.textPrimary,
@@ -179,7 +186,7 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   labelChrome: {
-    color: colors.textOnChrome,
+    color: colors.textInverse,
   },
   icon: {
     fontSize: 16,

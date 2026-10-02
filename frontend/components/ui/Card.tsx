@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View, ViewProps } from 'react-native';
 import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
 
 type CardProps = ViewProps & {
-  variant?: 'default' | 'elevated' | 'outlined' | 'filled' | 'editorial' | 'chrome' | 'glass';
+  variant?: 'default' | 'elevated' | 'outlined' | 'filled' | 'editorial' | 'chrome' | 'glass' | 'floating' | 'modal';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 };
 
@@ -23,6 +23,8 @@ export function Card({
     editorial: styles.variantEditorial,
     chrome: styles.variantChrome,
     glass: styles.variantGlass,
+    floating: styles.variantFloating,
+    modal: styles.variantModal,
   }[variant];
 
   const paddingStyles = {
@@ -41,14 +43,22 @@ export function Card({
           ? webShadows.lg
           : variant === 'chrome'
             ? webShadows.md
-            : webShadows.sm
+            : variant === 'floating'
+              ? webShadows.lg
+              : variant === 'modal'
+                ? webShadows.xl
+                : webShadows.sm
       : variant === 'elevated'
         ? shadows.md
         : variant === 'editorial'
           ? shadows.lg
           : variant === 'chrome'
             ? shadows.md
-            : shadows.sm;
+            : variant === 'floating'
+              ? shadows.lg
+              : variant === 'modal'
+                ? shadows.xl
+                : shadows.sm;
 
   return (
     <View {...props} style={[styles.card, variantStyles, paddingStyles, shadowStyle, style]}>
@@ -61,37 +71,57 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.xl,
   },
+  // Default — Standard surface card
   variantDefault: {
     backgroundColor: colors.surface,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderSubtle,
   },
+  // Elevated — Elevated surface, no border
   variantElevated: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: 0,
   },
+  // Outlined — Transparent with border
   variantOutlined: {
     backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.borderDefault,
   },
+  // Filled — Background secondary
   variantFilled: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundElevated,
     borderWidth: 0,
   },
+  // Editorial — Surface with subtle chrome accent
   variantEditorial: {
     backgroundColor: colors.surface,
-    borderWidth: 0,
+    borderWidth: borders.hairline,
+    borderColor: colors.chromeGlow,
   },
+  // Chrome — Chrome surface
   variantChrome: {
     backgroundColor: colors.surface,
     borderWidth: borders.thin,
     borderColor: colors.chrome,
   },
+  // Glass — Translucent floating surface (web uses backdrop-filter)
   variantGlass: {
-    backgroundColor: 'rgba(23, 24, 32, 0.8)',
+    backgroundColor: 'rgba(17, 17, 22, 0.78)',
     borderWidth: borders.hairline,
-    borderColor: 'rgba(191, 195, 204, 0.1)',
+    borderColor: colors.borderDefault,
+  },
+  // Floating — Material 03 floating surface
+  variantFloating: {
+    backgroundColor: colors.surfaceFloating,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderDefault,
+  },
+  // Modal — Material 04 modal surface
+  variantModal: {
+    backgroundColor: colors.surfaceModal,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderEmphasized,
   },
   paddingNone: {
     padding: 0,

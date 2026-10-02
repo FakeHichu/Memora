@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "opencode-todo-progress": "^0.1.3"
   }
 }
