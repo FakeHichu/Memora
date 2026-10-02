@@ -16,7 +16,7 @@ export default function IndexScreen() {
     );
   }
 
-  return <Redirect href={hasSupabaseConfig && session ? '/(tabs)/today' : '/(auth)/login'} />;
+  return <Redirect href={hasSupabaseConfig && session ? '/(tabs)/home' : '/(auth)/login'} />;
 }
 
 const styles = StyleSheet.create({

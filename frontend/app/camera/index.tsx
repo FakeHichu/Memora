@@ -5,8 +5,9 @@ import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '@/constants/theme';
+import { colors, spacing, typography, radius } from '@/constants/theme';
 import { setPhotoDraft } from '@/lib/photo-draft';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CameraIndexScreen() {
   const cameraRef = useRef<CameraView | null>(null);
@@ -36,7 +37,10 @@ export default function CameraIndexScreen() {
 
   const chooseFromLibrary = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.9,
+      });
       const selectedUri = result.assets?.[0]?.uri;
 
       if (!result.canceled && selectedUri) {
@@ -49,14 +53,18 @@ export default function CameraIndexScreen() {
   };
 
   if (!permission) {
-    return <View style={styles.permissionScreen}><Text style={styles.permissionText}>Checking camera access…</Text></View>;
+    return (
+      <View style={styles.permissionScreen}>
+        <Text style={styles.permissionText}>Checking camera access…</Text>
+      </View>
+    );
   }
 
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.permissionScreen}>
         <Text style={styles.permissionTitle}>Camera access needed</Text>
-        <Text style={styles.permissionText}>Allow camera access to take today’s class photo.</Text>
+        <Text style={styles.permissionText}>Allow camera access to take today's photo.</Text>
         <Pressable style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.permissionButtonText}>Allow camera</Text>
         </Pressable>
@@ -76,15 +84,21 @@ export default function CameraIndexScreen() {
         onCameraReady={() => setCameraReady(true)}
         onMountError={({ message }) => setErrorMessage(message)}
       />
+      <BackgroundPattern />
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
-          <Pressable style={styles.topControl} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close camera">
-            <Text style={styles.topControlText}>Close</Text>
-          </Pressable>
-          <Text style={styles.cameraLabel}>TODAY’S PROMPT</Text>
           <Pressable
             style={styles.topControl}
-            onPress={() => setFacing((current) => current === 'back' ? 'front' : 'back')}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Close camera"
+          >
+            <Text style={styles.topControlText}>Close</Text>
+          </Pressable>
+          <Text style={styles.cameraLabel}>TODAY'S PROMPT</Text>
+          <Pressable
+            style={styles.topControl}
+            onPress={() => setFacing((current) => (current === 'back' ? 'front' : 'back'))}
             accessibilityRole="button"
             accessibilityLabel="Switch camera"
           >
@@ -103,8 +117,13 @@ export default function CameraIndexScreen() {
             accessibilityLabel="Take photo"
           >
             <View style={styles.shutterInner} />
+            {cameraReady && !isTakingPhoto && <View style={styles.shutterGlow} />}
           </Pressable>
-          <Pressable onPress={chooseFromLibrary} style={styles.libraryButton} accessibilityRole="button">
+          <Pressable
+            onPress={chooseFromLibrary}
+            style={styles.libraryButton}
+            accessibilityRole="button"
+          >
             <Text style={styles.libraryButtonText}>Choose from library</Text>
           </Pressable>
         </View>
@@ -116,7 +135,7 @@ export default function CameraIndexScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#080808',
+    backgroundColor: colors.background,
   },
   overlay: {
     ...StyleSheet.absoluteFill,
@@ -135,13 +154,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topControlText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    ...typography.callout,
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   cameraLabel: {
-    color: '#FFFFFF',
-    fontSize: 11,
+    ...typography.mono.micro,
+    color: colors.accent,
     fontWeight: '700',
   },
   bottomControls: {
@@ -151,9 +170,8 @@ const styles = StyleSheet.create({
   prompt: {
     maxWidth: 300,
     marginBottom: spacing.xl,
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
+    ...typography.serif.body,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   shutterOuter: {
@@ -161,9 +179,10 @@ const styles = StyleSheet.create({
     height: 76,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: colors.chrome,
     borderRadius: 38,
+    backgroundColor: 'rgba(191, 195, 204, 0.05)',
   },
   shutterDisabled: {
     opacity: 0.45,
@@ -172,7 +191,20 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.chrome,
+    borderWidth: 2,
+    borderColor: colors.chromeHighlight,
+  },
+  shutterGlow: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 46,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    opacity: 0.3,
   },
   libraryButton: {
     minHeight: 44,
@@ -181,13 +213,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   libraryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    ...typography.callout,
+    color: colors.accent,
     fontWeight: '600',
   },
   error: {
     marginBottom: spacing.md,
-    color: '#FFFFFF',
+    ...typography.caption,
+    color: colors.error,
     textAlign: 'center',
   },
   permissionScreen: {
@@ -199,14 +232,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   permissionTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
+    ...typography.serif.title2,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   permissionText: {
-    color: colors.muted,
-    fontSize: 15,
+    ...typography.body,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   permissionButton: {
@@ -214,16 +246,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
   },
   permissionButtonText: {
-    color: '#FFFFFF',
+    ...typography.callout,
+    color: colors.textInverse,
     fontWeight: '700',
   },
   cancelText: {
     padding: spacing.md,
-    color: colors.text,
+    ...typography.callout,
+    color: colors.accent,
     fontWeight: '600',
   },
 });

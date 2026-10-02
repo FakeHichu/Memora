@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { resetPasswordForEmail } from '@/lib/supabase/auth';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -18,18 +19,21 @@ export default function ForgotPasswordScreen() {
     setMessage(null);
 
     const { error } = await resetPasswordForEmail(email.trim());
-    setMessage(error ? error.message : 'If an account exists for that email, a reset link has been sent.');
+    setMessage(
+      error ? error.message : 'If an account exists for that email, a reset link has been sent.',
+    );
     setIsSending(false);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>Reset access</Text>
         <Text style={styles.title}>Forgot your password?</Text>
-        <Text style={styles.subtitle}>We’ll send a reset link to the email on your account.</Text>
+        <Text style={styles.subtitle}>We'll send a reset link to the email on your account.</Text>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Email</Text>
           <TextInput
             value={email}
@@ -40,7 +44,13 @@ export default function ForgotPasswordScreen() {
           />
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
-          <Button title={isSending ? 'Sending…' : 'Send reset link'} onPress={sendResetLink} disabled={isSending} />
+          <Button
+            title={isSending ? 'Sending...' : 'Send reset link'}
+            onPress={sendResetLink}
+            disabled={isSending}
+            variant="accent"
+            fullWidth
+          />
         </Card>
 
         <View style={styles.footerRow}>
@@ -63,39 +73,40 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   kicker: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
+    ...typography.mono.micro,
+    color: colors.accent,
     letterSpacing: 1.1,
-    textTransform: 'uppercase',
   },
   title: {
-    ...typography.title,
-    color: colors.text,
+    ...typography.serif.title,
+    color: colors.textPrimary,
     marginVertical: spacing.md,
   },
   subtitle: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-    fontSize: 16,
+    color: colors.textPrimary,
+    ...typography.body,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -105,14 +116,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerText: {
-    color: colors.muted,
+    ...typography.body,
+    color: colors.textMuted,
   },
   link: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
   },
   message: {
-    color: colors.muted,
+    ...typography.footnote,
+    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
 });

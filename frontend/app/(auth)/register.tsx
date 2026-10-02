@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { signUpWithEmail } from '@/lib/supabase/auth';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -37,11 +38,12 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>Create your account</Text>
         <Text style={styles.title}>Join your class</Text>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Full name</Text>
           <TextInput value={name} onChangeText={setName} style={styles.input} />
 
@@ -64,7 +66,13 @@ export default function RegisterScreen() {
           />
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
-          <Button title={isSubmitting ? 'Creating account…' : 'Create account'} onPress={handleRegister} disabled={isSubmitting} />
+          <Button
+            title={isSubmitting ? 'Creating account…' : 'Create account'}
+            onPress={handleRegister}
+            disabled={isSubmitting}
+            variant="accent"
+            fullWidth
+          />
         </Card>
 
         <View style={styles.footerRow}>
@@ -87,34 +95,35 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   kicker: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    ...typography.mono.micro,
+    color: colors.accent,
     letterSpacing: 1.1,
   },
   title: {
-    ...typography.title,
-    color: colors.text,
+    ...typography.serif.title,
+    color: colors.textPrimary,
     marginVertical: spacing.md,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-    fontSize: 16,
+    color: colors.textPrimary,
+    ...typography.body,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -124,13 +133,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerText: {
-    color: colors.muted,
+    ...typography.body,
+    color: colors.textMuted,
   },
   link: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
   },
   message: {
+    ...typography.footnote,
     color: colors.error,
     marginBottom: spacing.md,
   },

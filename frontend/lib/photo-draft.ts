@@ -12,7 +12,8 @@ export type LocalPhotoPost = {
 
 let photoDraft: string | null = null;
 const postsStorageKey = 'camera-app.posts.v1';
-const photosDirectory = Platform.OS === 'web' ? null : new Directory(Paths.document, 'class-photos');
+const photosDirectory =
+  Platform.OS === 'web' ? null : new Directory(Paths.document, 'class-photos');
 
 export function setPhotoDraft(uri: string) {
   photoDraft = uri;
@@ -28,11 +29,11 @@ export function clearPhotoDraft() {
 
 export async function publishLocalPhoto(uri: string, caption: string) {
   const id = `${Date.now()}`;
-  const image = await manipulateAsync(
-    uri,
-    [{ resize: { width: 1280 } }],
-    { compress: 0.78, format: SaveFormat.JPEG, base64: Platform.OS === 'web' },
-  );
+  const image = await manipulateAsync(uri, [{ resize: { width: 1280 } }], {
+    compress: 0.78,
+    format: SaveFormat.JPEG,
+    base64: Platform.OS === 'web',
+  });
 
   let storedUri = image.uri;
   if (Platform.OS === 'web') {

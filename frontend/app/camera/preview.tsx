@@ -4,8 +4,9 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { clearPhotoDraft, getPhotoDraft, publishLocalPhoto } from '@/lib/photo-draft';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
@@ -29,7 +30,7 @@ export default function CameraPreviewScreen() {
 
     try {
       await publishLocalPhoto(photoUri, caption.trim());
-      router.replace('/(tabs)/today');
+      router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
       setIsSaving(false);
@@ -38,6 +39,7 @@ export default function CameraPreviewScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Pressable onPress={retake} accessibilityRole="button" accessibilityLabel="Retake photo">
@@ -48,7 +50,12 @@ export default function CameraPreviewScreen() {
         </View>
 
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" accessibilityLabel="Captured photo preview" />
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.photo}
+            resizeMode="cover"
+            accessibilityLabel="Captured photo preview"
+          />
         ) : (
           <View style={[styles.photo, styles.emptyPhoto]}>
             <Text style={styles.emptyText}>No photo captured</Text>
@@ -64,7 +71,7 @@ export default function CameraPreviewScreen() {
           value={caption}
           onChangeText={setCaption}
           placeholder="Add a caption..."
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.textMuted}
           maxLength={280}
           multiline
           style={styles.captionInput}
@@ -74,7 +81,13 @@ export default function CameraPreviewScreen() {
         {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
         <View style={styles.actions}>
-          <Button title="Retake" variant="secondary" onPress={retake} style={styles.actionButton} disabled={isSaving} />
+          <Button
+            title="Retake"
+            variant="secondary"
+            onPress={retake}
+            style={styles.actionButton}
+            disabled={isSaving}
+          />
           <Pressable
             onPress={postPhoto}
             disabled={!photoUri || isSaving}
@@ -110,13 +123,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   retakeText: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
   },
   kicker: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
+    ...typography.mono.micro,
+    color: colors.textMuted,
   },
   headerSpacer: {
     width: 48,
@@ -126,14 +139,17 @@ const styles = StyleSheet.create({
     aspectRatio: 3 / 4,
     maxHeight: 520,
     borderRadius: radius.lg,
-    backgroundColor: '#171717',
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderChrome,
   },
   emptyPhoto: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
-    color: '#FFFFFF',
+    ...typography.body,
+    color: colors.textMuted,
   },
   promptRow: {
     flexDirection: 'row',
@@ -141,32 +157,32 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   promptDot: {
-    width: 9,
-    height: 9,
+    width: 6,
+    height: 6,
     marginTop: 6,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
+    borderRadius: 3,
+    backgroundColor: colors.accent,
   },
   prompt: {
     flex: 1,
     ...typography.body,
-    color: colors.text,
+    color: colors.textPrimary,
   },
   captionInput: {
     minHeight: 52,
     maxHeight: 120,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
-    backgroundColor: colors.card,
-    color: colors.text,
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
     fontSize: 16,
     textAlignVertical: 'top',
   },
   errorMessage: {
+    ...typography.footnote,
     color: colors.error,
-    fontSize: 14,
     lineHeight: 20,
   },
   actions: {
@@ -183,13 +199,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
+    borderWidth: 0,
   },
   disabledButton: {
     opacity: 0.55,
   },
   postButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '700',
   },

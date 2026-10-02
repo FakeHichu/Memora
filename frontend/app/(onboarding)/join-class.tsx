@@ -6,21 +6,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function JoinClassScreen() {
   const [code, setCode] = useState('7K9A-PQ2T');
 
   const handleJoin = () => {
-    router.replace('/(tabs)/today');
+    router.replace('/(tabs)/home');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>Join class</Text>
         <Text style={styles.title}>Enter your class code</Text>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class join code</Text>
           <TextInput
             value={code}
@@ -30,7 +32,7 @@ export default function JoinClassScreen() {
             placeholder="ABCD-1234"
           />
 
-          <Button title="Join class" onPress={handleJoin} />
+          <Button title="Join class" onPress={handleJoin} variant="accent" />
         </Card>
 
         <View style={styles.helperWrap}>
@@ -53,47 +55,51 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   kicker: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.mono.micro,
+    color: colors.accent,
     letterSpacing: 1.1,
-    textTransform: 'uppercase',
   },
   title: {
-    ...typography.title,
-    color: colors.text,
+    ...typography.serif.title,
+    color: colors.textPrimary,
     marginVertical: spacing.md,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-    fontSize: 16,
-    letterSpacing: 1.5,
+    color: colors.textPrimary,
+    ...typography.mono.body,
   },
   helperWrap: {
     marginTop: spacing.xl,
     borderRadius: radius.lg,
-    backgroundColor: '#F3E7DF',
+    backgroundColor: colors.accentSubtle,
+    borderWidth: 0.5,
+    borderColor: 'rgba(184, 79, 125, 0.2)',
     padding: spacing.lg,
   },
   helperTitle: {
-    ...typography.subheading,
+    ...typography.serif.title3,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   helperText: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
 });

@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { signInWithEmail } from '@/lib/supabase/auth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -22,28 +23,33 @@ export default function LoginScreen() {
     try {
       const { error } = await signInWithEmail(email.trim(), password);
       if (error) throw error;
-      router.replace('/(tabs)/today');
+      router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not sign in.');
       setIsSubmitting(false);
     }
   };
 
-  const continueLocally = () => router.replace('/(tabs)/today');
+  const continueLocally = () => router.replace('/(tabs)/home');
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.brandRow}>
-            <View style={styles.brandMark}><Text style={styles.brandMarkText}>C</Text></View>
-            <Text style={styles.brandName}>CAMERA JOURNAL</Text>
+            <View style={styles.brandMark}>
+              <Text style={styles.brandMarkText}>M</Text>
+            </View>
+            <Text style={styles.brandName}>MEMORA</Text>
           </View>
           <Text style={styles.kicker}>A place for the small things</Text>
           <Text style={styles.title}>Moments worth keeping.</Text>
-          <Text style={styles.subtitle}>A private photo journal for the moments you want to remember.</Text>
+          <Text style={styles.subtitle}>
+            A private photo journal for the moments you want to remember.
+          </Text>
 
-          <Card style={styles.card}>
+          <Card style={styles.card} variant="editorial">
             {hasSupabaseConfig ? (
               <>
                 <Text style={styles.formTitle}>Sign in</Text>
@@ -73,9 +79,11 @@ export default function LoginScreen() {
 
                 {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
                 <Button
-                  title={isSubmitting ? 'Signing in…' : 'Sign in'}
+                  title={isSubmitting ? 'Signing in...' : 'Sign in'}
                   onPress={handleLogin}
                   disabled={isSubmitting || !email.trim() || !password}
+                  variant="accent"
+                  fullWidth
                 />
 
                 <Link href="/(auth)/forgot-password" asChild>
@@ -85,15 +93,23 @@ export default function LoginScreen() {
             ) : (
               <View style={styles.localAccess}>
                 <Text style={styles.formTitle}>Your journal is ready</Text>
-                <Text style={styles.localMessage}>Sign-in accounts aren’t connected yet. You can still keep photos privately on this device.</Text>
-                <Button title="Continue without account" onPress={continueLocally} />
+                <Text style={styles.localMessage}>
+                  Sign-in accounts aren't connected yet. You can still keep photos privately on this
+                  device.
+                </Text>
+                <Button
+                  title="Continue without account"
+                  onPress={continueLocally}
+                  variant="accent"
+                  fullWidth
+                />
               </View>
             )}
           </Card>
 
           {hasSupabaseConfig ? (
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>New to Camera Journal?</Text>
+              <Text style={styles.footerText}>New to Memora?</Text>
               <Link href="/(auth)/register" asChild>
                 <Text style={styles.link}>Create account</Text>
               </Link>
@@ -132,77 +148,79 @@ const styles = StyleSheet.create({
   brandMark: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.chromeDark,
+    borderWidth: 1,
+    borderColor: colors.chrome,
   },
   brandMarkText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 19,
+    ...typography.title2,
+    color: colors.textOnChrome,
+    fontWeight: '700',
   },
   brandName: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '800',
+    ...typography.mono.micro,
+    color: colors.chrome,
+    fontWeight: '700',
   },
   kicker: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    ...typography.mono.micro,
+    color: colors.accent,
     letterSpacing: 1.1,
   },
   title: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
-    color: colors.text,
+    ...typography.serif.title,
+    color: colors.textPrimary,
   },
   subtitle: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   card: {
     borderRadius: radius.xl,
     marginTop: spacing.md,
   },
   formTitle: {
-    ...typography.subheading,
+    ...typography.serif.title3,
+    color: colors.textPrimary,
     marginBottom: spacing.lg,
-    color: colors.text,
   },
   localAccess: {
     gap: spacing.md,
   },
   localMessage: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   fieldLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-    fontSize: 16,
+    color: colors.textPrimary,
+    ...typography.body,
   },
   link: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
     textAlign: 'center',
     marginTop: spacing.lg,
   },
   errorMessage: {
+    ...typography.footnote,
     color: colors.error,
     marginBottom: spacing.md,
   },
@@ -213,11 +231,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerText: {
-    color: colors.muted,
+    ...typography.body,
+    color: colors.textMuted,
   },
   privacyNote: {
-    color: colors.muted,
+    ...typography.caption,
+    color: colors.textMuted,
     textAlign: 'center',
-    fontSize: 12,
   },
 });

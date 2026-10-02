@@ -9,7 +9,10 @@ export default function ClassDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Shared class unavailable</Text>
-        <Text style={styles.message}>Connect the database before opening shared class details. Your local photos remain available in Memories.</Text>
+        <Text style={styles.message}>
+          Connect the database before opening shared class details. Your local photos remain
+          available in Memories.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -30,6 +33,6 @@ const styles = StyleSheet.create({
   },
   message: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
 });

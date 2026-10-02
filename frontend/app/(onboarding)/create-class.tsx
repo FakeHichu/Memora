@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { supabase } from '@/lib/supabase/client';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CreateClassScreen() {
   const [name, setName] = useState('12-A');
@@ -45,7 +46,7 @@ export default function CreateClassScreen() {
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.message ?? 'Could not create class.');
-      router.replace('/(tabs)/today');
+      router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not create class.');
       setIsSubmitting(false);
@@ -54,11 +55,12 @@ export default function CreateClassScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>Create class</Text>
         <Text style={styles.title}>Build a private digital yearbook</Text>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class name</Text>
           <TextInput value={name} onChangeText={setName} style={styles.input} />
 
@@ -69,12 +71,21 @@ export default function CreateClassScreen() {
           <TextInput value={year} onChangeText={setYear} style={styles.input} />
 
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
-          <Button title={isSubmitting ? 'Creating class…' : 'Create class'} onPress={handleCreate} disabled={isSubmitting} />
+          <Button
+            title={isSubmitting ? 'Creating class…' : 'Create class'}
+            onPress={handleCreate}
+            disabled={isSubmitting}
+            variant="accent"
+          />
         </Card>
 
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>Want to join instead?</Text>
-          <Button title="Join class" variant="secondary" onPress={() => router.push('/(onboarding)/join-class')} />
+          <Button
+            title="Join class"
+            variant="secondary"
+            onPress={() => router.push('/(onboarding)/join-class')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -90,44 +101,48 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   kicker: {
-    color: colors.primary,
-    fontWeight: '700',
+    ...typography.mono.micro,
+    color: colors.accent,
     letterSpacing: 1.1,
-    textTransform: 'uppercase',
   },
   title: {
-    ...typography.title,
-    color: colors.text,
+    ...typography.serif.title,
+    color: colors.textPrimary,
     marginVertical: spacing.md,
   },
   card: {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-    fontSize: 16,
+    color: colors.textPrimary,
+    ...typography.body,
   },
   footerRow: {
     marginTop: spacing.xl,
     gap: spacing.md,
   },
   errorMessage: {
+    ...typography.footnote,
     color: colors.error,
     marginBottom: spacing.md,
   },
   footerText: {
-    color: colors.muted,
+    ...typography.body,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });
