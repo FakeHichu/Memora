@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Image,
-  Pressable,
+  KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,19 +15,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
-import { setPhotoDraft } from '@/lib/photo-draft';
+import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
 import { Icon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { TagBadge } from '@/components/ui/TagBadge';
+import { useToast } from '@/components/ui/Toast';
 
-type CreateStep = 'landing' | 'photo' | 'details';
+const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
+
+type CreateStep = 'landing' | 'details';
 
 export default function CreateScreen() {
+  const { showToast } = useToast();
   const [step, setStep] = useState<CreateStep>('landing');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
+  const [location, setLocation] = useState('');
+  const [newTag, setNewTag] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [category, setCategory] = useState<MemoryCategory>('General');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -64,9 +74,15 @@ export default function CreateScreen() {
     }
   };
 
-  const handleRetake = () => {
-    setPhotoUri(null);
-    setStep('photo');
+  const handleAddTag = () => {
+    const normalized = newTag.toLowerCase().trim();
+    if (!normalized || tags.includes(normalized) || tags.length >= 10) return;
+    setTags((prev) => [...prev, normalized]);
+    setNewTag('');
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((prev) => prev.filter((t) => t !== tag));
   };
 
   const handleSave = async () => {
@@ -76,8 +92,17 @@ export default function CreateScreen() {
     setErrorMessage(null);
 
     try {
-      setPhotoDraft(photoUri);
-      router.replace('/camera/preview');
+      await publishLocalPhoto(
+        photoUri,
+        caption.trim(),
+        undefined,
+        category,
+        title.trim() || undefined,
+        tags,
+        location.trim() || undefined,
+      );
+      showToast({ message: '📸 Memory saved!', variant: 'success', duration: 2000 });
+      router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save memory.');
       setIsSaving(false);
@@ -86,8 +111,6 @@ export default function CreateScreen() {
 
   const handleBack = () => {
     if (step === 'details') {
-      setStep('photo');
-    } else if (step === 'photo') {
       setStep('landing');
     } else {
       router.back();
@@ -99,96 +122,49 @@ export default function CreateScreen() {
       <SafeAreaView style={styles.safeArea}>
         <BackgroundPattern />
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.landingContainer}>
-            <Text style={styles.landingQuestion}>What do you want to remember?</Text>
-
-            <View style={styles.landingOptions}>
-              <Pressable
-                onPress={handleTakePhoto}
-                style={styles.optionCard}
-                accessibilityRole="button"
-                accessibilityLabel="Take a photo"
-              >
-                <View style={styles.optionIcon}>
-                  <Icon name="camera" size={28} color={colors.accent} />
-                </View>
-                <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>Take a photo</Text>
-                  <Text style={styles.optionSubtitle}>Capture the moment now</Text>
-                </View>
-              </Pressable>
-
-              <Pressable
-                onPress={handleChooseFromLibrary}
-                style={styles.optionCard}
-                accessibilityRole="button"
-                accessibilityLabel="Choose from gallery"
-              >
-                <View style={styles.optionIcon}>
-                  <Icon name="picture" size={28} color={colors.accent} />
-                </View>
-                <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>Choose from gallery</Text>
-                  <Text style={styles.optionSubtitle}>Select an existing photo</Text>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (step === 'photo') {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <BackgroundPattern />
-        <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
-            <Pressable onPress={handleBack} style={styles.backButton} accessibilityLabel="Back">
+            <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
               <Text style={styles.backText}>Back</Text>
             </Pressable>
-            <Text style={styles.stepLabel}>Add a photo</Text>
+            <Text style={styles.screenTitle}>New Memory</Text>
             <View style={{ width: 44 }} />
           </View>
 
-          <View style={styles.photoPreviewContainer}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
-            ) : (
-              <View style={styles.emptyPhoto}>
-                <Text style={styles.emptyPhotoText}>No photo selected</Text>
-              </View>
-            )}
-          </View>
+          <Text style={styles.landingQuestion}>What do you want to remember?</Text>
 
-          <View style={styles.photoOptions}>
-            <Button
-              title="Take a photo"
-              variant="primary"
+          <View style={styles.landingOptions}>
+            <Pressable
               onPress={handleTakePhoto}
-              size="lg"
-              fullWidth
-            />
-            <Button
-              title="Choose from gallery"
-              variant="secondary"
-              onPress={handleChooseFromLibrary}
-              size="lg"
-              fullWidth
-            />
-          </View>
+              style={styles.optionCard}
+              accessibilityRole="button"
+              accessibilityLabel="Take a photo"
+            >
+              <View style={styles.optionIcon}>
+                <Icon name="camera" size={28} color={colors.accent} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={styles.optionTitle}>Take a photo</Text>
+                <Text style={styles.optionSubtitle}>Capture the moment now</Text>
+              </View>
+              <Icon name="chevron-right" size={16} color={colors.textMuted} />
+            </Pressable>
 
-          {photoUri && (
-            <Button
-              title="Next: Add details"
-              variant="accent"
-              onPress={() => setStep('details')}
-              size="lg"
-              fullWidth
-              style={styles.nextButton}
-            />
-          )}
+            <Pressable
+              onPress={handleChooseFromLibrary}
+              style={styles.optionCard}
+              accessibilityRole="button"
+              accessibilityLabel="Choose from gallery"
+            >
+              <View style={styles.optionIcon}>
+                <Icon name="picture" size={28} color={colors.accent} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={styles.optionTitle}>Choose from gallery</Text>
+                <Text style={styles.optionSubtitle}>Select an existing photo</Text>
+              </View>
+              <Icon name="chevron-right" size={16} color={colors.textMuted} />
+            </Pressable>
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -198,59 +174,156 @@ export default function CreateScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Pressable onPress={handleBack} style={styles.backButton} accessibilityLabel="Back">
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-          <Text style={styles.stepLabel}>Add details</Text>
-          <View style={{ width: 44 }} />
-        </View>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
+              <Text style={styles.backText}>Back</Text>
+            </Pressable>
+            <Text style={styles.screenTitle}>Add Details</Text>
+            <Pressable
+              onPress={() => router.push('/(tabs)/create')}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Retake photo"
+            >
+              <Text style={styles.retakeText}>Retake</Text>
+            </Pressable>
+          </View>
 
-        <View style={styles.photoPreviewContainer}>
-          {photoUri && (
-            <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
-          )}
-        </View>
+          {/* Photo Preview */}
+          <View style={styles.photoPreviewContainer}>
+            {photoUri && (
+              <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
+            )}
+          </View>
 
-        <Card style={styles.detailsCard} padding="lg">
-          <Text style={styles.fieldLabel}>Give this memory a name</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Beach day"
-            style={styles.textInput}
-            autoCapitalize="words"
-            autoFocus
-            maxLength={50}
-          />
+          <Card style={styles.detailsCard} padding="lg">
+            {/* Title */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Title</Text>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Beach day, Birthday party…"
+                style={styles.textInput}
+                autoCapitalize="words"
+                autoFocus
+                maxLength={80}
+                returnKeyType="next"
+                accessibilityLabel="Memory title"
+              />
+            </View>
 
-          <Text style={[styles.fieldLabel, { marginTop: spacing.lg }]}>Tell the story</Text>
-          <TextInput
-            value={caption}
-            onChangeText={setCaption}
-            placeholder="We stayed until sunset..."
-            style={[styles.textInput, styles.textInputMultiline, { minHeight: 100 }]}
-            multiline
-            maxLength={500}
-            textAlignVertical="top"
-          />
-        </Card>
+            {/* Caption */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Caption</Text>
+              <TextInput
+                value={caption}
+                onChangeText={setCaption}
+                placeholder="We stayed until sunset…"
+                style={[styles.textInput, styles.textInputMultiline]}
+                multiline
+                maxLength={500}
+                textAlignVertical="top"
+                accessibilityLabel="Memory caption"
+              />
+            </View>
 
-        {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+            {/* Category */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Category</Text>
+              <View style={styles.categoryPills}>
+                {CATEGORIES.map((cat) => (
+                  <Pressable
+                    key={cat}
+                    onPress={() => setCategory(cat)}
+                    style={[styles.categoryPill, category === cat && styles.categoryPillActive]}
+                    accessibilityRole="radio"
+                    accessibilityLabel={cat}
+                    accessibilityState={{ selected: category === cat }}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryPillText,
+                        category === cat && styles.categoryPillTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
-        <View style={styles.actionButtons}>
-          <Button title="Retake photo" variant="ghost" onPress={handleRetake} fullWidth />
-          <Button
-            title={isSaving ? 'Saving…' : 'Save memory'}
-            variant="accent"
-            onPress={handleSave}
-            disabled={isSaving || !title.trim()}
-            fullWidth
-            size="lg"
-          />
-        </View>
-      </ScrollView>
+            {/* Location */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Location (optional)</Text>
+              <TextInput
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Paris, France"
+                style={styles.textInput}
+                autoCapitalize="words"
+                maxLength={100}
+                returnKeyType="next"
+                accessibilityLabel="Memory location"
+              />
+            </View>
+
+            {/* Tags */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Tags (optional)</Text>
+              {tags.length > 0 && (
+                <View style={styles.tagsList}>
+                  {tags.map((tag) => (
+                    <TagBadge key={tag} label={tag} onRemove={() => handleRemoveTag(tag)} size="md" />
+                  ))}
+                </View>
+              )}
+              <View style={styles.addTagRow}>
+                <TextInput
+                  value={newTag}
+                  onChangeText={setNewTag}
+                  placeholder="Add a tag…"
+                  style={[styles.textInput, styles.tagInput]}
+                  autoCapitalize="none"
+                  maxLength={30}
+                  onSubmitEditing={handleAddTag}
+                  returnKeyType="done"
+                  accessibilityLabel="Add tag"
+                />
+                <Pressable
+                  onPress={handleAddTag}
+                  style={styles.addTagButton}
+                  disabled={!newTag.trim() || tags.length >= 10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add tag"
+                >
+                  <Text style={styles.addTagButtonText}>+</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.tagHint}>{tags.length}/10 tags</Text>
+            </View>
+          </Card>
+
+          {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+
+          <View style={styles.actionButtons}>
+            <Button
+              title={isSaving ? 'Saving…' : 'Save Memory'}
+              variant="accent"
+              onPress={handleSave}
+              disabled={isSaving}
+              fullWidth
+              size="lg"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -259,6 +332,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  flex: {
+    flex: 1,
   },
   content: {
     width: '100%',
@@ -277,28 +353,31 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: spacing.xs,
+    minWidth: 44,
   },
   backText: {
     ...typography.sans.callout,
     color: colors.accent,
     fontWeight: '600',
   },
-  stepLabel: {
+  retakeText: {
+    ...typography.sans.callout,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  screenTitle: {
     ...typography.sans.headline,
     color: colors.textPrimary,
-  },
-  landingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxxl,
-    gap: spacing.xl,
+    textAlign: 'center',
   },
   landingQuestion: {
     ...typography.serif.title,
     color: colors.textPrimary,
     textAlign: 'center',
     lineHeight: 38,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   landingOptions: {
     gap: spacing.md,
@@ -312,16 +391,15 @@ const styles = StyleSheet.create({
     borderWidth: borders.hairline,
     borderColor: colors.borderSubtle,
     gap: spacing.md,
-    ...Platform.select({
-      web: { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
-      },
-    }),
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 2,
+        }),
   },
   optionIcon: {
     width: 56,
@@ -330,9 +408,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSubtle,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  optionIconText: {
-    fontSize: 28,
   },
   optionText: {
     flex: 1,
@@ -358,25 +433,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  emptyPhoto: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundElevated,
-  },
-  emptyPhotoText: {
-    ...typography.sans.body,
-    color: colors.textMuted,
-  },
-  photoOptions: {
+  detailsCard: {
     gap: spacing.md,
   },
-  nextButton: {
-    marginTop: spacing.sm,
-  },
-  detailsCard: {
-    gap: spacing.sm,
+  field: {
+    gap: spacing.xs,
   },
   fieldLabel: {
     ...typography.sans.caption,
@@ -397,11 +458,76 @@ const styles = StyleSheet.create({
   },
   textInputMultiline: {
     paddingTop: spacing.md,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  categoryPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  categoryPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.round,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
+  },
+  categoryPillActive: {
+    backgroundColor: colors.accentSubtle,
+    borderColor: colors.accent,
+  },
+  categoryPillText: {
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  categoryPillTextActive: {
+    color: colors.accent,
+    fontWeight: '700',
+  },
+  tagsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  addTagRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  tagInput: {
+    flex: 1,
+    marginTop: 0,
+  },
+  addTagButton: {
+    width: 40,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+  },
+  addTagButtonText: {
+    fontSize: 24,
+    color: colors.textInverse,
+    fontWeight: '700',
+    lineHeight: 28,
+  },
+  tagHint: {
+    ...typography.sans.caption2,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   errorMessage: {
     ...typography.sans.footnote,
     color: colors.error,
     marginTop: spacing.sm,
+    textAlign: 'center',
   },
   actionButtons: {
     flexDirection: 'column',

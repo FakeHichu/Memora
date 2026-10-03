@@ -2,7 +2,6 @@ import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -14,10 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
 import {
-  clearLocalPhotoPosts,
   getLocalPhotoPosts,
   getLocalProfile,
   saveLocalProfile,
+  computeCurrentStreak,
+  getMostActiveMonth,
+  getFavoritePosts,
   type LocalProfile,
 } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
@@ -26,14 +27,19 @@ import { Button } from '@/components/ui/Button';
 import { signOut } from '@/lib/supabase/auth';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { SkeletonProfileHeader, SkeletonSettingsSection } from '@/components/ui/Skeleton';
 
 export default function ProfileScreen() {
   const [photoCount, setPhotoCount] = useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [mostActiveMonth, setMostActiveMonth] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [localProfile, setLocalProfile] = useState<LocalProfile>({
-    name: 'Class Memory Keeper',
-    handle: '@memora_keeper',
+    name: 'Memory Keeper',
+    handle: '@memora',
     bio: 'Preserving everyday moments that matter.',
     email: '',
   });
@@ -44,13 +50,21 @@ export default function ProfileScreen() {
   const [editBio, setEditBio] = useState('');
 
   const refreshProfileAndData = useCallback(() => {
-    getLocalPhotoPosts().then((posts) => setPhotoCount(posts.length));
-    getLocalProfile().then((prof) => {
-      setLocalProfile(prof);
-      setEditName(prof.name);
-      setEditHandle(prof.handle);
-      setEditBio(prof.bio);
-    });
+    setIsLoading(true);
+
+    Promise.all([getLocalPhotoPosts(), getFavoritePosts(), getLocalProfile()]).then(
+      ([posts, favs, prof]) => {
+        setPhotoCount(posts.filter((p) => !p.isArchived).length);
+        setFavoriteCount(favs.length);
+        setStreak(computeCurrentStreak(posts));
+        setMostActiveMonth(getMostActiveMonth(posts));
+        setLocalProfile(prof);
+        setEditName(prof.name);
+        setEditHandle(prof.handle);
+        setEditBio(prof.bio);
+        setIsLoading(false);
+      },
+    );
 
     if (hasSupabaseConfig && supabase) {
       supabase.auth.getSession().then(({ data }) => {
@@ -70,27 +84,10 @@ export default function ProfileScreen() {
 
   useFocusEffect(refreshProfileAndData);
 
-  const confirmClearPhotos = () => {
-    Alert.alert(
-      'Delete all photos?',
-      'This permanently removes all photos saved in your journal.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete photos',
-          style: 'destructive',
-          onPress: () => {
-            clearLocalPhotoPosts().then(() => setPhotoCount(0));
-          },
-        },
-      ],
-    );
-  };
-
   const handleSaveProfile = async () => {
     const updated = await saveLocalProfile({
-      name: editName.trim() || 'Class Memory Keeper',
-      handle: editHandle.trim() || '@memora_keeper',
+      name: editName.trim() || 'Memory Keeper',
+      handle: editHandle.trim() || '@memora',
       bio: editBio.trim(),
     });
     setLocalProfile(updated);
@@ -109,9 +106,9 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader title="Profile" subtitle="Your account & settings" />
+        <AppHeader title="Profile" subtitle="Your account & statistics" />
 
-        {/* Account Card */}
+        {/* Profile Header */}
         <ProfileSection title="Account" style={styles.accountSection}>
           <View style={styles.profileHeader}>
             <View style={styles.avatar}>
@@ -120,6 +117,9 @@ export default function ProfileScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{localProfile.name}</Text>
               <Text style={styles.profileHandle}>{localProfile.handle}</Text>
+              {localProfile.bio ? (
+                <Text style={styles.profileBio} numberOfLines={2}>{localProfile.bio}</Text>
+              ) : null}
               <Text style={styles.profileStatus}>
                 {isSignedIn ? `Signed in (${userEmail})` : 'Private device journal'}
               </Text>
@@ -139,13 +139,7 @@ export default function ProfileScreen() {
               <ProfileDivider />
               <ProfileRow label="Email" value={userEmail} icon="envelope" />
               <ProfileDivider />
-              <ProfileRow
-                label="Sign out"
-                value=""
-                icon="door"
-                onPress={handleSignOut}
-                destructive
-              />
+              <ProfileRow label="Sign out" value="" icon="door" onPress={handleSignOut} destructive />
             </>
           ) : hasSupabaseConfig ? (
             <>
@@ -165,31 +159,72 @@ export default function ProfileScreen() {
           )}
         </ProfileSection>
 
-        {/* Stats Section */}
-        <ProfileSection title="Journal Statistics">
-          <ProfileRow label="Memories captured" value={`${photoCount}`} icon="picture" />
+        {/* Stats */}
+        {isLoading ? (
+          <>
+            <SkeletonProfileHeader />
+            <SkeletonSettingsSection rows={6} />
+          </>
+        ) : (
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{photoCount}</Text>
+              <Text style={styles.statLabel}>Memories</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{favoriteCount}</Text>
+              <Text style={styles.statLabel}>Favorites</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{streak > 0 ? `${streak}🔥` : '0'}</Text>
+              <Text style={styles.statLabel}>Streak</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statValue, { fontSize: 14 }]} numberOfLines={1}>
+                {mostActiveMonth ? mostActiveMonth.split(' ')[0] : '—'}
+              </Text>
+              <Text style={styles.statLabel}>Best Month</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Navigation */}
+        <ProfileSection title="Your Library">
+          <ProfileRow
+            label="All memories"
+            value={`${photoCount} total`}
+            icon="calendar"
+            onPress={() => router.push('/(tabs)/memories')}
+          />
           <ProfileDivider />
           <ProfileRow
-            label="Active storage"
-            value={isSignedIn ? 'Cloud + Local Cache' : 'Device Sandbox'}
+            label="Favorites"
+            value={`${favoriteCount} memories`}
+            icon="star"
+            onPress={() => router.push('/favorites')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="Collections"
+            value="Organized groups"
             icon="file"
+            onPress={() => router.push('/collections')}
           />
         </ProfileSection>
 
-        {/* Data & Privacy Section */}
-        <ProfileSection title="Data & Safety">
+        {/* Settings & Data */}
+        <ProfileSection title="Settings & Data">
+          <ProfileRow
+            label="Settings"
+            value="Theme, shortcuts, export"
+            icon="cog"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
           <ProfileRow
             label="Privacy guarantee"
             value="No public profiles, no tracking"
             icon="info"
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Delete all local photos"
-            value="Clear device storage"
-            icon="trash"
-            onPress={confirmClearPhotos}
-            destructive
           />
         </ProfileSection>
       </ScrollView>
@@ -205,8 +240,9 @@ export default function ProfileScreen() {
               value={editName}
               onChangeText={setEditName}
               style={styles.modalInput}
-              placeholder="e.g. Maya Chen"
+              placeholder="Your name"
               placeholderTextColor={colors.textMuted}
+              accessibilityLabel="Display name"
             />
 
             <Text style={styles.fieldLabel}>Handle</Text>
@@ -214,9 +250,10 @@ export default function ProfileScreen() {
               value={editHandle}
               onChangeText={setEditHandle}
               style={styles.modalInput}
-              placeholder="e.g. @mayachen"
+              placeholder="@handle"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
+              accessibilityLabel="Handle"
             />
 
             <Text style={styles.fieldLabel}>Bio</Text>
@@ -224,17 +261,14 @@ export default function ProfileScreen() {
               value={editBio}
               onChangeText={setEditBio}
               style={[styles.modalInput, styles.bioInput]}
-              placeholder="A few words about you..."
+              placeholder="A few words about you…"
               placeholderTextColor={colors.textMuted}
               multiline
+              accessibilityLabel="Bio"
             />
 
             <View style={styles.modalActions}>
-              <Button
-                title="Cancel"
-                variant="secondary"
-                onPress={() => setEditModalVisible(false)}
-              />
+              <Button title="Cancel" variant="secondary" onPress={() => setEditModalVisible(false)} />
               <Button title="Save Changes" variant="accent" onPress={handleSaveProfile} />
             </View>
           </View>
@@ -262,25 +296,29 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: spacing.lg,
     gap: spacing.md,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 64,
+    height: 64,
     borderRadius: radius.full,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.accentSoft,
+    borderWidth: borders.thin,
+    borderColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   avatarText: {
     ...typography.serif.title2,
-    color: colors.textInverse,
+    color: colors.accent,
     fontWeight: '700',
   },
   profileInfo: {
     flex: 1,
+    gap: 3,
   },
   profileName: {
     ...typography.serif.title3,
@@ -290,12 +328,44 @@ const styles = StyleSheet.create({
     ...typography.sans.caption,
     color: colors.accent,
     fontWeight: '600',
-    marginTop: 2,
+  },
+  profileBio: {
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   profileStatus: {
-    ...typography.sans.caption,
+    ...typography.sans.caption2,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '22%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderSubtle,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statValue: {
+    ...typography.serif.title2,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  statLabel: {
+    ...typography.sans.caption2,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
@@ -312,18 +382,18 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     borderWidth: borders.hairline,
     borderColor: colors.borderSubtle,
+    gap: spacing.sm,
   },
   modalTitle: {
     ...typography.serif.title3,
     color: colors.textPrimary,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   fieldLabel: {
     ...typography.sans.caption2,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginBottom: spacing.xs,
   },
   modalInput: {
     backgroundColor: colors.backgroundElevated,
@@ -333,15 +403,15 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     color: colors.textPrimary,
     ...typography.sans.body,
-    marginBottom: spacing.md,
   },
   bioInput: {
     minHeight: 60,
+    textAlignVertical: 'top',
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
 });

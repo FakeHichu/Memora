@@ -81,23 +81,17 @@ export default function CircleScreen() {
             <EmptyState
               title="No Circle Joined Yet"
               message="Join an existing class using an invite code, or create a brand new private group for your classmates or friends."
-              icon="users"
+              variant="users"
               action={{
                 label: 'Enter Invite Code',
                 onPress: () => router.push('/(onboarding)/join-class'),
+                variant: 'accent',
+              }}
+              secondaryAction={{
+                label: 'Create a Class',
+                onPress: () => router.push('/(onboarding)/create-class'),
               }}
               style={styles.emptyState}
-            />
-            <View style={styles.orRow}>
-              <View style={styles.orLine} />
-              <Text style={styles.orText}>OR</Text>
-              <View style={styles.orLine} />
-            </View>
-            <Button
-              title="Create a New Class Circle"
-              variant="secondary"
-              onPress={() => router.push('/(onboarding)/create-class')}
-              style={styles.createButton}
             />
           </View>
         )}
@@ -198,10 +192,11 @@ export default function CircleScreen() {
               <EmptyState
                 title="No memories posted today yet"
                 message="Be the first one in your class to post today's memory!"
-                icon="camera"
+                variant="prompt"
                 action={{
                   label: 'Post daily photo',
                   onPress: () => router.push('/(tabs)/create'),
+                  variant: 'accent',
                 }}
                 style={styles.emptyState}
               />

@@ -67,6 +67,7 @@ export function useClass() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadClasses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
