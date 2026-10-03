@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Camera App",
-    "slug": "camera-app",
-    "scheme": "cameraapp",
+    "name": "Memora",
+    "slug": "memora",
+    "scheme": "memora",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -11,7 +11,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Camera App to use the camera for daily class photos."
+          "cameraPermission": "Allow Memora to use the camera for daily class photos."
         }
       ]
     ],
@@ -19,7 +19,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.cameraapp.classmemories",
+      "package": "com.memora.classmemories",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

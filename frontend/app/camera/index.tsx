@@ -5,9 +5,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+<<<<<<< HEAD
 import { spacing, type ThemeColors } from '@/constants/theme';
 import { getLocalPhotoPosts, setPhotoDraft } from '@/lib/photo-draft';
 import { useAppTheme } from '@/providers/ThemeProvider';
+=======
+import { colors, spacing, typography, radius } from '@/constants/theme';
+import { setPhotoDraft } from '@/lib/photo-draft';
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+>>>>>>> origin/swish
 
 export default function CameraIndexScreen() {
   const { colors } = useAppTheme();
@@ -68,7 +74,10 @@ export default function CameraIndexScreen() {
 
   const chooseFromLibrary = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.9,
+      });
       const selectedUri = result.assets?.[0]?.uri;
 
       if (!result.canceled && selectedUri) {
@@ -83,8 +92,12 @@ export default function CameraIndexScreen() {
   if (!permission) {
     return (
       <View style={styles.permissionScreen}>
+<<<<<<< HEAD
         <Text style={styles.permissionEyebrow}>MEMORA CAMERA</Text>
         <Text style={styles.permissionText}>Preparing your camera…</Text>
+=======
+        <Text style={styles.permissionText}>Checking camera access…</Text>
+>>>>>>> origin/swish
       </View>
     );
   }
@@ -92,10 +105,15 @@ export default function CameraIndexScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.permissionScreen}>
+<<<<<<< HEAD
         <View style={styles.permissionMark}><Text style={styles.permissionMarkText}>M</Text></View>
         <Text style={styles.permissionEyebrow}>MAKE A MOMENT</Text>
         <Text style={styles.permissionTitle}>Your camera is waiting.</Text>
         <Text style={styles.permissionText}>Allow camera access to take a photo for today’s journal.</Text>
+=======
+        <Text style={styles.permissionTitle}>Camera access needed</Text>
+        <Text style={styles.permissionText}>Allow camera access to take today's photo.</Text>
+>>>>>>> origin/swish
         <Pressable style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.permissionButtonText}>Enable camera</Text>
         </Pressable>
@@ -120,12 +138,27 @@ export default function CameraIndexScreen() {
           setCameraReady(false);
         }}
       />
+      <BackgroundPattern />
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
           <Pressable
+<<<<<<< HEAD
             style={styles.roundControl}
             onPress={() => router.back()}
             disabled={isTakingPhoto}
+=======
+            style={styles.topControl}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Close camera"
+          >
+            <Text style={styles.topControlText}>Close</Text>
+          </Pressable>
+          <Text style={styles.cameraLabel}>TODAY'S PROMPT</Text>
+          <Pressable
+            style={styles.topControl}
+            onPress={() => setFacing((current) => (current === 'back' ? 'front' : 'back'))}
+>>>>>>> origin/swish
             accessibilityRole="button"
             accessibilityLabel="Close camera"
           >
@@ -166,6 +199,7 @@ export default function CameraIndexScreen() {
             <Text style={styles.prompt}>Show us something interesting you saw today.</Text>
           </View>
           {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+<<<<<<< HEAD
 
           <View style={styles.zoomControls} accessibilityLabel="Zoom level">
             {[
@@ -242,6 +276,25 @@ export default function CameraIndexScreen() {
 
           <Text style={styles.modeLabel}>{countdown !== null ? `CAPTURING IN ${countdown}` : 'PHOTO  ·  TODAY'}</Text>
           {!cameraReady && !errorMessage ? <Text style={styles.loadingLabel}>Waking up the camera…</Text> : null}
+=======
+          <Pressable
+            style={[styles.shutterOuter, (!cameraReady || isTakingPhoto) && styles.shutterDisabled]}
+            onPress={capturePhoto}
+            disabled={!cameraReady || isTakingPhoto}
+            accessibilityRole="button"
+            accessibilityLabel="Take photo"
+          >
+            <View style={styles.shutterInner} />
+            {cameraReady && !isTakingPhoto && <View style={styles.shutterGlow} />}
+          </Pressable>
+          <Pressable
+            onPress={chooseFromLibrary}
+            style={styles.libraryButton}
+            accessibilityRole="button"
+          >
+            <Text style={styles.libraryButtonText}>Choose from library</Text>
+          </Pressable>
+>>>>>>> origin/swish
         </View>
 
         {showGrid ? (
@@ -292,6 +345,7 @@ function createStyles(colors: ThemeColors) {
     borderRadius: 22,
     backgroundColor: 'rgba(20,20,19,0.48)',
   },
+<<<<<<< HEAD
   closeIcon: {
     color: '#FFFFFF',
     fontSize: 29,
@@ -350,6 +404,16 @@ function createStyles(colors: ThemeColors) {
   flashLabel: {
     color: '#FFFFFF',
     fontSize: 8,
+=======
+  topControlText: {
+    ...typography.callout,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  cameraLabel: {
+    ...typography.mono.micro,
+    color: colors.accent,
+>>>>>>> origin/swish
     fontWeight: '700',
   },
   bottomControls: {
@@ -385,15 +449,24 @@ function createStyles(colors: ThemeColors) {
     letterSpacing: 1.2,
   },
   prompt: {
+<<<<<<< HEAD
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 21,
+=======
+    maxWidth: 300,
+    marginBottom: spacing.xl,
+    ...typography.serif.body,
+    color: colors.textPrimary,
+    textAlign: 'center',
+>>>>>>> origin/swish
   },
   zoomControls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+<<<<<<< HEAD
     gap: spacing.sm,
   },
   zoomOption: {
@@ -492,11 +565,18 @@ function createStyles(colors: ThemeColors) {
     borderColor: '#FFFFFF',
     borderRadius: 41,
     backgroundColor: 'rgba(255,255,255,0.16)',
+=======
+    borderWidth: 2,
+    borderColor: colors.chrome,
+    borderRadius: 38,
+    backgroundColor: 'rgba(191, 195, 204, 0.05)',
+>>>>>>> origin/swish
   },
   shutterDisabled: {
     opacity: 0.45,
   },
   shutterInner: {
+<<<<<<< HEAD
     width: 66,
     height: 66,
     borderRadius: 33,
@@ -572,6 +652,41 @@ function createStyles(colors: ThemeColors) {
     backgroundColor: 'rgba(145,68,86,0.92)',
     color: '#FFFFFF',
     fontSize: 12,
+=======
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.chrome,
+    borderWidth: 2,
+    borderColor: colors.chromeHighlight,
+  },
+  shutterGlow: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 46,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    opacity: 0.3,
+  },
+  libraryButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
+  },
+  libraryButtonText: {
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  error: {
+    marginBottom: spacing.md,
+    ...typography.caption,
+    color: colors.error,
+>>>>>>> origin/swish
     textAlign: 'center',
   },
   permissionScreen: {
@@ -602,6 +717,7 @@ function createStyles(colors: ThemeColors) {
     letterSpacing: 1.6,
   },
   permissionTitle: {
+<<<<<<< HEAD
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '700',
@@ -612,6 +728,15 @@ function createStyles(colors: ThemeColors) {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 15,
     lineHeight: 22,
+=======
+    ...typography.serif.title2,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  permissionText: {
+    ...typography.body,
+    color: colors.textMuted,
+>>>>>>> origin/swish
     textAlign: 'center',
   },
   permissionButton: {
@@ -620,12 +745,17 @@ function createStyles(colors: ThemeColors) {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
   },
   permissionButtonText: {
+<<<<<<< HEAD
     color: colors.onPrimary,
     fontSize: 15,
+=======
+    ...typography.callout,
+    color: colors.textInverse,
+>>>>>>> origin/swish
     fontWeight: '700',
   },
   permissionCancel: {
@@ -634,8 +764,17 @@ function createStyles(colors: ThemeColors) {
     paddingHorizontal: spacing.lg,
   },
   cancelText: {
+<<<<<<< HEAD
     color: 'rgba(255,255,255,0.72)',
     fontWeight: '600',
   },
   });
 }
+=======
+    padding: spacing.md,
+    ...typography.callout,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+});
+>>>>>>> origin/swish

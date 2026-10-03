@@ -1,41 +1,59 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+<<<<<<< HEAD
 import { Card } from '@/components/ui/Card';
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { signInWithEmail } from '@/lib/supabase/auth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
 import { useAppTheme } from '@/providers/ThemeProvider';
+=======
+import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { signInWithEmail, signUpWithEmail } from '@/lib/supabase/auth';
+>>>>>>> origin/swish
 
 export default function LoginScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
 
-  const handleLogin = async () => {
+  const handleSubmit = async () => {
+    if (!email.trim() || !password) return;
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
-      const { error } = await signInWithEmail(email.trim(), password);
-      if (error) throw error;
-      router.replace('/(tabs)/today');
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not sign in.');
+      if (mode === 'signup') {
+        const { error } = await signUpWithEmail(email.trim(), password, displayName.trim() || undefined);
+        if (error) throw error;
+      } else {
+        const { error } = await signInWithEmail(email.trim(), password);
+        if (error) throw error;
+      }
+      router.replace('/(tabs)/home');
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Authentication failed. Try again.');
       setIsSubmitting(false);
     }
   };
 
-  const continueLocally = () => router.replace('/(tabs)/today');
+  const continueLocally = () => {
+    router.replace('/(tabs)/home');
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+<<<<<<< HEAD
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.brandRow}>
@@ -45,10 +63,43 @@ export default function LoginScreen() {
           <Text style={styles.kicker}>A place for the small things</Text>
           <Text style={styles.title}>Moments worth keeping.</Text>
           <Text style={styles.subtitle}>A private place for everyday moments, made to become memories.</Text>
+=======
+      <BackgroundPattern />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Brand */}
+          <View style={styles.brand}>
+            <View style={styles.brandMark}>
+              <Text style={styles.brandMarkText}>M</Text>
+            </View>
+            <View style={styles.brandText}>
+              <Text style={styles.brandName}>MEMORA</Text>
+              <Text style={styles.brandTagline}>A place for the small things</Text>
+            </View>
+          </View>
+>>>>>>> origin/swish
 
-          <Card style={styles.card}>
+          <Text style={styles.headline}>
+            {mode === 'signup' ? 'Create your account' : 'Welcome back'}
+          </Text>
+          <Text style={styles.subheadline}>
+            {mode === 'signup'
+              ? 'Start building your private photo journal today.'
+              : 'Sign in to access your memories.'}
+          </Text>
+
+          {/* Form */}
+          <View style={styles.form}>
             {hasSupabaseConfig ? (
               <>
+<<<<<<< HEAD
                 <Text style={styles.formTitle}>Sign in</Text>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <TextInput
@@ -75,27 +126,109 @@ export default function LoginScreen() {
                   placeholderTextColor={colors.muted}
                   style={styles.input}
                 />
+=======
+                {mode === 'signup' && (
+                  <View style={styles.field}>
+                    <Text style={styles.fieldLabel}>Display Name</Text>
+                    <TextInput
+                      value={displayName}
+                      onChangeText={setDisplayName}
+                      placeholder="Your name"
+                      placeholderTextColor={colors.textMuted}
+                      autoCapitalize="words"
+                      autoComplete="name"
+                      returnKeyType="next"
+                      style={styles.input}
+                      accessibilityLabel="Display name"
+                    />
+                  </View>
+                )}
 
-                {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Email</Text>
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                    style={styles.input}
+                    accessibilityLabel="Email address"
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Password</Text>
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder={mode === 'signup' ? 'Create a password' : 'Your password'}
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmit}
+                    style={styles.input}
+                    accessibilityLabel="Password"
+                  />
+                </View>
+
+                {errorMessage ? (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.errorText}>{errorMessage}</Text>
+                  </View>
+                ) : null}
+>>>>>>> origin/swish
+
                 <Button
-                  title={isSubmitting ? 'Signing in…' : 'Sign in'}
-                  onPress={handleLogin}
+                  title={isSubmitting ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}
+                  onPress={handleSubmit}
                   disabled={isSubmitting || !email.trim() || !password}
+                  variant="accent"
+                  fullWidth
+                  size="lg"
                 />
 
-                <Link href="/(auth)/forgot-password" asChild>
-                  <Text style={styles.link}>Forgot password?</Text>
-                </Link>
+                <View style={styles.toggleRow}>
+                  <Text style={styles.toggleLabel}>
+                    {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+                  </Text>
+                  <Button
+                    title={mode === 'signup' ? 'Sign in instead' : 'Create account'}
+                    onPress={() => {
+                      setMode(mode === 'signup' ? 'signin' : 'signup');
+                      setErrorMessage(null);
+                    }}
+                    variant="ghost"
+                    size="sm"
+                  />
+                </View>
               </>
             ) : (
               <View style={styles.localAccess}>
-                <Text style={styles.formTitle}>Your journal is ready</Text>
-                <Text style={styles.localMessage}>Sign-in accounts aren’t connected yet. You can still keep photos privately on this device.</Text>
-                <Button title="Continue without account" onPress={continueLocally} />
+                <View style={styles.localIcon}>
+                  <Text style={styles.localIconText}>🔒</Text>
+                </View>
+                <Text style={styles.localTitle}>Private local journal</Text>
+                <Text style={styles.localMessage}>
+                  Cloud accounts aren't configured. Your memories are stored privately on this
+                  device and never leave it.
+                </Text>
+                <Button
+                  title="Open my journal"
+                  onPress={continueLocally}
+                  variant="accent"
+                  fullWidth
+                  size="lg"
+                />
               </View>
             )}
-          </Card>
+          </View>
 
+<<<<<<< HEAD
           {hasSupabaseConfig ? (
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>New to Memora?</Text>
@@ -108,6 +241,14 @@ export default function LoginScreen() {
           )}
         </View>
       </ScrollView>
+=======
+          {/* Footer privacy note */}
+          <Text style={styles.privacyNote}>
+            Your memories are private. No ads, no tracking, no sharing without your consent.
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+>>>>>>> origin/swish
     </SafeAreaView>
   );
 }
@@ -118,81 +259,83 @@ function createStyles(colors: ThemeColors) {
     flex: 1,
     backgroundColor: colors.background,
   },
+  flex: {
+    flex: 1,
+  },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  content: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.massive,
+    maxWidth: 480,
     width: '100%',
-    maxWidth: 460,
     alignSelf: 'center',
-    padding: spacing.xl,
-    gap: spacing.lg,
   },
-  brandRow: {
+  brand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
+    marginBottom: spacing.xxxl,
   },
   brandMark: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.chromeDark,
+    borderWidth: borders.thin,
+    borderColor: colors.chrome,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
   },
   brandMarkText: {
+<<<<<<< HEAD
     color: colors.onPrimary,
     fontWeight: '800',
     fontSize: 19,
+=======
+    ...typography.serif.title3,
+    color: colors.chrome,
+    fontWeight: '700',
+  },
+  brandText: {
+    gap: 2,
+>>>>>>> origin/swish
   },
   brandName: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '800',
+    ...typography.sans.headline,
+    color: colors.textPrimary,
+    letterSpacing: 3,
   },
-  kicker: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
+  brandTagline: {
+    ...typography.sans.caption2,
+    color: colors.textMuted,
+    letterSpacing: 0.3,
   },
-  title: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.muted,
-  },
-  card: {
-    borderRadius: radius.xl,
-    marginTop: spacing.md,
-  },
-  formTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.lg,
-    color: colors.text,
-  },
-  localAccess: {
-    gap: spacing.md,
-  },
-  localMessage: {
-    ...typography.body,
-    color: colors.muted,
-  },
-  fieldLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
+  headline: {
+    ...typography.serif.title2,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
+  subheadline: {
+    ...typography.sans.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xxxl,
+    lineHeight: 24,
+  },
+  form: {
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  field: {
+    gap: spacing.xs,
+  },
+  fieldLabel: {
+    ...typography.sans.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   input: {
+<<<<<<< HEAD
     backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.border,
@@ -202,30 +345,74 @@ function createStyles(colors: ThemeColors) {
     marginBottom: spacing.lg,
     fontSize: 16,
     color: colors.text,
+=======
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderDefault,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    color: colors.textPrimary,
+    ...typography.sans.body,
+    minHeight: 50,
+>>>>>>> origin/swish
   },
-  link: {
-    color: colors.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: spacing.lg,
+  errorBox: {
+    backgroundColor: colors.errorSoft,
+    borderRadius: radius.sm,
+    borderWidth: borders.hairline,
+    borderColor: colors.error,
+    padding: spacing.md,
   },
-  errorMessage: {
+  errorText: {
+    ...typography.sans.footnote,
     color: colors.error,
-    marginBottom: spacing.md,
   },
-  footerRow: {
+  toggleRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    flexWrap: 'wrap',
   },
-  footerText: {
-    color: colors.muted,
+  toggleLabel: {
+    ...typography.sans.footnote,
+    color: colors.textMuted,
+  },
+  localAccess: {
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.xl,
+  },
+  localIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.xl,
+    backgroundColor: colors.accentSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  localIconText: {
+    fontSize: 28,
+  },
+  localTitle: {
+    ...typography.serif.title3,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  localMessage: {
+    ...typography.sans.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   privacyNote: {
-    color: colors.muted,
+    ...typography.sans.caption2,
+    color: colors.textMuted,
     textAlign: 'center',
-    fontSize: 12,
+    marginTop: spacing.xl,
+    lineHeight: 18,
   },
   });
 }
