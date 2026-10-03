@@ -4,10 +4,13 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { clearPhotoDraft, getPhotoDraft, publishLocalPhoto } from '@/lib/photo-draft';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function CameraPreviewScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [photoUri] = useState(() => getPhotoDraft());
   const [caption, setCaption] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,7 +93,8 @@ export default function CameraPreviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   retakeText: {
-    color: colors.primary,
+    color: colors.accent,
     fontWeight: '700',
   },
   kicker: {
@@ -126,14 +130,14 @@ const styles = StyleSheet.create({
     aspectRatio: 3 / 4,
     maxHeight: 520,
     borderRadius: radius.lg,
-    backgroundColor: '#171717',
+    backgroundColor: colors.glassStrong,
   },
   emptyPhoto: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
-    color: '#FFFFFF',
+    color: colors.text,
   },
   promptRow: {
     flexDirection: 'row',
@@ -145,7 +149,7 @@ const styles = StyleSheet.create({
     height: 9,
     marginTop: 6,
     borderRadius: 5,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
   },
   prompt: {
     flex: 1,
@@ -159,7 +163,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    backgroundColor: colors.card,
+    backgroundColor: colors.glass,
     color: colors.text,
     fontSize: 16,
     textAlignVertical: 'top',
@@ -189,8 +193,9 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   postButtonText: {
-    color: '#FFFFFF',
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
-});
+  });
+}

@@ -2,9 +2,12 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, typography } from '@/constants/theme';
+import { spacing, typography, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function ClassScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -15,7 +18,8 @@ export default function ClassScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -32,4 +36,5 @@ const styles = StyleSheet.create({
     color: colors.muted,
     ...typography.body,
   },
-});
+  });
+}

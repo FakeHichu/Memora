@@ -4,10 +4,13 @@ import React, { useCallback, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { getLocalPhotoPost, type LocalPhotoPost } from '@/lib/photo-draft';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function PostDetailScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const [post, setPost] = useState<LocalPhotoPost | null>(null);
 
@@ -43,7 +46,8 @@ export default function PostDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -77,4 +81,5 @@ const styles = StyleSheet.create({
     ...typography.subheading,
     color: colors.text,
   },
-});
+  });
+}

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type ButtonProps = {
   title: string;
@@ -12,6 +13,9 @@ type ButtonProps = {
 };
 
 export function Button({ title, onPress, variant = 'primary', style, disabled }: ButtonProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -26,12 +30,13 @@ export function Button({ title, onPress, variant = 'primary', style, disabled }:
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Text style={[styles.label, variant === 'ghost' && styles.labelGhost]}>{title}</Text>
+      <Text style={[styles.label, variant === 'secondary' && styles.labelSecondary, variant === 'ghost' && styles.labelGhost]}>{title}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   base: {
     borderRadius: radius.md,
     paddingHorizontal: spacing.xl,
@@ -58,11 +63,15 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   label: {
-    color: '#fff',
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '600',
+  },
+  labelSecondary: {
+    color: colors.primaryDark,
   },
   labelGhost: {
     color: colors.text,
   },
-});
+  });
+}

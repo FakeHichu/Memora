@@ -5,9 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function WelcomeScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -33,7 +36,8 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -70,4 +74,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text,
   },
-});
+  });
+}

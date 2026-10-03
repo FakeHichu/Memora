@@ -6,10 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase/client';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function CreateClassScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [name, setName] = useState('12-A');
   const [school, setSchool] = useState('Northfield Academy');
   const [year, setYear] = useState('2026');
@@ -60,13 +63,13 @@ export default function CreateClassScreen() {
 
         <Card style={styles.card}>
           <Text style={styles.fieldLabel}>Class name</Text>
-          <TextInput value={name} onChangeText={setName} style={styles.input} />
+          <TextInput value={name} onChangeText={setName} placeholderTextColor={colors.muted} style={styles.input} />
 
           <Text style={styles.fieldLabel}>School</Text>
-          <TextInput value={school} onChangeText={setSchool} style={styles.input} />
+          <TextInput value={school} onChangeText={setSchool} placeholderTextColor={colors.muted} style={styles.input} />
 
           <Text style={styles.fieldLabel}>Academic year</Text>
-          <TextInput value={year} onChangeText={setYear} style={styles.input} />
+          <TextInput value={year} onChangeText={setYear} placeholderTextColor={colors.muted} style={styles.input} />
 
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
           <Button title={isSubmitting ? 'Creating class…' : 'Create class'} onPress={handleCreate} disabled={isSubmitting} />
@@ -81,7 +84,8 @@ export default function CreateClassScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -109,7 +113,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
+    backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -117,6 +121,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
     fontSize: 16,
+    color: colors.text,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -130,4 +135,5 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textAlign: 'center',
   },
-});
+  });
+}

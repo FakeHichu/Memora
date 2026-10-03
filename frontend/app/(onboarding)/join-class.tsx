@@ -5,9 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function JoinClassScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [code, setCode] = useState('7K9A-PQ2T');
 
   const handleJoin = () => {
@@ -26,6 +29,7 @@ export default function JoinClassScreen() {
             value={code}
             onChangeText={setCode}
             autoCapitalize="characters"
+            placeholderTextColor={colors.muted}
             style={styles.input}
             placeholder="ABCD-1234"
           />
@@ -44,7 +48,8 @@ export default function JoinClassScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
+    backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -81,12 +86,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     fontSize: 16,
     letterSpacing: 1.5,
+    color: colors.text,
   },
   helperWrap: {
     marginTop: spacing.xl,
     borderRadius: radius.lg,
-    backgroundColor: '#F3E7DF',
+    backgroundColor: colors.glass,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   helperTitle: {
     ...typography.subheading,
@@ -96,4 +104,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.muted,
   },
-});
+  });
+}

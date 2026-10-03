@@ -5,10 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { resetPasswordForEmail } from '@/lib/supabase/auth';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function ForgotPasswordScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -36,6 +39,7 @@ export default function ForgotPasswordScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            placeholderTextColor={colors.muted}
             style={styles.input}
           />
 
@@ -54,7 +58,8 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
+    backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -96,6 +101,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
     fontSize: 16,
+    color: colors.text,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -115,4 +121,5 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginBottom: spacing.md,
   },
-});
+  });
+}

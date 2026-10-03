@@ -1,11 +1,14 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { colors } from '@/constants/theme';
+import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function IndexScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { session, isLoading } = useAuth();
 
   if (isLoading) {
@@ -19,11 +22,13 @@ export default function IndexScreen() {
   return <Redirect href={hasSupabaseConfig && session ? '/(tabs)/today' : '/(auth)/login'} />;
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
   },
-});
+  });
+}

@@ -5,11 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { colors, radius, spacing, typography } from '@/constants/theme';
+import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { signInWithEmail } from '@/lib/supabase/auth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function LoginScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,12 +39,12 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.brandRow}>
-            <View style={styles.brandMark}><Text style={styles.brandMarkText}>C</Text></View>
-            <Text style={styles.brandName}>CAMERA JOURNAL</Text>
+            <View style={styles.brandMark}><Text style={styles.brandMarkText}>M</Text></View>
+            <Text style={styles.brandName}>MEMORA</Text>
           </View>
           <Text style={styles.kicker}>A place for the small things</Text>
           <Text style={styles.title}>Moments worth keeping.</Text>
-          <Text style={styles.subtitle}>A private photo journal for the moments you want to remember.</Text>
+          <Text style={styles.subtitle}>A private place for everyday moments, made to become memories.</Text>
 
           <Card style={styles.card}>
             {hasSupabaseConfig ? (
@@ -56,6 +59,7 @@ export default function LoginScreen() {
                   autoComplete="email"
                   keyboardType="email-address"
                   returnKeyType="next"
+                  placeholderTextColor={colors.muted}
                   style={styles.input}
                 />
 
@@ -68,6 +72,7 @@ export default function LoginScreen() {
                   autoComplete="current-password"
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
+                  placeholderTextColor={colors.muted}
                   style={styles.input}
                 />
 
@@ -93,7 +98,7 @@ export default function LoginScreen() {
 
           {hasSupabaseConfig ? (
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>New to Camera Journal?</Text>
+              <Text style={styles.footerText}>New to Memora?</Text>
               <Link href="/(auth)/register" asChild>
                 <Text style={styles.link}>Create account</Text>
               </Link>
@@ -107,7 +112,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -138,7 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   brandMarkText: {
-    color: '#FFFFFF',
+    color: colors.onPrimary,
     fontWeight: '800',
     fontSize: 19,
   },
@@ -187,7 +193,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: '#F9F8F7',
+    backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -195,6 +201,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
     fontSize: 16,
+    color: colors.text,
   },
   link: {
     color: colors.primary,
@@ -220,4 +227,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
   },
-});
+  });
+}

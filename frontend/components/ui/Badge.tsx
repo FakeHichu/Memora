@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type BadgeProps = {
   label: string;
@@ -9,14 +10,18 @@ type BadgeProps = {
 };
 
 export function Badge({ label, tone = 'neutral' }: BadgeProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={[styles.badge, styles[tone]]}>
-      <Text style={[styles.text, tone === 'neutral' && styles.textNeutral]}>{label}</Text>
+      <Text style={[styles.text, tone === 'neutral' && styles.textNeutral, tone === 'success' && styles.textSuccess]}>{label}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing.sm,
@@ -27,13 +32,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   neutral: {
-    backgroundColor: '#F0F1F3',
+    backgroundColor: colors.surface,
   },
   success: {
-    backgroundColor: '#DDF3E8',
+    backgroundColor: colors.success,
   },
   text: {
-    color: colors.primary,
+    color: colors.primaryDark,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -41,4 +46,8 @@ const styles = StyleSheet.create({
   textNeutral: {
     color: colors.text,
   },
-});
+  textSuccess: {
+    color: colors.neon,
+  },
+  });
+}
