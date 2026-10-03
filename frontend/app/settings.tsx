@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Platform,
+  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders, type ThemeColors, type ThemeMode } from '@/constants/theme';
 import {
   clearLocalPhotoPosts,
   exportAllData,
@@ -24,8 +25,11 @@ import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export default function SettingsScreen() {
+  const { colors, mode, setMode } = useAppTheme();
+  const styles = createStyles(colors);
   const { showToast } = useToast();
   const [confirmClear, setConfirmClear] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -136,11 +140,28 @@ export default function SettingsScreen() {
 
         {/* Appearance */}
         <ProfileSection title="Appearance">
-          <ProfileRow
-            label="Color theme"
-            value="Dark (default)"
-            icon="info"
-          />
+          <View style={styles.appearanceControl}>
+            <Text style={styles.appearanceLabel}>Color theme</Text>
+            <Text style={styles.appearanceHint}>Choose how Memora looks on this device.</Text>
+            <View style={styles.appearanceOptions} accessibilityLabel="Color theme">
+              {([
+                { value: 'dark', label: 'Dark', icon: '☾' },
+                { value: 'light', label: 'Light', icon: '☼' },
+              ] as const).map((option) => (
+                <Pressable
+                  key={option.value}
+                  onPress={() => setMode(option.value as ThemeMode)}
+                  style={[styles.appearanceOption, mode === option.value && styles.appearanceOptionActive]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${option.label} theme`}
+                  accessibilityState={{ selected: mode === option.value }}
+                >
+                  <Text style={[styles.appearanceIcon, mode === option.value && styles.appearanceIconActive]}>{option.icon}</Text>
+                  <Text style={[styles.appearanceOptionLabel, mode === option.value && styles.appearanceOptionLabelActive]}>{option.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
           <ProfileDivider />
           <ProfileRow
             label="App icon"
@@ -236,7 +257,8 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -296,6 +318,55 @@ const styles = StyleSheet.create({
     ...typography.mono.caption,
     color: colors.textMuted,
   },
+  appearanceControl: {
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
+  appearanceLabel: {
+    ...typography.sans.callout,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  appearanceHint: {
+    ...typography.sans.footnote,
+    color: colors.textSecondary,
+  },
+  appearanceOptions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  appearanceOption: {
+    flex: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceElevated,
+  },
+  appearanceOptionActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSubtle,
+  },
+  appearanceIcon: {
+    color: colors.textSecondary,
+    fontSize: 16,
+  },
+  appearanceIconActive: {
+    color: colors.accent,
+  },
+  appearanceOptionLabel: {
+    ...typography.sans.callout,
+    color: colors.textSecondary,
+  },
+  appearanceOptionLabelActive: {
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
   shortcutsList: {
     padding: spacing.lg,
     gap: spacing.md,
@@ -344,4 +415,5 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: spacing.md,
   },
-});
+  });
+}

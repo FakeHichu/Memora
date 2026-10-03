@@ -1,12 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-<<<<<<< HEAD
-import { radius, spacing, type ThemeColors } from '@/constants/theme';
-import { useAppTheme } from '@/providers/ThemeProvider';
-=======
 import { colors, radius, spacing, borders } from '@/constants/theme';
->>>>>>> origin/swish
 
 type BadgeProps = {
   label: string;
@@ -14,15 +9,6 @@ type BadgeProps = {
   size?: 'sm' | 'md';
 };
 
-<<<<<<< HEAD
-export function Badge({ label, tone = 'neutral' }: BadgeProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
-
-  return (
-    <View style={[styles.badge, styles[tone]]}>
-      <Text style={[styles.text, tone === 'neutral' && styles.textNeutral, tone === 'success' && styles.textSuccess]}>{label}</Text>
-=======
 export function Badge({ label, tone = 'neutral', size = 'md' }: BadgeProps) {
   const sizeStyles = size === 'sm' ? styles.sizeSm : styles.sizeMd;
   const toneStyles = {
@@ -47,13 +33,11 @@ export function Badge({ label, tone = 'neutral', size = 'md' }: BadgeProps) {
   return (
     <View style={[styles.badge, sizeStyles, toneStyles]}>
       <Text style={[styles.text, sizeTextStyles, toneTextStyles]}>{label}</Text>
->>>>>>> origin/swish
     </View>
   );
 }
 
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
     borderRadius: radius.round,
@@ -75,18 +59,6 @@ function createStyles(colors: ThemeColors) {
     borderWidth: borders.hairline,
     borderColor: 'rgba(184, 79, 125, 0.2)',
   },
-<<<<<<< HEAD
-  neutral: {
-    backgroundColor: colors.surface,
-  },
-  success: {
-    backgroundColor: colors.success,
-  },
-  text: {
-    color: colors.primaryDark,
-    fontSize: 11,
-    fontWeight: '700',
-=======
   toneNeutral: {
     backgroundColor: colors.backgroundSecondary,
     borderWidth: borders.hairline,
@@ -114,7 +86,6 @@ function createStyles(colors: ThemeColors) {
   },
   text: {
     fontWeight: '600',
->>>>>>> origin/swish
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     fontFamily: 'System',
@@ -143,8 +114,4 @@ function createStyles(colors: ThemeColors) {
   toneChromeText: {
     color: colors.textOnChrome,
   },
-  textSuccess: {
-    color: colors.neon,
-  },
-  });
-}
+});

@@ -3,7 +3,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ThemeProvider, useAppTheme } from '@/providers/ThemeProvider';
-
 import { ToastProvider } from '@/components/ui/Toast';
 import { CommandPaletteProvider } from '@/components/ui/CommandPalette';
 
@@ -12,9 +11,12 @@ const queryClient = new QueryClient();
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-<<<<<<< HEAD
       <ThemeProvider>
-        <RootNavigator />
+        <ToastProvider>
+          <CommandPaletteProvider>
+            <RootNavigator />
+          </CommandPaletteProvider>
+        </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
@@ -26,26 +28,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
     </>
-=======
-      <ToastProvider>
-        <CommandPaletteProvider>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-            }}
-          />
-        </CommandPaletteProvider>
-      </ToastProvider>
-    </QueryClientProvider>
->>>>>>> origin/swish
   );
 }

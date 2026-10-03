@@ -5,19 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-<<<<<<< HEAD
-import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
-import { resetPasswordForEmail } from '@/lib/supabase/auth';
-import { useAppTheme } from '@/providers/ThemeProvider';
-=======
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography } from '@/constants/theme';
 import { resetPasswordForEmail } from '@/lib/supabase/auth';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
->>>>>>> origin/swish
 
 export default function ForgotPasswordScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -48,17 +40,14 @@ export default function ForgotPasswordScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            placeholderTextColor={colors.muted}
             style={styles.input}
-            placeholder="you@example.com"
-            placeholderTextColor={colors.textMuted}
           />
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
           <Button
             title={isSending ? 'Sending...' : 'Send reset link'}
             onPress={sendResetLink}
-            disabled={isSending || !email.trim()}
+            disabled={isSending}
             variant="accent"
             fullWidth
           />
@@ -75,8 +64,7 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -95,7 +83,7 @@ function createStyles(colors: ThemeColors) {
     marginVertical: spacing.md,
   },
   subtitle: {
-    ...typography.sans.body,
+    ...typography.body,
     color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
@@ -103,33 +91,22 @@ function createStyles(colors: ThemeColors) {
     borderRadius: radius.xl,
   },
   fieldLabel: {
-    ...typography.sans.caption,
+    ...typography.caption,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   input: {
-<<<<<<< HEAD
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.border,
-=======
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
->>>>>>> origin/swish
+    backgroundColor: colors.backgroundSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     marginBottom: spacing.lg,
-<<<<<<< HEAD
-    fontSize: 16,
-    color: colors.text,
-=======
     color: colors.textPrimary,
-    ...typography.sans.body,
->>>>>>> origin/swish
+    ...typography.body,
   },
   footerRow: {
     marginTop: spacing.xl,
@@ -139,22 +116,17 @@ function createStyles(colors: ThemeColors) {
     gap: spacing.sm,
   },
   footerText: {
-    ...typography.sans.body,
+    ...typography.body,
     color: colors.textMuted,
   },
   link: {
-    ...typography.sans.callout,
+    ...typography.callout,
     color: colors.accent,
     fontWeight: '600',
   },
   message: {
-    ...typography.sans.footnote,
+    ...typography.footnote,
     color: colors.textSecondary,
     marginBottom: spacing.md,
   },
-<<<<<<< HEAD
-  });
-}
-=======
 });
->>>>>>> origin/swish

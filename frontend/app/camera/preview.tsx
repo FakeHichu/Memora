@@ -4,38 +4,12 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
-<<<<<<< HEAD
-import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
-import { clearPhotoDraft, getPhotoDraft, publishLocalPhoto } from '@/lib/photo-draft';
-import { useAppTheme } from '@/providers/ThemeProvider';
-=======
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
-import {
-  clearPhotoDraft,
-  getPhotoDraft,
-  getPromptDraft,
-  publishLocalPhoto,
-  type MemoryCategory,
-} from '@/lib/photo-draft';
+import { clearPhotoDraft, getPhotoDraft, publishLocalPhoto } from '@/lib/photo-draft';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { defaultPrompts } from '@/constants/prompts';
-
-const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
->>>>>>> origin/swish
 
 export default function CameraPreviewScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
   const [photoUri] = useState(() => getPhotoDraft());
-  const [prompt] = useState(() => {
-    const draftPrompt = getPromptDraft();
-    if (draftPrompt) return draftPrompt;
-    const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
-    );
-    return defaultPrompts[dayOfYear % defaultPrompts.length];
-  });
-  const [category, setCategory] = useState<MemoryCategory>('General');
   const [caption, setCaption] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,7 +29,7 @@ export default function CameraPreviewScreen() {
     setIsSaving(true);
 
     try {
-      await publishLocalPhoto(photoUri, caption.trim(), prompt, category);
+      await publishLocalPhoto(photoUri, caption.trim());
       router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
@@ -90,36 +64,13 @@ export default function CameraPreviewScreen() {
 
         <View style={styles.promptRow}>
           <View style={styles.promptDot} />
-          <Text style={styles.prompt}>{prompt}</Text>
-        </View>
-
-        {/* Category selector */}
-        <View style={styles.categoryRow}>
-          <Text style={styles.categoryLabel}>CATEGORY</Text>
-          <View style={styles.categoryPills}>
-            {CATEGORIES.map((cat) => (
-              <Pressable
-                key={cat}
-                onPress={() => setCategory(cat)}
-                style={[styles.categoryPill, category === cat && styles.categoryPillActive]}
-              >
-                <Text
-                  style={[
-                    styles.categoryPillText,
-                    category === cat && styles.categoryPillTextActive,
-                  ]}
-                >
-                  {cat}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <Text style={styles.prompt}>Show us something interesting you saw today.</Text>
         </View>
 
         <TextInput
           value={caption}
           onChangeText={setCaption}
-          placeholder="Add a caption to preserve this moment..."
+          placeholder="Add a caption..."
           placeholderTextColor={colors.textMuted}
           maxLength={280}
           multiline
@@ -144,7 +95,7 @@ export default function CameraPreviewScreen() {
             accessibilityLabel="Post photo"
             style={[styles.postButton, (!photoUri || isSaving) && styles.disabledButton]}
           >
-            <Text style={styles.postButtonText}>{isSaving ? 'Saving…' : 'Post Memory'}</Text>
+            <Text style={styles.postButtonText}>{isSaving ? 'Saving…' : 'Post'}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -152,36 +103,33 @@ export default function CameraPreviewScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xxxl,
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
     gap: spacing.lg,
   },
   header: {
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   retakeText: {
-<<<<<<< HEAD
-    color: colors.accent,
-    fontWeight: '700',
-=======
-    ...typography.sans.caption,
+    ...typography.callout,
     color: colors.accent,
     fontWeight: '600',
->>>>>>> origin/swish
   },
   kicker: {
     ...typography.mono.micro,
     color: colors.textMuted,
-    letterSpacing: 1.1,
   },
   headerSpacer: {
     width: 48,
@@ -189,141 +137,77 @@ function createStyles(colors: ThemeColors) {
   photo: {
     width: '100%',
     aspectRatio: 3 / 4,
-<<<<<<< HEAD
     maxHeight: 520,
     borderRadius: radius.lg,
-    backgroundColor: colors.glassStrong,
-=======
-    borderRadius: radius.xl,
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.backgroundSecondary,
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
->>>>>>> origin/swish
+    borderColor: colors.borderChrome,
   },
   emptyPhoto: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
-<<<<<<< HEAD
-    color: colors.text,
-=======
-    ...typography.sans.body,
+    ...typography.body,
     color: colors.textMuted,
->>>>>>> origin/swish
   },
   promptRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
-    backgroundColor: colors.accentSubtle,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
   },
   promptDot: {
-<<<<<<< HEAD
-    width: 9,
-    height: 9,
+    width: 6,
+    height: 6,
     marginTop: 6,
-    borderRadius: 5,
-=======
-    width: 8,
-    height: 8,
-    borderRadius: 4,
->>>>>>> origin/swish
+    borderRadius: 3,
     backgroundColor: colors.accent,
   },
   prompt: {
-    ...typography.sans.subheadline,
-    color: colors.textPrimary,
     flex: 1,
-    fontStyle: 'italic',
-  },
-  categoryRow: {
-    gap: spacing.xs,
-  },
-  categoryLabel: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.8,
-  },
-  categoryPills: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  categoryPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  categoryPillActive: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-  },
-  categoryPillText: {
-    ...typography.sans.caption2,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  categoryPillTextActive: {
-    color: colors.accent,
-    fontWeight: '700',
+    ...typography.body,
+    color: colors.textPrimary,
   },
   captionInput: {
-    backgroundColor: colors.backgroundElevated,
+    minHeight: 52,
+    maxHeight: 120,
+    padding: spacing.md,
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderChrome,
     borderRadius: radius.md,
-<<<<<<< HEAD
-    backgroundColor: colors.glass,
-    color: colors.text,
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
     fontSize: 16,
     textAlignVertical: 'top',
-=======
-    padding: spacing.md,
-    color: colors.textPrimary,
-    ...typography.sans.body,
-    minHeight: 80,
->>>>>>> origin/swish
   },
   errorMessage: {
-    ...typography.sans.caption,
+    ...typography.footnote,
     color: colors.error,
-    textAlign: 'center',
+    lineHeight: 20,
   },
   actions: {
     flexDirection: 'row',
     gap: spacing.md,
-    alignItems: 'center',
   },
   actionButton: {
     flex: 1,
   },
   postButton: {
-    flex: 2,
-    backgroundColor: colors.accent,
-    borderRadius: radius.round,
-    paddingVertical: spacing.md,
+    flex: 1.4,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  postButtonText: {
-<<<<<<< HEAD
-    color: colors.onPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-=======
-    ...typography.sans.headline,
-    color: colors.textInverse,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    borderWidth: 0,
   },
   disabledButton: {
-    opacity: 0.5,
->>>>>>> origin/swish
+    opacity: 0.55,
   },
-  });
-}
+  postButtonText: {
+    color: colors.textInverse,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});

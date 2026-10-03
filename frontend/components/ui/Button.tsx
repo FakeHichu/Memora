@@ -1,12 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
-<<<<<<< HEAD
-import { radius, spacing, type ThemeColors } from '@/constants/theme';
-import { useAppTheme } from '@/providers/ThemeProvider';
-=======
-import { colors, radius, spacing, shadows, webShadows, borders, variants } from '@/constants/theme';
->>>>>>> origin/swish
+import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
 
 type ButtonProps = {
   title: string;
@@ -20,11 +15,6 @@ type ButtonProps = {
   rightIcon?: string;
 };
 
-<<<<<<< HEAD
-export function Button({ title, onPress, variant = 'primary', style, disabled }: ButtonProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
-=======
 export function Button({
   title,
   onPress,
@@ -59,7 +49,6 @@ export function Button({
   }[variant];
 
   const pressedStyle = Platform.OS === 'web' ? webShadows.xs : shadows.xs;
->>>>>>> origin/swish
 
   return (
     <Pressable
@@ -78,9 +67,6 @@ export function Button({
         style,
       ]}
     >
-<<<<<<< HEAD
-      <Text style={[styles.label, variant === 'secondary' && styles.labelSecondary, variant === 'ghost' && styles.labelGhost]}>{title}</Text>
-=======
       {leftIcon && <Text style={styles.icon}>{leftIcon}</Text>}
       <Text
         style={[
@@ -95,21 +81,15 @@ export function Button({
         {title}
       </Text>
       {rightIcon && <Text style={styles.icon}>{rightIcon}</Text>}
->>>>>>> origin/swish
     </Pressable>
   );
 }
 
-<<<<<<< HEAD
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
-=======
 const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
 const styles = StyleSheet.create({
->>>>>>> origin/swish
   base: {
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -134,60 +114,48 @@ const styles = StyleSheet.create({
   fullWidth: {
     width: '100%',
   },
-  // Primary — Chrome dim surface with chrome border
   variantPrimary: {
-    backgroundColor: variants.button.primary.backgroundColor,
+    backgroundColor: colors.chromeDark,
     borderWidth: borders.thin,
-    borderColor: variants.button.primary.borderColor,
+    borderColor: colors.chrome,
   },
-  // Secondary — Elevated surface with subtle border
   variantSecondary: {
-    backgroundColor: variants.button.secondary.backgroundColor,
-    borderWidth: borders.hairline,
-    borderColor: variants.button.secondary.borderColor,
+    backgroundColor: colors.surface,
+    borderWidth: borders.thin,
+    borderColor: colors.borderChrome,
   },
-  // Ghost — Transparent with subtle border
   variantGhost: {
-    backgroundColor: variants.button.ghost.backgroundColor,
+    backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: variants.button.ghost.borderColor,
+    borderColor: colors.borderChrome,
   },
-  // Chrome — Full chrome surface
   variantChrome: {
-    backgroundColor: variants.button.chrome.backgroundColor,
+    backgroundColor: colors.chrome,
     borderWidth: 0,
   },
-  // Accent — Icy blue primary action
   variantAccent: {
-    backgroundColor: variants.button.accent.backgroundColor,
+    backgroundColor: colors.accent,
     borderWidth: 0,
     ...shadows.glowSm,
   },
-  // Destructive — Muted error tone
   variantDestructive: {
-    backgroundColor: variants.button.destructive.backgroundColor,
+    backgroundColor: colors.errorSoft,
     borderWidth: borders.hairline,
-    borderColor: variants.button.destructive.borderColor,
+    borderColor: colors.error,
   },
-  // Subtle — Accent tint for secondary actions
   variantSubtle: {
     backgroundColor: colors.accentSubtle,
     borderWidth: borders.hairline,
-    borderColor: 'rgba(122, 159, 216, 0.15)',
+    borderColor: 'rgba(184, 79, 125, 0.2)',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   disabled: {
-    opacity: 0.35,
+    opacity: 0.4,
   },
   label: {
-<<<<<<< HEAD
-    color: colors.onPrimary,
-    fontSize: 16,
-=======
     color: colors.textPrimary,
->>>>>>> origin/swish
     fontWeight: '600',
     letterSpacing: 0.2,
     fontFamily: 'System',
@@ -201,16 +169,9 @@ const styles = StyleSheet.create({
   sizeLgText: {
     fontSize: 17,
   },
-  labelSecondary: {
-    color: colors.primaryDark,
-  },
   labelGhost: {
     color: colors.accent,
   },
-<<<<<<< HEAD
-  });
-}
-=======
   labelDestructive: {
     color: colors.error,
   },
@@ -218,11 +179,10 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   labelChrome: {
-    color: colors.textInverse,
+    color: colors.textOnChrome,
   },
   icon: {
     fontSize: 16,
     lineHeight: 20,
   },
 });
->>>>>>> origin/swish

@@ -6,17 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icons';
 import { Card } from '@/components/ui/Card';
-<<<<<<< HEAD
-import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
-import { useAppTheme } from '@/providers/ThemeProvider';
-=======
 import { colors, radius, spacing, typography } from '@/constants/theme';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
->>>>>>> origin/swish
 
 export default function WelcomeScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -75,8 +68,7 @@ export default function WelcomeScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -95,7 +87,7 @@ function createStyles(colors: ThemeColors) {
     color: colors.textPrimary,
   },
   subtitle: {
-    ...typography.sans.body,
+    ...typography.body,
     color: colors.textSecondary,
   },
   card: {
@@ -113,13 +105,9 @@ function createStyles(colors: ThemeColors) {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    ...typography.sans.body,
+    ...typography.body,
     color: colors.textPrimary,
   },
-<<<<<<< HEAD
-  });
-}
-=======
   listIcon: {
     flexShrink: 0,
   },
@@ -130,8 +118,7 @@ function createStyles(colors: ThemeColors) {
     marginVertical: spacing.md,
   },
   dividerText: {
-    ...typography.sans.caption,
+    ...typography.caption,
     color: colors.textMuted,
   },
 });
->>>>>>> origin/swish

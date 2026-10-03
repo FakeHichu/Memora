@@ -94,7 +94,6 @@ export function EmptyState({
     <View
       style={[styles.container, style]}
       accessibilityLabel={accessibilityLabel || title}
-      accessibilityRole={action ? 'button' : undefined}
     >
       {illustration ? (
         illustration

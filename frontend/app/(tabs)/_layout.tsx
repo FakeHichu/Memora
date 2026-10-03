@@ -1,29 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-<<<<<<< HEAD
-
-import { MemoraTabBar } from '@/components/ui/MemoraTabBar';
-=======
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
+import { colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
 import { TabIcon } from '@/components/ui/Icons';
->>>>>>> origin/swish
 
 export default function TabsLayout() {
   return (
     <Tabs
-<<<<<<< HEAD
-      tabBar={(props) => <MemoraTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      <Tabs.Screen name="today" options={{ title: 'Home' }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
-      <Tabs.Screen name="memories" options={{ title: 'Memories' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Me' }} />
-      <Tabs.Screen name="class" options={{ href: null }} />
-      <Tabs.Screen name="yearbook" options={{ href: null }} />
-=======
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
@@ -65,7 +49,7 @@ export default function TabsLayout() {
                 focused && styles.createIconContainerFocused,
               ]}
             >
-              <TabIcon name="plus" focused={focused} activeColor={colors.textInverse} inactiveColor={colors.chromeDim} size={28} />
+              <TabIcon name="plus" focused={focused} activeColor={colors.textOnChrome} inactiveColor={colors.chrome} size={28} />
             </View>
           ),
         }}
@@ -92,16 +76,20 @@ export default function TabsLayout() {
           ),
         }}
       />
->>>>>>> origin/swish
+      <Tabs.Screen name="class" options={{ href: null }} />
+      <Tabs.Screen name="today" options={{ href: null }} />
+      <Tabs.Screen name="search" options={{ href: null }} />
+      <Tabs.Screen name="discover" options={{ href: null }} />
+      <Tabs.Screen name="yearbook" options={{ href: null }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surfaceNavigation,
-    borderTopWidth: borders.hairline,
-    borderTopColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.borderChrome,
     height: 88,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
@@ -119,7 +107,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: radius.round,
+    borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
@@ -130,16 +118,16 @@ const styles = StyleSheet.create({
   createIconContainer: {
     width: 52,
     height: 52,
-    borderRadius: radius.round,
+    borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -6,
     marginTop: -10,
     backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
+    borderWidth: 1,
     borderColor: colors.chrome,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 12px rgba(122, 159, 216, 0.15), 0 4px 16px rgba(0, 0, 0, 0.25)' }
+      ? { boxShadow: '0 0 12px rgba(184, 79, 125, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3)' }
       : { ...shadows.glowMd, ...shadows.md }),
   },
   createIconContainerFocused: {
