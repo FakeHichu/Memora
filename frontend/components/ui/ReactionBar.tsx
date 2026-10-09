@@ -32,27 +32,19 @@ export function ReactionBar({
         const isSelected = userReaction === emoji;
 
         return (
-          <Pressable
-            key={emoji}
-            onPress={() => onReact(emoji)}
-            style={[
+          <Pressable key={emoji} onPress={() => onReact(emoji)} style={[
               styles.pill,
               compact && styles.pillCompact,
               isSelected && styles.pillSelected,
               count > 0 && !isSelected && styles.pillActive,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`${label} reaction, ${count} count`}
-          >
+            ]} accessibilityRole="button" accessibilityLabel={`${label} reaction, ${count} count`}>
             <Text style={[styles.emoji, compact && styles.emojiCompact]}>{emoji}</Text>
             {count > 0 && (
-              <Text
-                style={[
+              <Text style={[
                   styles.count,
                   compact && styles.countCompact,
                   isSelected && styles.countSelected,
-                ]}
-              >
+                ]}>
                 {count}
               </Text>
             )}

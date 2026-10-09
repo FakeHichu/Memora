@@ -119,24 +119,17 @@ export function MemoryCard({
   const isInteractive = onPress || onLongPress;
 
   return (
-    <Pressable
-      onPress={selectionMode ? onLongPress : onPress}
-      onLongPress={onLongPress}
-      style={({ pressed }) => [
+    <Pressable onPress={selectionMode ? onLongPress : onPress} onLongPress={onLongPress} style={({ pressed }) => [
         styles.container,
         config.padding === 0 ? styles.noPadding : {},
         isInteractive && pressed && styles.pressed,
         isSelected && styles.selectedContainer,
         style,
-      ]}
-      accessibilityRole={isInteractive ? 'button' : 'image'}
-      accessibilityLabel={
+      ]} accessibilityRole={isInteractive ? 'button' : 'image'} accessibilityLabel={
         selectionMode
           ? `${isSelected ? 'Deselect' : 'Select'} memory from ${formattedDate}`
           : memory.caption || `Memory from ${formattedDate}`
-      }
-      accessibilityState={{ selected: isSelected }}
-    >
+      } accessibilityState={{ selected: isSelected }}>
       {/* Selection Checkbox */}
       {selectionMode && (
         <View style={styles.selectionIndicator}>
@@ -198,9 +191,8 @@ export function MemoryCard({
         )}
       </View>
 
-      {(config.showCaption || showMetadata || showReactions || memory.prompt || showTags) && (
-        <View
-          style={[
+      {(config.showCaption || showMetadata || showReactions || memory.prompt || showTags) ? (
+        <View style={[
             styles.content,
             { gap: config.gap, paddingHorizontal: config.padding, paddingBottom: config.padding },
           ]}
@@ -254,24 +246,24 @@ export function MemoryCard({
             <View style={styles.metaRow}>
               <Text style={[config.metaStyle, styles.metaText]}>{formattedDate}</Text>
               {config.showTime && (
-                <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
                   <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
                   <Text style={[config.metaStyle, styles.metaText]}>{timeString}</Text>
-                </>
+                </View>
               )}
               {memory.category && memory.category !== 'General' && (
-                <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
                   <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
                   <Text style={[config.metaStyle, styles.categoryBadge]}>{memory.category}</Text>
-                </>
+                </View>
               )}
               {memory.location && (
-                <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
                   <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
                   <Text style={[config.metaStyle, styles.locationText]} numberOfLines={1}>
                     📍 {memory.location}
                   </Text>
-                </>
+                </View>
               )}
             </View>
           )}
@@ -285,7 +277,7 @@ export function MemoryCard({
             />
           )}
         </View>
-      )}
+      ) : null}
     </Pressable>
   );
 }

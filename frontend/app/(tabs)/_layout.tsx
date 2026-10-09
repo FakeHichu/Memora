@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
+import { borders, colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
 import { TabIcon } from '@/components/ui/Icons';
 
 export default function TabsLayout() {
@@ -87,21 +87,25 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.borderChrome,
-    height: 88,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    borderTopWidth: borders.hairline,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    height: 78,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
     paddingHorizontal: spacing.md,
-    ...(Platform.OS === 'web' ? webShadows.xl : shadows.xl),
+    ...(Platform.OS === 'web'
+      ? {
+          ...webShadows.xl,
+          backdropFilter: 'blur(28px)',
+          WebkitBackdropFilter: 'blur(28px)',
+        }
+      : { ...shadows.xl }),
   },
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: spacing.xs,
+    marginTop: 2,
     fontFamily: 'System',
   },
   iconContainer: {
@@ -113,26 +117,26 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   iconContainerFocused: {
-    backgroundColor: colors.accentSubtle,
+    backgroundColor: 'rgba(184, 79, 125, 0.14)',
   },
   createIconContainer: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -6,
     marginTop: -10,
-    backgroundColor: colors.chromeDark,
+    backgroundColor: colors.accent,
     borderWidth: 1,
-    borderColor: colors.chrome,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 12px rgba(184, 79, 125, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3)' }
+      ? { boxShadow: '0 0 18px rgba(184, 79, 125, 0.32), 0 4px 16px rgba(0, 0, 0, 0.3)' }
       : { ...shadows.glowMd, ...shadows.md }),
   },
   createIconContainerFocused: {
-    backgroundColor: colors.chrome,
-    borderColor: colors.chromeHighlight,
+    backgroundColor: colors.accentLight,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     transform: [{ scale: 1.03 }],
   },
 });

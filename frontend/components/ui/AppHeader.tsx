@@ -80,7 +80,11 @@ export function AppHeader({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(9, 9, 12, 0.68)',
+    ...Platform.select({
+      web: { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' },
+      default: undefined,
+    }),
   },
   container: {
     flexDirection: 'row',
@@ -91,9 +95,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     gap: spacing.md,
     // Material 02 — Navigation surface
-    backgroundColor: colors.surfaceNavigation,
+    backgroundColor: 'transparent',
     borderBottomWidth: borders.hairline,
-    borderBottomColor: colors.borderSubtle,
+    borderBottomColor: 'rgba(255, 255, 255, 0.07)',
   },
   containerTransparent: {
     paddingBottom: spacing.sm,
@@ -110,8 +114,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   title: {
-    ...typography.serif.title2,
+    ...typography.sans.title2,
     color: colors.textPrimary,
+    letterSpacing: -0.45,
     marginTop: spacing.xs,
   },
   subtitle: {
@@ -125,9 +130,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.round,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceFloating,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderWidth: borders.thin,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     ...Platform.select({
       web: webShadows.xs,
       default: undefined,

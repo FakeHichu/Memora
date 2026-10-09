@@ -446,12 +446,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    backgroundColor: 'rgba(29, 30, 39, 0.58)',
+    borderRadius: radius.xl,
+    borderWidth: borders.thin,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: spacing.md,
     alignItems: 'center',
+    ...(Platform.OS === 'web'
+      ? { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+      : {}),
   },
   statItem: {
     flex: 1,
@@ -479,16 +482,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   quickAction: {
     flex: 1,
     alignItems: 'center',
-    padding: spacing.md,
-    backgroundColor: colors.surface,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    backgroundColor: 'rgba(29, 30, 39, 0.42)',
     borderRadius: radius.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderWidth: borders.thin,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     gap: spacing.xs,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
@@ -504,11 +508,18 @@ const styles = StyleSheet.create({
   promptHeroCard: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
+    padding: spacing.xl,
+    backgroundColor: 'rgba(30, 25, 36, 0.76)',
     borderRadius: radius.xxl,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderWidth: borders.thin,
+    borderColor: 'rgba(200, 145, 178, 0.2)',
+    ...(Platform.OS === 'web'
+      ? {
+          backdropFilter: 'blur(28px)',
+          WebkitBackdropFilter: 'blur(28px)',
+          boxShadow: '0 18px 48px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+        }
+      : {}),
   },
   promptHeader: {
     flexDirection: 'row',
@@ -532,7 +543,7 @@ const styles = StyleSheet.create({
   },
   promptTagText: {
     ...typography.mono.micro,
-    color: colors.accent,
+    color: colors.accentLight,
     letterSpacing: 0.8,
     fontWeight: '700',
   },
@@ -546,9 +557,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.round,
   },
   promptQuestion: {
-    ...typography.serif.title3,
+    ...typography.serif.title2,
     color: colors.textPrimary,
-    lineHeight: 26,
+    lineHeight: 30,
     marginBottom: spacing.md,
   },
   promptSubtext: {
