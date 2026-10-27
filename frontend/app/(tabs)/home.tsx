@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
+import { Icon } from '@/components/ui/Icons';
 
 const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
 
@@ -131,6 +132,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
+      <View pointerEvents="none" style={styles.ambientBackdrop}>
+        <View style={[styles.ambientGlow, styles.ambientGlowPrimary]} />
+        <View style={[styles.ambientGlow, styles.ambientGlowSecondary]} />
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AppHeader
           greeting={getGreeting()}
@@ -193,7 +198,9 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Create a memory"
           >
-            <Text style={styles.quickActionIcon}>📸</Text>
+            <View style={styles.quickActionIconWrap}>
+              <Icon name="camera" size={19} color={colors.accentLight} />
+            </View>
             <Text style={styles.quickActionLabel}>New memory</Text>
           </Pressable>
           <Pressable
@@ -202,7 +209,9 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="View favorites"
           >
-            <Text style={styles.quickActionIcon}>⭐</Text>
+            <View style={styles.quickActionIconWrap}>
+              <Icon name="star" size={19} color={colors.accentLight} />
+            </View>
             <Text style={styles.quickActionLabel}>Favorites</Text>
           </Pressable>
           <Pressable
@@ -211,7 +220,9 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="View collections"
           >
-            <Text style={styles.quickActionIcon}>📁</Text>
+            <View style={styles.quickActionIconWrap}>
+              <Icon name="bookmark" size={19} color={colors.accentLight} />
+            </View>
             <Text style={styles.quickActionLabel}>Collections</Text>
           </Pressable>
           <Pressable
@@ -220,7 +231,9 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Open command palette"
           >
-            <Text style={styles.quickActionIcon}>⌘</Text>
+            <View style={styles.quickActionIconWrap}>
+              <Icon name="cog" size={19} color={colors.accentLight} />
+            </View>
             <Text style={styles.quickActionLabel}>Commands</Text>
           </Pressable>
         </View>
@@ -232,7 +245,7 @@ export default function HomeScreen() {
               <View style={[styles.promptDot, postedToday && styles.promptDotCompleted]} />
               <Text style={styles.promptTagText}>TODAY'S PROMPT</Text>
             </View>
-            <Text style={styles.streakBadge}>{postedToday ? '🔥 Posted Today' : '⏳ Pending'}</Text>
+            <Text style={styles.streakBadge}>{postedToday ? 'Today complete' : 'Your daily moment'}</Text>
           </View>
 
           <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
@@ -436,6 +449,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  ambientBackdrop: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+  },
+  ambientGlow: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: radius.circle,
+  },
+  ambientGlowPrimary: {
+    top: 90,
+    right: -150,
+    backgroundColor: 'rgba(184, 79, 125, 0.09)',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 0 110px 72px rgba(184, 79, 125, 0.12)' }
+      : {}),
+  },
+  ambientGlowSecondary: {
+    top: 360,
+    left: -180,
+    width: 230,
+    height: 230,
+    backgroundColor: 'rgba(104, 82, 151, 0.08)',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 0 100px 68px rgba(104, 82, 151, 0.1)' }
+      : {}),
+  },
   content: {
     width: '100%',
     maxWidth: layout.maxContentWidth,
@@ -496,8 +537,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
-  quickActionIcon: {
-    fontSize: 20,
+  quickActionIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.circle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(184, 79, 125, 0.12)',
+    borderWidth: borders.hairline,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   quickActionLabel: {
     ...typography.sans.caption2,
