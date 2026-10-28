@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
+  BackHandler,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -38,10 +40,59 @@ export default function CreateScreen() {
   const [tags, setTags] = useState<string[]>([]);
   const [category, setCategory] = useState<MemoryCategory>('General');
   const [isSaving, setIsSaving] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleBack = useCallback(() => {
+    if (step === 'details') {
+      if (caption.trim() || title.trim() || location.trim() || tags.length > 0) {
+        Alert.alert('Discard changes?', 'You have unsaved changes that will be lost.', [
+          { text: 'Keep editing', style: 'cancel' },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              setPhotoUri(null);
+              setCaption('');
+              setTitle('');
+              setLocation('');
+              setTags([]);
+              setStep('landing');
+            },
+          },
+        ]);
+      } else {
+        setPhotoUri(null);
+        setStep('landing');
+      }
+    } else {
+      router.back();
+    }
+  }, [step, caption, title, location, tags]);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (step === 'details') {
+          handleBack();
+          return true;
+        }
+        return false;
+      });
+      return () => backHandler.remove();
+    }
+  }, [step, handleBack]);
 
   const handleTakePhoto = async () => {
     try {
+      setErrorMessage(null);
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        setErrorMessage('Camera permission is required to capture memories.');
+        return;
+      }
+
+      setIsProcessing(true);
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.9,
@@ -54,11 +105,21 @@ export default function CreateScreen() {
       }
     } catch {
       setErrorMessage('Could not access camera.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleChooseFromLibrary = async () => {
     try {
+      setErrorMessage(null);
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setErrorMessage('Photo library permission is required to select photos.');
+        return;
+      }
+
+      setIsProcessing(true);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.9,
@@ -71,6 +132,8 @@ export default function CreateScreen() {
       }
     } catch {
       setErrorMessage('Could not open photo library.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -109,21 +172,18 @@ export default function CreateScreen() {
     }
   };
 
-  const handleBack = () => {
-    if (step === 'details') {
-      setStep('landing');
-    } else {
-      router.back();
-    }
-  };
-
   if (step === 'landing') {
     return (
       <SafeAreaView style={styles.safeArea}>
         <BackgroundPattern />
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
-            <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
+            <Pressable
+              onPress={handleBack}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
               <Text style={styles.backText}>Back</Text>
             </Pressable>
             <Text style={styles.screenTitle}>New Memory</Text>
@@ -135,7 +195,8 @@ export default function CreateScreen() {
           <View style={styles.landingOptions}>
             <Pressable
               onPress={handleTakePhoto}
-              style={styles.optionCard}
+              disabled={isProcessing}
+              style={[styles.optionCard, isProcessing && styles.optionCardDisabled]}
               accessibilityRole="button"
               accessibilityLabel="Take a photo"
             >
@@ -144,14 +205,17 @@ export default function CreateScreen() {
               </View>
               <View style={styles.optionText}>
                 <Text style={styles.optionTitle}>Take a photo</Text>
-                <Text style={styles.optionSubtitle}>Capture the moment now</Text>
+                <Text style={styles.optionSubtitle}>
+                  {isProcessing ? 'Opening camera…' : 'Capture the moment now'}
+                </Text>
               </View>
               <Icon name="chevron-right" size={16} color={colors.textMuted} />
             </Pressable>
 
             <Pressable
               onPress={handleChooseFromLibrary}
-              style={styles.optionCard}
+              disabled={isProcessing}
+              style={[styles.optionCard, isProcessing && styles.optionCardDisabled]}
               accessibilityRole="button"
               accessibilityLabel="Choose from gallery"
             >
@@ -160,7 +224,9 @@ export default function CreateScreen() {
               </View>
               <View style={styles.optionText}>
                 <Text style={styles.optionTitle}>Choose from gallery</Text>
-                <Text style={styles.optionSubtitle}>Select an existing photo</Text>
+                <Text style={styles.optionSubtitle}>
+                  {isProcessing ? 'Opening gallery…' : 'Select an existing photo'}
+                </Text>
               </View>
               <Icon name="chevron-right" size={16} color={colors.textMuted} />
             </Pressable>
@@ -180,12 +246,17 @@ export default function CreateScreen() {
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
+            <Pressable
+              onPress={handleBack}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
               <Text style={styles.backText}>Back</Text>
             </Pressable>
             <Text style={styles.screenTitle}>Add Details</Text>
             <Pressable
-              onPress={() => router.push('/(tabs)/create')}
+              onPress={() => setStep('landing')}
               style={styles.backButton}
               accessibilityRole="button"
               accessibilityLabel="Retake photo"
@@ -209,9 +280,10 @@ export default function CreateScreen() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Beach day, Birthday party…"
+                placeholderTextColor={colors.textMuted}
                 style={styles.textInput}
                 autoCapitalize="words"
-                autoFocus
+                autoFocus={Platform.OS === 'web'}
                 maxLength={80}
                 returnKeyType="next"
                 accessibilityLabel="Memory title"
@@ -225,6 +297,7 @@ export default function CreateScreen() {
                 value={caption}
                 onChangeText={setCaption}
                 placeholder="We stayed until sunset…"
+                placeholderTextColor={colors.textMuted}
                 style={[styles.textInput, styles.textInputMultiline]}
                 multiline
                 maxLength={500}
@@ -266,6 +339,7 @@ export default function CreateScreen() {
                 value={location}
                 onChangeText={setLocation}
                 placeholder="Paris, France"
+                placeholderTextColor={colors.textMuted}
                 style={styles.textInput}
                 autoCapitalize="words"
                 maxLength={100}
@@ -280,7 +354,12 @@ export default function CreateScreen() {
               {tags.length > 0 && (
                 <View style={styles.tagsList}>
                   {tags.map((tag) => (
-                    <TagBadge key={tag} label={tag} onRemove={() => handleRemoveTag(tag)} size="md" />
+                    <TagBadge
+                      key={tag}
+                      label={tag}
+                      onRemove={() => handleRemoveTag(tag)}
+                      size="md"
+                    />
                   ))}
                 </View>
               )}
@@ -289,6 +368,7 @@ export default function CreateScreen() {
                   value={newTag}
                   onChangeText={setNewTag}
                   placeholder="Add a tag…"
+                  placeholderTextColor={colors.textMuted}
                   style={[styles.textInput, styles.tagInput]}
                   autoCapitalize="none"
                   maxLength={30}
@@ -400,6 +480,9 @@ const styles = StyleSheet.create({
           shadowRadius: 8,
           elevation: 2,
         }),
+  },
+  optionCardDisabled: {
+    opacity: 0.6,
   },
   optionIcon: {
     width: 56,

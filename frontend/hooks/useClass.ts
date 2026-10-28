@@ -24,7 +24,8 @@ export function useClass() {
       const stored = await AsyncStorage.getItem(CLASSES_STORAGE_KEY);
       if (stored) {
         try {
-          localClasses = JSON.parse(stored) as ClassRecord[];
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) localClasses = parsed;
         } catch {
           // ignore parsing error
         }

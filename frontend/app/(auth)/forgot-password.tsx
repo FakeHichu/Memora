@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.kicker}>Reset access</Text>
         <Text style={styles.title}>Forgot your password?</Text>
         <Text style={styles.subtitle}>We'll send a reset link to the email on your account.</Text>
@@ -38,6 +38,8 @@ export default function ForgotPasswordScreen() {
           <TextInput
             value={email}
             onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
             style={styles.input}

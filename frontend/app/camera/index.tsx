@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing, typography, radius } from '@/constants/theme';
 import { setPhotoDraft } from '@/lib/photo-draft';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CameraIndexScreen() {
   const cameraRef = useRef<CameraView | null>(null);
@@ -84,7 +83,6 @@ export default function CameraIndexScreen() {
         onCameraReady={() => setCameraReady(true)}
         onMountError={({ message }) => setErrorMessage(message)}
       />
-      <BackgroundPattern />
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
           <Pressable

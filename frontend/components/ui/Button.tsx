@@ -1,5 +1,4 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
+import { Insets, Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
 import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
 
@@ -13,6 +12,7 @@ type ButtonProps = {
   size?: 'sm' | 'md' | 'lg';
   leftIcon?: string;
   rightIcon?: string;
+  hitSlop?: Insets | number;
 };
 
 export function Button({
@@ -25,6 +25,7 @@ export function Button({
   size = 'md',
   leftIcon,
   rightIcon,
+  hitSlop,
 }: ButtonProps) {
   const sizeStyles = {
     sm: styles.sizeSm,
@@ -57,6 +58,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled }}
+      hitSlop={hitSlop ?? (size === 'sm' ? { top: 8, bottom: 8, left: 8, right: 8 } : undefined)}
       style={({ pressed }) => [
         styles.base,
         sizeStyles,

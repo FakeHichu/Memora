@@ -12,7 +12,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { radius, spacing, typography, layout, borders, type ThemeColors, type ThemeMode } from '@/constants/theme';
+import {
+  radius,
+  spacing,
+  typography,
+  layout,
+  borders,
+  type ThemeColors,
+  type ThemeMode,
+} from '@/constants/theme';
 import {
   clearLocalPhotoPosts,
   exportAllData,
@@ -104,7 +112,11 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header */}
         <View style={styles.header}>
           <IconButton
@@ -144,30 +156,45 @@ export default function SettingsScreen() {
             <Text style={styles.appearanceLabel}>Color theme</Text>
             <Text style={styles.appearanceHint}>Choose how Memora looks on this device.</Text>
             <View style={styles.appearanceOptions} accessibilityLabel="Color theme">
-              {([
-                { value: 'dark', label: 'Dark', icon: '☾' },
-                { value: 'light', label: 'Light', icon: '☼' },
-              ] as const).map((option) => (
+              {(
+                [
+                  { value: 'dark', label: 'Dark', icon: '☾' },
+                  { value: 'light', label: 'Light', icon: '☼' },
+                ] as const
+              ).map((option) => (
                 <Pressable
                   key={option.value}
                   onPress={() => setMode(option.value as ThemeMode)}
-                  style={[styles.appearanceOption, mode === option.value && styles.appearanceOptionActive]}
+                  style={[
+                    styles.appearanceOption,
+                    mode === option.value && styles.appearanceOptionActive,
+                  ]}
                   accessibilityRole="button"
                   accessibilityLabel={`${option.label} theme`}
                   accessibilityState={{ selected: mode === option.value }}
                 >
-                  <Text style={[styles.appearanceIcon, mode === option.value && styles.appearanceIconActive]}>{option.icon}</Text>
-                  <Text style={[styles.appearanceOptionLabel, mode === option.value && styles.appearanceOptionLabelActive]}>{option.label}</Text>
+                  <Text
+                    style={[
+                      styles.appearanceIcon,
+                      mode === option.value && styles.appearanceIconActive,
+                    ]}
+                  >
+                    {option.icon}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.appearanceOptionLabel,
+                      mode === option.value && styles.appearanceOptionLabelActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
           </View>
           <ProfileDivider />
-          <ProfileRow
-            label="App icon"
-            value="Default"
-            icon="picture"
-          />
+          <ProfileRow label="App icon" value="Default" icon="picture" />
         </ProfileSection>
 
         {/* Data */}
@@ -191,7 +218,7 @@ export default function SettingsScreen() {
               <TextInput
                 value={importJson}
                 onChangeText={setImportJson}
-                placeholder='Paste your exported JSON here…'
+                placeholder="Paste your exported JSON here…"
                 placeholderTextColor={colors.textMuted}
                 style={styles.importInput}
                 multiline
@@ -201,7 +228,15 @@ export default function SettingsScreen() {
                 accessibilityLabel="Import JSON"
               />
               <View style={styles.importActions}>
-                <Button title="Cancel" variant="secondary" size="sm" onPress={() => { setShowImportInput(false); setImportJson(''); }} />
+                <Button
+                  title="Cancel"
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => {
+                    setShowImportInput(false);
+                    setImportJson('');
+                  }}
+                />
                 <Button
                   title={isImporting ? 'Importing…' : 'Import'}
                   variant="accent"
@@ -259,161 +294,161 @@ export default function SettingsScreen() {
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.xl,
-    maxWidth: layout.maxContentWidth,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.serif.title2,
-    color: colors.textPrimary,
-  },
-  appInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  appIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appIconText: {
-    ...typography.serif.title3,
-    color: colors.chrome,
-    fontWeight: '700',
-  },
-  appTextContainer: {
-    flex: 1,
-    gap: 2,
-  },
-  appName: {
-    ...typography.sans.headline,
-    color: colors.textPrimary,
-  },
-  appTagline: {
-    ...typography.sans.subheadline,
-    color: colors.textSecondary,
-  },
-  appVersion: {
-    ...typography.mono.caption,
-    color: colors.textMuted,
-  },
-  appearanceControl: {
-    gap: spacing.sm,
-    padding: spacing.lg,
-  },
-  appearanceLabel: {
-    ...typography.sans.callout,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  appearanceHint: {
-    ...typography.sans.footnote,
-    color: colors.textSecondary,
-  },
-  appearanceOptions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  appearanceOption: {
-    flex: 1,
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    borderWidth: borders.hairline,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceElevated,
-  },
-  appearanceOptionActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSubtle,
-  },
-  appearanceIcon: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  appearanceIconActive: {
-    color: colors.accent,
-  },
-  appearanceOptionLabel: {
-    ...typography.sans.callout,
-    color: colors.textSecondary,
-  },
-  appearanceOptionLabelActive: {
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  shortcutsList: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  shortcutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  shortcutKey: {
-    ...typography.mono.body,
-    color: colors.accent,
-    fontWeight: '700',
-    backgroundColor: colors.accentSubtle,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    borderWidth: borders.hairline,
-    borderColor: colors.accent,
-    minWidth: 44,
-    textAlign: 'center',
-  },
-  shortcutAction: {
-    ...typography.sans.callout,
-    color: colors.textSecondary,
-  },
-  importContainer: {
-    padding: spacing.md,
-    gap: spacing.md,
-    borderTopWidth: borders.hairline,
-    borderTopColor: colors.borderSubtle,
-  },
-  importInput: {
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    color: colors.textPrimary,
-    ...typography.mono.body,
-    minHeight: 120,
-    fontSize: 11,
-  },
-  importActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-  },
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: spacing.xl,
+      paddingBottom: spacing.xxxl,
+      gap: spacing.xl,
+      maxWidth: layout.maxContentWidth,
+      width: '100%',
+      alignSelf: 'center',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    title: {
+      ...typography.serif.title2,
+      color: colors.textPrimary,
+    },
+    appInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    appIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
+      backgroundColor: colors.chromeDark,
+      borderWidth: borders.thin,
+      borderColor: colors.chrome,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    appIconText: {
+      ...typography.serif.title3,
+      color: colors.chrome,
+      fontWeight: '700',
+    },
+    appTextContainer: {
+      flex: 1,
+      gap: 2,
+    },
+    appName: {
+      ...typography.sans.headline,
+      color: colors.textPrimary,
+    },
+    appTagline: {
+      ...typography.sans.subheadline,
+      color: colors.textSecondary,
+    },
+    appVersion: {
+      ...typography.mono.caption,
+      color: colors.textMuted,
+    },
+    appearanceControl: {
+      gap: spacing.sm,
+      padding: spacing.lg,
+    },
+    appearanceLabel: {
+      ...typography.sans.callout,
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    appearanceHint: {
+      ...typography.sans.footnote,
+      color: colors.textSecondary,
+    },
+    appearanceOptions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    appearanceOption: {
+      flex: 1,
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      borderWidth: borders.hairline,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceElevated,
+    },
+    appearanceOptionActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accentSubtle,
+    },
+    appearanceIcon: {
+      color: colors.textSecondary,
+      fontSize: 16,
+    },
+    appearanceIconActive: {
+      color: colors.accent,
+    },
+    appearanceOptionLabel: {
+      ...typography.sans.callout,
+      color: colors.textSecondary,
+    },
+    appearanceOptionLabelActive: {
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    shortcutsList: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    shortcutRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.lg,
+    },
+    shortcutKey: {
+      ...typography.mono.body,
+      color: colors.accent,
+      fontWeight: '700',
+      backgroundColor: colors.accentSubtle,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.sm,
+      borderWidth: borders.hairline,
+      borderColor: colors.accent,
+      minWidth: 44,
+      textAlign: 'center',
+    },
+    shortcutAction: {
+      ...typography.sans.callout,
+      color: colors.textSecondary,
+    },
+    importContainer: {
+      padding: spacing.md,
+      gap: spacing.md,
+      borderTopWidth: borders.hairline,
+      borderTopColor: colors.borderSubtle,
+    },
+    importInput: {
+      backgroundColor: colors.backgroundElevated,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderDefault,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      color: colors.textPrimary,
+      ...typography.mono.body,
+      minHeight: 120,
+      fontSize: 11,
+    },
+    importActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: spacing.md,
+    },
   });
 }

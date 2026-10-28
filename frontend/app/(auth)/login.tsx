@@ -35,7 +35,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <View style={styles.brandRow}>
             <View style={styles.brandMark}>
@@ -58,6 +58,7 @@ export default function LoginScreen() {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="you@example.com"
+                  placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   autoComplete="email"
                   keyboardType="email-address"
@@ -70,6 +71,7 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Enter your password"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry
                   autoComplete="current-password"
                   returnKeyType="done"

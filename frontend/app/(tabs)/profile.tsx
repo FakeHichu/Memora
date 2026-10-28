@@ -1,38 +1,65 @@
 import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
-import { clearLocalPhotoPosts, getLocalPhotoPosts } from '@/lib/photo-draft';
+import { clearLocalPhotoPosts, getLocalPhotoPosts, getLocalProfile } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { signOut } from '@/lib/supabase/auth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { useAuth } from '@/hooks/useAuth';
+import { SkeletonProfileHeader } from '@/components/ui/Skeleton';
 
 export default function ProfileScreen() {
+  const { session, isLoading: isAuthLoading } = useAuth();
   const [photoCount, setPhotoCount] = useState(0);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  const refreshPhotoCount = useCallback(() => {
-    getLocalPhotoPosts().then((posts) => setPhotoCount(posts.length));
-  }, []);
-
-  useFocusEffect(refreshPhotoCount);
+  const [localProfile, setLocalProfile] = useState<{ name: string; handle: string; email: string }>(
+    {
+      name: 'Memory Keeper',
+      handle: '@memora',
+      email: '',
+    },
+  );
+  const [isLoading, setIsLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
-      if (hasSupabaseConfig) {
-        setIsSignedIn(true);
-        setUserName('Alex Morgan');
-      }
+      let isActive = true;
+      Promise.all([getLocalPhotoPosts(), getLocalProfile()]).then(([posts, prof]) => {
+        if (isActive) {
+          setPhotoCount(posts.length);
+          setLocalProfile(prof);
+          setIsLoading(false);
+        }
+      });
+      return () => {
+        isActive = false;
+      };
     }, []),
   );
 
+  const isSignedIn = Boolean(session?.user);
+  const displayName =
+    (session?.user?.user_metadata?.full_name as string | undefined) ||
+    session?.user?.email?.split('@')[0] ||
+    localProfile.name;
+  const displayEmail = session?.user?.email || localProfile.email;
+
   const confirmClearPhotos = () => {
+    if (Platform.OS === 'web') {
+      // eslint-disable-next-line no-alert
+      if (
+        typeof window !== 'undefined' &&
+        window.confirm('Delete all photos? This permanently removes the photos saved in this app.')
+      ) {
+        clearLocalPhotoPosts().then(() => setPhotoCount(0));
+      }
+      return;
+    }
     Alert.alert('Delete all photos?', 'This permanently removes the photos saved in this app.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -48,8 +75,6 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     if (hasSupabaseConfig) {
       await signOut();
-      setIsSignedIn(false);
-      setUserName('');
     }
   };
 
@@ -59,104 +84,116 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AppHeader title="Profile" subtitle="Your account" />
 
-        {/* Account Section */}
-        <ProfileSection title="Account" style={styles.accountSection}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{userName ? userName.charAt(0) : 'A'}</Text>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{userName || 'Local User'}</Text>
-              <Text style={styles.profileStatus}>
-                {isSignedIn ? 'Signed in with email' : 'Using local storage only'}
-              </Text>
-            </View>
+        {/* Loading Skeleton */}
+        {(isLoading || isAuthLoading) && (
+          <View style={styles.skeletonWrapper}>
+            <SkeletonProfileHeader />
           </View>
+        )}
 
-          {isSignedIn && (
-            <>
-              <ProfileDivider />
-              <ProfileRow label="Email" value="alex@example.com" icon="envelope" />
-              <ProfileDivider />
-              <ProfileRow label="Sign out" value="" icon="door" onPress={handleSignOut} destructive />
-            </>
-          )}
+        {/* Account Section */}
+        {!isLoading && !isAuthLoading && (
+          <>
+            <ProfileSection title="Account" style={styles.accountSection}>
+              <View style={styles.profileHeader}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {displayName ? displayName.charAt(0).toUpperCase() : 'M'}
+                  </Text>
+                </View>
+                <View style={styles.profileInfo}>
+                  <Text style={styles.profileName}>{displayName}</Text>
+                  <Text style={styles.profileStatus}>
+                    {isSignedIn ? 'Signed in with email' : 'Using local storage only'}
+                  </Text>
+                </View>
+              </View>
 
-          {!isSignedIn && hasSupabaseConfig && (
-            <>
+              {isSignedIn && (
+                <>
+                  <ProfileDivider />
+                  {displayEmail ? (
+                    <ProfileRow label="Email" value={displayEmail} icon="envelope" />
+                  ) : null}
+                  <ProfileDivider />
+                  <ProfileRow
+                    label="Sign out"
+                    value=""
+                    icon="door"
+                    onPress={handleSignOut}
+                    destructive
+                  />
+                </>
+              )}
+
+              {!isSignedIn && hasSupabaseConfig && (
+                <>
+                  <ProfileDivider />
+                  <ProfileRow
+                    label="Sign in"
+                    value="Connect your account to sync across devices"
+                    icon="padlock"
+                    onPress={() => router.push('/(auth)/login')}
+                  />
+                </>
+              )}
+            </ProfileSection>
+
+            {/* Photo Storage Section */}
+            <ProfileSection title="Photo Storage">
+              <ProfileRow
+                label="Photos saved"
+                value={`${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`}
+                icon="camera"
+              />
               <ProfileDivider />
               <ProfileRow
-                label="Sign in"
-                value="Connect your account to sync across devices"
-                icon="padlock"
-                onPress={() => router.push('/(auth)/login')}
+                label="Storage location"
+                value={hasSupabaseConfig && isSignedIn ? 'Cloud (Supabase)' : 'This device only'}
+                icon="cloud"
               />
-            </>
-          )}
-        </ProfileSection>
+              <ProfileDivider />
+              <ProfileRow label="Offline mode" value="Always available locally" icon="cloud" />
 
-        {/* Photo Storage Section */}
-        <ProfileSection title="Photo Storage">
-          <ProfileRow
-            label="Photos saved"
-            value={`${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`}
-            icon="camera"
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Storage location"
-            value={hasSupabaseConfig && isSignedIn ? 'Cloud (Supabase)' : 'This device only'}
-            icon="cloud"
-          />
-          <ProfileDivider />
-          <ProfileRow label="Auto-backup" value="Enabled" icon="cloud" />
+              {photoCount > 0 && (
+                <>
+                  <ProfileDivider />
+                  <ProfileRow
+                    label="Delete all photos"
+                    value="This cannot be undone"
+                    icon="trash"
+                    onPress={confirmClearPhotos}
+                    destructive
+                  />
+                </>
+              )}
+            </ProfileSection>
 
-          {photoCount > 0 && (
-            <>
+            {/* Notifications Section */}
+            <ProfileSection title="Notifications">
+              <ProfileRow label="Daily reminder" value="9:00 PM" icon="clock" />
+              <ProfileDivider />
+              <ProfileRow label="Memory notifications" value="On" icon="bell" />
+            </ProfileSection>
+
+            {/* Settings & Preferences */}
+            <ProfileSection title="Preferences">
+              <ProfileRow
+                label="Settings"
+                value="Appearance, notifications, data"
+                icon="cog"
+                onPress={() => router.push('/settings')}
+              />
               <ProfileDivider />
               <ProfileRow
-                label="Delete all photos"
-                value="This cannot be undone"
-                icon="trash"
-                onPress={confirmClearPhotos}
-                destructive
+                label="Collections"
+                value="Manage memory collections"
+                icon="folder"
+                onPress={() => router.push('/collections')}
               />
-            </>
-          )}
-        </ProfileSection>
-
-        {/* Notifications Section */}
-        <ProfileSection title="Notifications">
-          <ProfileRow label="Daily reminder" value="9:00 PM" icon="clock" />
-          <ProfileDivider />
-          <ProfileRow label="Memory notifications" value="On" icon="bell" />
-        </ProfileSection>
-
-        {/* About Section */}
-        <ProfileSection title="About">
-          <ProfileRow label="Version" value="1.0.0" icon="info" />
-          <ProfileDivider />
-          <ProfileRow
-            label="Privacy Policy"
-            value="View our privacy policy"
-            icon="file"
-            onPress={() => console.log('Open privacy policy')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Terms of Service"
-            value="Read our terms"
-            icon="file"
-            onPress={() => console.log('Open terms')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Open Source Licenses"
-            value="View licenses"
-            icon="file"
-            onPress={() => console.log('Open licenses')}
-          />
-        </ProfileSection>
+            </ProfileSection>
+          </>
+        )}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -174,6 +211,9 @@ const styles = StyleSheet.create({
     maxWidth: layout.maxContentWidth,
     alignSelf: 'center',
     paddingBottom: spacing.xxxl + layout.tabBarHeight,
+  },
+  skeletonWrapper: {
+    marginTop: spacing.lg,
   },
   accountSection: {
     marginTop: spacing.lg,

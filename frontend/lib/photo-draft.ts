@@ -167,7 +167,12 @@ export async function getLocalPhotoPosts(): Promise<LocalPhotoPost[]> {
   if (!savedPosts) return [];
 
   try {
-    const posts = JSON.parse(savedPosts) as LocalPhotoPost[];
+    const parsed = JSON.parse(savedPosts);
+    if (!Array.isArray(parsed)) {
+      await AsyncStorage.removeItem(postsStorageKey);
+      return [];
+    }
+    const posts = parsed as LocalPhotoPost[];
     // Migrate old posts: ensure new fields exist
     return posts.map((p) => ({
       isFavorite: false,
@@ -226,7 +231,9 @@ export async function updateLocalPhotoCaption(
 
 export async function updateLocalPhotoPost(
   id: string,
-  updates: Partial<Pick<LocalPhotoPost, 'title' | 'caption' | 'tags' | 'category' | 'location' | 'collectionId'>>,
+  updates: Partial<
+    Pick<LocalPhotoPost, 'title' | 'caption' | 'tags' | 'category' | 'location' | 'collectionId'>
+  >,
 ): Promise<LocalPhotoPost | null> {
   return updatePost(id, (post) => ({
     ...post,
@@ -415,7 +422,8 @@ export async function getAllTags(): Promise<string[]> {
 // BULK ACTIONS
 // ============================================================================
 
-export type BulkAction = 'delete' | 'archive' | 'unarchive' | 'favorite' | 'unfavorite' | 'pin' | 'unpin';
+export type BulkAction =
+  'delete' | 'archive' | 'unarchive' | 'favorite' | 'unfavorite' | 'pin' | 'unpin';
 
 export async function bulkAction(ids: string[], action: BulkAction): Promise<void> {
   const posts = await getLocalPhotoPosts();
@@ -475,7 +483,8 @@ async function getCollectionsRaw(): Promise<LocalCollection[]> {
   const stored = await AsyncStorage.getItem(collectionsStorageKey);
   if (!stored) return [];
   try {
-    return JSON.parse(stored) as LocalCollection[];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as LocalCollection[]) : [];
   } catch {
     return [];
   }
@@ -543,7 +552,9 @@ export async function deleteCollection(id: string, unassignMemories = true): Pro
   if (unassignMemories) {
     const posts = await getLocalPhotoPosts();
     const updated = posts.map((p) =>
-      p.collectionId === id ? { ...p, collectionId: undefined, updatedAt: new Date().toISOString() } : p,
+      p.collectionId === id
+        ? { ...p, collectionId: undefined, updatedAt: new Date().toISOString() }
+        : p,
     );
     await savePostsToStorage(updated);
   }
@@ -688,22 +699,35 @@ export async function importData(jsonString: string): Promise<ImportResult> {
 const MAX_RECENTLY_VIEWED = 20;
 
 export async function recordRecentlyViewed(postId: string): Promise<void> {
-  const stored = await AsyncStorage.getItem(recentlyViewedKey);
-  const viewed: string[] = stored ? JSON.parse(stored) : [];
-  const filtered = viewed.filter((id) => id !== postId);
-  const updated = [postId, ...filtered].slice(0, MAX_RECENTLY_VIEWED);
-  await AsyncStorage.setItem(recentlyViewedKey, JSON.stringify(updated));
+  try {
+    const stored = await AsyncStorage.getItem(recentlyViewedKey);
+    let viewed: string[] = [];
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) viewed = parsed;
+    }
+    const filtered = viewed.filter((id) => id !== postId);
+    const updated = [postId, ...filtered].slice(0, MAX_RECENTLY_VIEWED);
+    await AsyncStorage.setItem(recentlyViewedKey, JSON.stringify(updated));
+  } catch {
+    // Graceful fallback for corrupted local storage
+  }
 }
 
 export async function getRecentlyViewedPosts(): Promise<LocalPhotoPost[]> {
-  const stored = await AsyncStorage.getItem(recentlyViewedKey);
-  if (!stored) return [];
+  try {
+    const stored = await AsyncStorage.getItem(recentlyViewedKey);
+    if (!stored) return [];
 
-  const ids: string[] = JSON.parse(stored);
-  const posts = await getLocalPhotoPosts();
-  const postMap = new Map(posts.map((p) => [p.id, p]));
+    const parsed = JSON.parse(stored);
+    const ids: string[] = Array.isArray(parsed) ? parsed : [];
+    const posts = await getLocalPhotoPosts();
+    const postMap = new Map(posts.map((p) => [p.id, p]));
 
-  return ids.map((id) => postMap.get(id)).filter((p): p is LocalPhotoPost => p !== undefined);
+    return ids.map((id) => postMap.get(id)).filter((p): p is LocalPhotoPost => p !== undefined);
+  } catch {
+    return [];
+  }
 }
 
 // ============================================================================
@@ -716,17 +740,30 @@ export async function addRecentSearch(query: string): Promise<void> {
   const trimmed = query.trim();
   if (!trimmed) return;
 
-  const stored = await AsyncStorage.getItem(recentSearchesKey);
-  const searches: string[] = stored ? JSON.parse(stored) : [];
-  const filtered = searches.filter((s) => s !== trimmed);
-  const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_SEARCHES);
-  await AsyncStorage.setItem(recentSearchesKey, JSON.stringify(updated));
+  try {
+    const stored = await AsyncStorage.getItem(recentSearchesKey);
+    let searches: string[] = [];
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) searches = parsed;
+    }
+    const filtered = searches.filter((s) => s !== trimmed);
+    const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_SEARCHES);
+    await AsyncStorage.setItem(recentSearchesKey, JSON.stringify(updated));
+  } catch {
+    // Graceful fallback
+  }
 }
 
 export async function getRecentSearches(): Promise<string[]> {
-  const stored = await AsyncStorage.getItem(recentSearchesKey);
-  if (!stored) return [];
-  return JSON.parse(stored) as string[];
+  try {
+    const stored = await AsyncStorage.getItem(recentSearchesKey);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function clearRecentSearches(): Promise<void> {

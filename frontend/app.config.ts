@@ -5,6 +5,21 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
   name: 'Memora',
   slug: 'memora',
   scheme: process.env.EXPO_PUBLIC_APP_SCHEME ?? 'memora',
+  ios: {
+    ...config.ios,
+    supportsTablet: true,
+    bundleIdentifier: 'com.memora.classmemories',
+    infoPlist: {
+      NSCameraUsageDescription: 'Allow Memora to use the camera for capturing daily memories.',
+      NSPhotoLibraryUsageDescription:
+        'Allow Memora to access your photo library to select memories.',
+    },
+  },
+  android: {
+    ...config.android,
+    package: 'com.memora.classmemories',
+    permissions: ['android.permission.CAMERA', 'android.permission.READ_MEDIA_IMAGES'],
+  },
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
@@ -16,7 +31,14 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
     [
       'expo-camera',
       {
-        cameraPermission: 'Allow Memora to use the camera for daily class photos.',
+        cameraPermission: 'Allow Memora to use the camera for capturing daily memories.',
+      },
+    ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Allow Memora to access your photo library to select memories.',
+        cameraPermission: 'Allow Memora to use your camera to capture memories.',
       },
     ],
   ],

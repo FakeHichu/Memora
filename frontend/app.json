@@ -11,15 +11,31 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Memora to use the camera for daily class photos."
+          "cameraPermission": "Allow Memora to use the camera for capturing daily memories."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Memora to access your photo library to select memories.",
+          "cameraPermission": "Allow Memora to use your camera to capture memories."
         }
       ]
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.memora.classmemories",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Memora to use the camera for capturing daily memories.",
+        "NSPhotoLibraryUsageDescription": "Allow Memora to access your photo library to select memories."
+      }
     },
     "android": {
       "package": "com.memora.classmemories",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

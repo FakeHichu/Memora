@@ -1,15 +1,31 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
-import { clearPhotoDraft, getPhotoDraft, publishLocalPhoto } from '@/lib/photo-draft';
+import {
+  clearPhotoDraft,
+  getPhotoDraft,
+  getPromptDraft,
+  publishLocalPhoto,
+} from '@/lib/photo-draft';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
+  const [prompt] = useState(() => getPromptDraft());
   const [caption, setCaption] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -29,7 +45,8 @@ export default function CameraPreviewScreen() {
     setIsSaving(true);
 
     try {
-      await publishLocalPhoto(photoUri, caption.trim());
+      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
+      clearPhotoDraft();
       router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
@@ -40,65 +57,76 @@ export default function CameraPreviewScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Pressable onPress={retake} accessibilityRole="button" accessibilityLabel="Retake photo">
-            <Text style={styles.retakeText}>Retake</Text>
-          </Pressable>
-          <Text style={styles.kicker}>PHOTO PREVIEW</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
-        {photoUri ? (
-          <Image
-            source={{ uri: photoUri }}
-            style={styles.photo}
-            resizeMode="cover"
-            accessibilityLabel="Captured photo preview"
-          />
-        ) : (
-          <View style={[styles.photo, styles.emptyPhoto]}>
-            <Text style={styles.emptyText}>No photo captured</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Pressable
+              onPress={retake}
+              accessibilityRole="button"
+              accessibilityLabel="Retake photo"
+            >
+              <Text style={styles.retakeText}>Retake</Text>
+            </Pressable>
+            <Text style={styles.kicker}>PHOTO PREVIEW</Text>
+            <View style={styles.headerSpacer} />
           </View>
-        )}
 
-        <View style={styles.promptRow}>
-          <View style={styles.promptDot} />
-          <Text style={styles.prompt}>Show us something interesting you saw today.</Text>
-        </View>
+          {photoUri ? (
+            <Image
+              source={{ uri: photoUri }}
+              style={styles.photo}
+              resizeMode="cover"
+              accessibilityLabel="Captured photo preview"
+            />
+          ) : (
+            <View style={[styles.photo, styles.emptyPhoto]}>
+              <Text style={styles.emptyText}>No photo captured</Text>
+            </View>
+          )}
 
-        <TextInput
-          value={caption}
-          onChangeText={setCaption}
-          placeholder="Add a caption..."
-          placeholderTextColor={colors.textMuted}
-          maxLength={280}
-          multiline
-          style={styles.captionInput}
-          accessibilityLabel="Photo caption"
-        />
+          <View style={styles.promptRow}>
+            <View style={styles.promptDot} />
+            <Text style={styles.prompt}>
+              {prompt || 'Show us something interesting you saw today.'}
+            </Text>
+          </View>
 
-        {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
-
-        <View style={styles.actions}>
-          <Button
-            title="Retake"
-            variant="secondary"
-            onPress={retake}
-            style={styles.actionButton}
-            disabled={isSaving}
+          <TextInput
+            value={caption}
+            onChangeText={setCaption}
+            placeholder="Add a caption..."
+            placeholderTextColor={colors.textMuted}
+            maxLength={280}
+            multiline
+            style={styles.captionInput}
+            accessibilityLabel="Photo caption"
           />
-          <Pressable
-            onPress={postPhoto}
-            disabled={!photoUri || isSaving}
-            accessibilityRole="button"
-            accessibilityLabel="Post photo"
-            style={[styles.postButton, (!photoUri || isSaving) && styles.disabledButton]}
-          >
-            <Text style={styles.postButtonText}>{isSaving ? 'Saving…' : 'Post'}</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+
+          {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+
+          <View style={styles.actions}>
+            <Button
+              title="Retake"
+              variant="secondary"
+              onPress={retake}
+              style={styles.actionButton}
+              disabled={isSaving}
+            />
+            <Pressable
+              onPress={postPhoto}
+              disabled={!photoUri || isSaving}
+              accessibilityRole="button"
+              accessibilityLabel="Post photo"
+              style={[styles.postButton, (!photoUri || isSaving) && styles.disabledButton]}
+            >
+              <Text style={styles.postButtonText}>{isSaving ? 'Saving…' : 'Post'}</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

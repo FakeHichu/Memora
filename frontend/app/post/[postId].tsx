@@ -3,9 +3,12 @@ import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
+  Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -13,15 +16,16 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
-import { getLocalPhotoPost, type LocalPhotoPost } from '@/lib/photo-draft';
+import { getLocalPhotoPost, deleteLocalPhotoPost, type LocalPhotoPost } from '@/lib/photo-draft';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { IconButton } from '@/components/ui/IconButton';
 
 export default function PostDetailScreen() {
+  const insets = useSafeAreaInsets();
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const [post, setPost] = useState<LocalPhotoPost | null>(null);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
@@ -69,16 +73,52 @@ export default function PostDetailScreen() {
     return () => scrollYRef.removeListener(listenerId);
   }, [headerOpacity, scrollY]);
 
-  const handleEdit = () => {
-    console.log('Edit memory:', post?.id);
-  };
-
   const handleDelete = () => {
-    console.log('Delete memory:', post?.id);
+    if (!post) return;
+    if (Platform.OS === 'web') {
+      // eslint-disable-next-line no-alert
+      if (
+        typeof window !== 'undefined' &&
+        window.confirm('Delete this memory? This cannot be undone.')
+      ) {
+        deleteLocalPhotoPost(post.id).then(() => router.back());
+      }
+      return;
+    }
+    Alert.alert('Delete memory?', 'This memory will be permanently removed.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteLocalPhotoPost(post.id);
+          router.back();
+        },
+      },
+    ]);
   };
 
-  const handleShare = () => {
-    console.log('Share memory:', post?.id);
+  const handleShare = async () => {
+    if (!post) return;
+    try {
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          await navigator.share({
+            title: post.title || post.caption || 'Memora Memory',
+            text: post.caption,
+            url: window.location.href,
+          });
+        }
+      } else {
+        await Share.share({
+          message: post.caption
+            ? `${post.caption} — captured with Memora`
+            : 'Check out this memory captured with Memora',
+        });
+      }
+    } catch {
+      // ignore cancelled shares
+    }
   };
 
   return (
@@ -139,13 +179,6 @@ export default function PostDetailScreen() {
                   accessibilityLabel="Share"
                 />
                 <IconButton
-                  icon="pencil"
-                  onPress={handleEdit}
-                  variant="overlay"
-                  size="sm"
-                  accessibilityLabel="Edit"
-                />
-                <IconButton
                   icon="trash"
                   onPress={handleDelete}
                   variant="overlay"
@@ -158,22 +191,50 @@ export default function PostDetailScreen() {
             {/* Memory Title & Caption */}
             <View style={styles.memoryContent}>
               <Text style={styles.memoryTitle} numberOfLines={2}>
-                {post.caption || 'Untitled memory'}
+                {post.title || post.caption || 'Untitled memory'}
               </Text>
-              {post.caption && <Text style={styles.memoryCaption}>{post.caption}</Text>}
+              {post.caption ? <Text style={styles.memoryCaption}>{post.caption}</Text> : null}
             </View>
 
-            {/* Metadata */}
+            {/* Real Metadata */}
             <View style={styles.metadata}>
               <View style={styles.metadataSection}>
-                <Text style={styles.metadataLabel}>People</Text>
-                <Text style={styles.metadataValue}>You · Alex · Sam</Text>
+                <Text style={styles.metadataLabel}>Category</Text>
+                <Text style={styles.metadataValue}>{post.category || 'General'}</Text>
               </View>
-              <View style={styles.metadataDivider} />
-              <View style={styles.metadataSection}>
-                <Text style={styles.metadataLabel}>Location</Text>
-                <Text style={styles.metadataValue}>Marina Beach</Text>
-              </View>
+
+              {post.location ? (
+                <>
+                  <View style={styles.metadataDivider} />
+                  <View style={styles.metadataSection}>
+                    <Text style={styles.metadataLabel}>Location</Text>
+                    <Text style={styles.metadataValue}>{post.location}</Text>
+                  </View>
+                </>
+              ) : null}
+
+              {post.prompt ? (
+                <>
+                  <View style={styles.metadataDivider} />
+                  <View style={styles.metadataSection}>
+                    <Text style={styles.metadataLabel}>Prompt</Text>
+                    <Text style={styles.metadataValue}>"{post.prompt}"</Text>
+                  </View>
+                </>
+              ) : null}
+
+              {post.tags && post.tags.length > 0 ? (
+                <>
+                  <View style={styles.metadataDivider} />
+                  <View style={styles.metadataSection}>
+                    <Text style={styles.metadataLabel}>Tags</Text>
+                    <Text style={styles.metadataValue}>
+                      {post.tags.map((t) => `#${t}`).join(' ')}
+                    </Text>
+                  </View>
+                </>
+              ) : null}
+
               <View style={styles.metadataDivider} />
               <View style={styles.metadataSection}>
                 <Text style={styles.metadataLabel}>Time</Text>
@@ -181,19 +242,22 @@ export default function PostDetailScreen() {
               </View>
             </View>
 
-            {/* Bottom spacer for tab bar */}
+            {/* Bottom spacer for safe area */}
             <View style={styles.bottomSpacer} />
           </View>
         )}
       </ScrollView>
 
-      {/* Floating back button */}
+      {/* Floating back button with safe area top inset */}
       <IconButton
         icon="arrow-left"
         onPress={() => router.back()}
         variant="overlay"
         size="md"
-        style={styles.floatingBack}
+        style={{
+          ...styles.floatingBack,
+          top: Math.max(insets.top + spacing.xs, spacing.md),
+        }}
         accessibilityLabel="Go back"
       />
     </SafeAreaView>
@@ -249,44 +313,47 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: radius.xxl,
     borderTopRightRadius: radius.xxl,
-    marginTop: -radius.xxl,
-    paddingHorizontal: spacing.lg,
+    marginTop: -spacing.xl,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-    gap: spacing.xl,
+    paddingBottom: spacing.massive,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.xl,
   },
   dateBlock: {
-    gap: spacing.xs,
+    flex: 1,
   },
   memoryId: {
-    ...typography.mono.micro,
+    ...typography.caption,
     color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1.5,
+    marginBottom: 2,
   },
   dateLabel: {
-    ...typography.serif.title3,
+    ...typography.serif.title2,
     color: colors.textPrimary,
+    lineHeight: 28,
   },
   timeLabel: {
-    ...typography.mono.caption,
+    ...typography.caption,
     color: colors.textMuted,
+    marginTop: 2,
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   memoryContent: {
-    gap: spacing.md,
+    marginBottom: spacing.xl,
   },
   memoryTitle: {
     ...typography.serif.title,
     color: colors.textPrimary,
+    marginBottom: spacing.sm,
     lineHeight: 38,
   },
   memoryCaption: {
@@ -328,7 +395,6 @@ const styles = StyleSheet.create({
   },
   floatingBack: {
     position: 'absolute',
-    top: spacing.lg + 50,
     left: spacing.lg,
     zIndex: 100,
   },

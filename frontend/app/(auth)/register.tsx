@@ -39,18 +39,26 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.kicker}>Create your account</Text>
         <Text style={styles.title}>Join your class</Text>
 
         <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Full name</Text>
-          <TextInput value={name} onChangeText={setName} style={styles.input} />
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+          />
 
           <Text style={styles.fieldLabel}>Email</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
             style={styles.input}
@@ -62,6 +70,7 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry
             placeholder="At least 8 characters"
+            placeholderTextColor={colors.textMuted}
             style={styles.input}
           />
 

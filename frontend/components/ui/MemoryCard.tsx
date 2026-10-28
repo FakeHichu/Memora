@@ -34,7 +34,7 @@ type MemoryCardProps = {
   selectionMode?: boolean;
 };
 
-export function MemoryCard({
+export const MemoryCard = React.memo(function MemoryCard({
   memory,
   density = 'compact',
   onPress,
@@ -119,17 +119,24 @@ export function MemoryCard({
   const isInteractive = onPress || onLongPress;
 
   return (
-    <Pressable onPress={selectionMode ? onLongPress : onPress} onLongPress={onLongPress} style={({ pressed }) => [
+    <Pressable
+      onPress={selectionMode ? onLongPress : onPress}
+      onLongPress={onLongPress}
+      style={({ pressed }) => [
         styles.container,
         config.padding === 0 ? styles.noPadding : {},
         isInteractive && pressed && styles.pressed,
         isSelected && styles.selectedContainer,
         style,
-      ]} accessibilityRole={isInteractive ? 'button' : 'image'} accessibilityLabel={
+      ]}
+      accessibilityRole={isInteractive ? 'button' : 'image'}
+      accessibilityLabel={
         selectionMode
           ? `${isSelected ? 'Deselect' : 'Select'} memory from ${formattedDate}`
           : memory.caption || `Memory from ${formattedDate}`
-      } accessibilityState={{ selected: isSelected }}>
+      }
+      accessibilityState={{ selected: isSelected }}
+    >
       {/* Selection Checkbox */}
       {selectionMode && (
         <View style={styles.selectionIndicator}>
@@ -191,15 +198,14 @@ export function MemoryCard({
         )}
       </View>
 
-      {(config.showCaption || showMetadata || showReactions || memory.prompt || showTags) ? (
-        <View style={[
+      {config.showCaption || showMetadata || showReactions || memory.prompt || showTags ? (
+        <View
+          style={[
             styles.content,
             { gap: config.gap, paddingHorizontal: config.padding, paddingBottom: config.padding },
           ]}
         >
-          {(showMemoryId || config.showId) && (
-            <Text style={styles.memoryId}>{memoryId}</Text>
-          )}
+          {(showMemoryId || config.showId) && <Text style={styles.memoryId}>{memoryId}</Text>}
 
           {/* Title */}
           {memory.title && (
@@ -280,7 +286,7 @@ export function MemoryCard({
       ) : null}
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

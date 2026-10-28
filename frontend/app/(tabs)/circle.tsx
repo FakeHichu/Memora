@@ -1,6 +1,15 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Clipboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Clipboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
@@ -10,6 +19,7 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { MemoryCard } from '@/components/ui/MemoryCard';
 import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { Skeleton, SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import {
   getLocalPhotoPosts,
   hasPostedToday,
@@ -52,10 +62,20 @@ export default function CircleScreen() {
 
   const handleCopyCode = () => {
     if (activeClass?.join_code) {
-      Clipboard.setString(activeClass.join_code);
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(activeClass.join_code).catch(() => {});
+      } else {
+        try {
+          Clipboard.setString(activeClass.join_code);
+        } catch {
+          // ignore
+        }
+      }
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2500);
-      Alert.alert('Code Copied', `Invite code "${activeClass.join_code}" copied to clipboard.`);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Code Copied', `Invite code "${activeClass.join_code}" copied to clipboard.`);
+      }
     }
   };
 
@@ -75,8 +95,16 @@ export default function CircleScreen() {
           subtitle={activeClass ? activeClass.name : 'Shared class memories'}
         />
 
+        {/* Loading state */}
+        {(isClassLoading || isLoading) && (
+          <View style={{ gap: spacing.md }}>
+            <Skeleton width="100%" height={140} borderRadius={radius.xl} />
+            <SkeletonMemoryCard aspectRatio={4 / 3} variant="timeline" />
+          </View>
+        )}
+
         {/* If no class joined */}
-        {!isClassLoading && !activeClass && (
+        {!isClassLoading && !isLoading && !activeClass && (
           <View style={styles.noClassContainer}>
             <EmptyState
               title="No Circle Joined Yet"

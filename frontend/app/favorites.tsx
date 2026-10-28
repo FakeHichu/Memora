@@ -1,14 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
-import {
-  getFavoritePosts,
-  toggleFavorite,
-  type LocalPhotoPost,
-} from '@/lib/photo-draft';
+import { getFavoritePosts, toggleFavorite, type LocalPhotoPost } from '@/lib/photo-draft';
 import { MemoryCard } from '@/components/ui/MemoryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -16,6 +12,12 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { IconButton } from '@/components/ui/IconButton';
+
+type FavoriteSection = {
+  key: string;
+  title: string;
+  data: LocalPhotoPost[];
+};
 
 export default function FavoritesScreen() {
   const { showToast } = useToast();
@@ -56,101 +58,109 @@ export default function FavoritesScreen() {
   };
 
   // Group by month
-  const grouped: Record<string, LocalPhotoPost[]> = {};
-  for (const post of favorites) {
-    const d = new Date(post.createdAt);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(post);
-  }
+  const sections: FavoriteSection[] = useMemo(() => {
+    const grouped: Record<string, LocalPhotoPost[]> = {};
+    for (const post of favorites) {
+      const d = new Date(post.createdAt);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(post);
+    }
 
-  const groups = Object.entries(grouped)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([key, items]) => {
-      const [year, month] = key.split('-').map(Number);
-      return {
-        key,
-        title: new Date(year, month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-        items,
-      };
-    });
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, items]) => {
+        const [year, month] = key.split('-').map(Number);
+        return {
+          key,
+          title: new Date(year, month).toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric',
+          }),
+          data: items,
+        };
+      });
+  }, [favorites]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <IconButton
-            icon="arrow-left"
-            onPress={() => router.back()}
-            variant="overlay"
-            size="sm"
-            accessibilityLabel="Go back"
-          />
-          <View style={styles.headerTitle}>
-            <Text style={styles.titleEmoji}>⭐</Text>
-            <Text style={styles.title}>Favorites</Text>
-          </View>
-          <View style={{ width: 40 }} />
-        </View>
-
-        {isLoading ? (
-          <View style={styles.list}>
-            {[0, 1, 2].map((i) => (
-              <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
-            ))}
-          </View>
-        ) : favorites.length === 0 ? (
-          <EmptyState
-            title="No favorites yet"
-            message="Tap the star ⭐ on any memory to save it here for quick access."
-            variant="star"
-            action={{
-              label: 'Browse memories',
-              onPress: () => router.push('/(tabs)/memories'),
-              variant: 'accent',
-            }}
-            style={styles.emptyState}
-          />
-        ) : (
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
+        ListHeaderComponent={
           <>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{favorites.length} favorited</Text>
+            {/* Header */}
+            <View style={styles.header}>
+              <IconButton
+                icon="arrow-left"
+                onPress={() => router.back()}
+                variant="overlay"
+                size="sm"
+                accessibilityLabel="Go back"
+              />
+              <View style={styles.headerTitle}>
+                <Text style={styles.titleEmoji}>⭐</Text>
+                <Text style={styles.title}>Favorites</Text>
+              </View>
+              <View style={{ width: 40 }} />
             </View>
 
-            {groups.map((group) => (
-              <View key={group.key} style={styles.monthGroup}>
-                <SectionHeader
-                  title={group.title}
-                  subtitle={`${group.items.length} memories`}
-                />
-                <View style={styles.list}>
-                  {group.items.map((post) => (
-                    <Pressable
-                      key={post.id}
-                      onLongPress={() => handleToggleFavorite(post.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Long press to unfavorite: ${post.caption || 'memory'}`}
-                    >
-                      <MemoryCard
-                        memory={post}
-                        density="timeline"
-                        aspectRatio={4 / 3}
-                        onPress={() => router.push(`/post/${post.id}`)}
-                        showMemoryId
-                        showTags
-                      />
-                    </Pressable>
-                  ))}
-                </View>
+            {!isLoading && favorites.length > 0 && (
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{favorites.length} favorited</Text>
               </View>
-            ))}
+            )}
           </>
+        }
+        renderSectionHeader={({ section: { title, data } }) => (
+          <View style={styles.sectionHeaderWrap}>
+            <SectionHeader title={title} subtitle={`${data.length} memories`} />
+          </View>
         )}
-
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+        renderItem={({ item }) => (
+          <Pressable
+            onLongPress={() => handleToggleFavorite(item.id)}
+            style={styles.cardContainer}
+            accessibilityRole="button"
+            accessibilityLabel={`Long press to unfavorite: ${item.caption || 'memory'}`}
+          >
+            <MemoryCard
+              memory={item}
+              density="timeline"
+              aspectRatio={4 / 3}
+              onPress={() => router.push(`/post/${item.id}`)}
+              showMemoryId
+              showTags
+            />
+          </Pressable>
+        )}
+        ListEmptyComponent={
+          isLoading ? (
+            <View style={styles.loadingList}>
+              {[0, 1, 2].map((i) => (
+                <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
+              ))}
+            </View>
+          ) : (
+            <EmptyState
+              title="No favorites yet"
+              message="Tap the star ⭐ on any memory to save it here for quick access."
+              variant="star"
+              action={{
+                label: 'Browse memories',
+                onPress: () => router.push('/(tabs)/memories'),
+                variant: 'accent',
+              }}
+              style={styles.emptyState}
+            />
+          )
+        }
+        ListFooterComponent={<View style={styles.bottomSpacer} />}
+      />
     </SafeAreaView>
   );
 }
@@ -201,10 +211,16 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '700',
   },
-  monthGroup: {
-    marginBottom: spacing.xl,
+  sectionHeaderWrap: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
-  list: {
+  cardContainer: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  loadingList: {
     paddingHorizontal: spacing.lg,
     gap: spacing.lg,
   },
