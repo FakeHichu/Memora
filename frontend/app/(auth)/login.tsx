@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
@@ -15,22 +15,80 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const validateEmail = (email: string): boolean => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setEmailError('Email is required');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
+
+  const validatePassword = (password: string): boolean => {
+    if (!password) {
+      setPasswordError('Password is required');
+      return false;
+    }
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return false;
+    }
+    setPasswordError(null);
+    return true;
+  };
 
   const handleLogin = async () => {
-    setIsSubmitting(true);
     setErrorMessage(null);
+    
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const { error } = await signInWithEmail(email.trim(), password);
-      if (error) throw error;
-      router.replace('/(tabs)/home');
+      const { data, error } = await signInWithEmail(email.trim(), password);
+      
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('Invalid login credentials')) {
+          setErrorMessage('Invalid email or password. Please try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setErrorMessage('Please verify your email before signing in.');
+        } else {
+          setErrorMessage(error.message);
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data?.session) {
+        // Successfully logged in
+        router.replace('/(onboarding)/welcome');
+      } else {
+        setErrorMessage('Unable to sign in. Please try again.');
+        setIsSubmitting(false);
+      }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not sign in.');
+      setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred.');
       setIsSubmitting(false);
     }
   };
 
-  const continueLocally = () => router.replace('/(tabs)/home');
+  const continueLocally = () => router.replace('/(onboarding)/welcome');
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -44,42 +102,75 @@ export default function LoginScreen() {
             <Text style={styles.brandName}>MEMORA</Text>
           </View>
           <Text style={styles.kicker}>A place for the small things</Text>
-          <Text style={styles.title}>Moments worth keeping.</Text>
+          <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>
-            A private photo journal for the moments you want to remember.
+            Sign in to access your memories and moments.
           </Text>
 
           <Card style={styles.card} variant="editorial">
             {hasSupabaseConfig ? (
               <>
-                <Text style={styles.formTitle}>Sign in</Text>
-                <Text style={styles.fieldLabel}>Email</Text>
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={colors.textMuted}
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  returnKeyType="next"
-                  style={styles.input}
-                />
+                <Text style={styles.formTitle}>Sign in to your account</Text>
+                
+                <View>
+                  <Text style={styles.fieldLabel}>Email</Text>
+                  <TextInput
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      if (emailError) setEmailError(null);
+                      if (errorMessage) setErrorMessage(null);
+                    }}
+                    onBlur={() => email && validateEmail(email)}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                    editable={!isSubmitting}
+                    style={[styles.input, emailError && styles.inputError]}
+                  />
+                  {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
+                </View>
 
-                <Text style={styles.fieldLabel}>Password</Text>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Enter your password"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry
-                  autoComplete="current-password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                  style={styles.input}
-                />
+                <View>
+                  <Text style={styles.fieldLabel}>Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      value={password}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        if (passwordError) setPasswordError(null);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      onBlur={() => password && validatePassword(password)}
+                      placeholder="Enter your password"
+                      placeholderTextColor={colors.textMuted}
+                      secureTextEntry={!showPassword}
+                      autoComplete="current-password"
+                      returnKeyType="done"
+                      onSubmitEditing={handleLogin}
+                      editable={!isSubmitting}
+                      style={[styles.input, styles.passwordInput, passwordError && styles.inputError]}
+                    />
+                    <Pressable 
+                      onPress={() => setShowPassword(!showPassword)} 
+                      style={styles.showPasswordButton}
+                      disabled={isSubmitting}
+                    >
+                      <Text style={styles.showPasswordText}>{showPassword ? 'Hide' : 'Show'}</Text>
+                    </Pressable>
+                  </View>
+                  {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
+                </View>
 
-                {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+                {errorMessage ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorMessage}>{errorMessage}</Text>
+                  </View>
+                ) : null}
+
                 <Button
                   title={isSubmitting ? 'Signing in...' : 'Sign in'}
                   onPress={handleLogin}
@@ -89,7 +180,11 @@ export default function LoginScreen() {
                 />
 
                 <Link href="/(auth)/forgot-password" asChild>
-                  <Text style={styles.link}>Forgot password?</Text>
+                  <Pressable disabled={isSubmitting}>
+                    <Text style={[styles.link, isSubmitting && styles.linkDisabled]}>
+                      Forgot password?
+                    </Text>
+                  </Pressable>
                 </Link>
               </>
             ) : (
@@ -113,7 +208,11 @@ export default function LoginScreen() {
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>New to Memora?</Text>
               <Link href="/(auth)/register" asChild>
-                <Text style={styles.link}>Create account</Text>
+                <Pressable disabled={isSubmitting}>
+                  <Text style={[styles.link, isSubmitting && styles.linkDisabled]}>
+                    Create account
+                  </Text>
+                </Pressable>
               </Link>
             </View>
           ) : (
@@ -210,9 +309,47 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
     color: colors.textPrimary,
     ...typography.body,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 1,
+  },
+  passwordContainer: {
+    position: 'relative',
+    marginBottom: spacing.xs,
+  },
+  passwordInput: {
+    marginBottom: 0,
+    paddingRight: 70,
+  },
+  showPasswordButton: {
+    position: 'absolute',
+    right: spacing.md,
+    top: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  showPasswordText: {
+    ...typography.caption,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  fieldError: {
+    ...typography.caption,
+    color: colors.error,
+    marginBottom: spacing.md,
+    marginTop: spacing.xs,
+  },
+  errorContainer: {
+    backgroundColor: colors.errorBackground || 'rgba(220, 38, 38, 0.1)',
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   link: {
     ...typography.callout,
@@ -221,10 +358,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.lg,
   },
+  linkDisabled: {
+    opacity: 0.5,
+  },
   errorMessage: {
     ...typography.footnote,
     color: colors.error,
-    marginBottom: spacing.md,
+    lineHeight: 20,
   },
   footerRow: {
     flexDirection: 'row',

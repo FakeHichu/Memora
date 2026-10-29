@@ -48,8 +48,14 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
-      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "backendUrl": "http://localhost:4000",
+      "appName": "Memora",
+      "router": {},
+      "eas": {
+        "projectId": "eb865880-9106-4970-b163-8d962c0a8b1f"
+      }
     }
   }
 }

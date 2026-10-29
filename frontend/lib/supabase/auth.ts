@@ -13,8 +13,12 @@ export async function signUpWithEmail(email: string, password: string, displayNa
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { display_name: displayName } },
+    options: {
+      data: { display_name: displayName },
+      emailRedirectTo: 'http://localhost:8081',
+    },
   });
+
   return { data, error };
 }
 
