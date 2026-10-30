@@ -1,41 +1,118 @@
-// Memora Design System - Dark iOS × Gothic Y2K × Chrome Aesthetic
+// Memora Design System - Soft Minimalist Light Theme
 
 export const colors = {
   // Backgrounds
-  background: '#09090C', // Primary - near black
-  backgroundSecondary: '#101116', // Secondary - slightly lighter
-  backgroundTertiary: '#14151A', // Tertiary - for subtle differentiation
-  backgroundElevated: '#1D1E27',
-  card: '#171820',
+  background: '#E8EDF0', // Primary - soft blue-grey
+  backgroundSecondary: '#DFE4E8', // Secondary
+  backgroundTertiary: '#D6DCE0', // Tertiary
+  backgroundElevated: '#FFFFFF',
+  card: '#FFFFFF',
 
   // Surfaces
-  surface: '#171820', // Default card/surface
-  surfaceElevated: '#1D1E27', // Elevated surfaces (modals, sheets)
-  surfaceOverlay: '#22232C', // Overlay surfaces
-  surfaceWarm: '#1A1B22', // Warm surface (legacy)
+  surface: '#FFFFFF', // Default card/surface - white
+  surfaceElevated: '#F8FAFB', // Elevated surfaces
+  surfaceOverlay: '#F0F4F6', // Overlay surfaces
+  surfaceWarm: '#F5F2EF', // Warm surface
+  surfaceFloating: 'rgba(255, 255, 255, 0.95)',
+  surfaceModal: 'rgba(255, 255, 255, 0.98)',
+  surfaceNavigation: 'rgba(23, 25, 29, 0.92)',
+  glass: 'rgba(255, 255, 255, 0.85)',
+  glassStrong: 'rgba(255, 255, 255, 0.96)',
+  secondary: '#F0F4F6',
+
+  // Accent / Chrome
+  chromeDark: '#8A9099',
+  chromeDim: '#A0A8B0',
+  chrome: '#81947B', // Sage green
+  chromeHighlight: '#6B7D66',
+  chromeGlow: 'rgba(129, 148, 123, 0.15)',
+  primaryDark: '#6B7D66',
+  onPrimary: '#FFFFFF',
+  neon: '#81947B',
+
+  // Semantic color names
+  primary: '#81947B', // Sage green
+  primaryLight: '#9AAD94',
+  primarySoft: '#C5D1C0',
+  primaryUltraSoft: '#EAF0E8',
+  accent: '#81947B', // Sage green accent
+  accentLight: '#9AAD94',
+  accentLavender: '#B8C4D4',
+  accentSoft: 'rgba(129, 148, 123, 0.12)',
+  text: '#17191D',
+  textPrimary: '#17191D', // Near-black
+  textSecondary: '#707983', // Medium grey
+  textTertiary: '#9BA3AA',
+  textMuted: '#9BA3AA', // Light grey
+  muted: '#707983',
+  textInverse: '#FFFFFF',
+  textOnPrimary: '#FFFFFF',
+  textOnChrome: '#FFFFFF',
+  border: '#E4E8EB', // Light border
+  borderSubtle: 'rgba(0, 0, 0, 0.06)',
+  borderDefault: 'rgba(0, 0, 0, 0.08)',
+  borderEmphasized: 'rgba(0, 0, 0, 0.12)',
+  borderSoft: '#EEF1F3',
+  divider: '#E4E8EB',
+  dividerSoft: '#F0F4F6',
+  shadow: 'rgba(23, 25, 29, 0.08)', // Light shadow
+  shadowStrong: 'rgba(23, 25, 29, 0.15)',
+  overlay: 'rgba(23, 25, 29, 0.6)',
+  overlayLight: 'rgba(23, 25, 29, 0.3)',
+  overlayStrong: 'rgba(23, 25, 29, 0.85)',
+
+  // Status
+  success: '#4A8A62',
+  successSoft: '#E8F5ED',
+  warning: '#C49A2A',
+  warningSoft: '#FBF5E0',
+  error: '#C0392B',
+  errorSoft: '#FDECEA',
+  errorBackground: '#FDECEA', // Soft error surface (background tint)
+
+  // Additional
+  accentDeep: '#5C7056',
+  accentSoftGlow: '#9AAD94',
+  accentGlow: 'rgba(129, 148, 123, 0.25)',
+  coolHighlight: '#8EA6C5',
+  coolGlow: 'rgba(142, 166, 197, 0.15)',
+  borderChrome: '#D0D8DC',
+  borderHighlight: '#C0C8CC',
+  accentSubtle: 'rgba(129, 148, 123, 0.12)',
+  patternTint: 'rgba(129, 148, 123, 0.03)',
+  patternTintCool: 'rgba(142, 166, 197, 0.02)',
+};
+
+// Dark theme palette (preserved for dark mode support)
+export const darkColors = {
+  background: '#09090C',
+  backgroundSecondary: '#101116',
+  backgroundTertiary: '#14151A',
+  backgroundElevated: '#1D1E27',
+  card: '#171820',
+  surface: '#171820',
+  surfaceElevated: '#1D1E27',
+  surfaceOverlay: '#22232C',
+  surfaceWarm: '#1A1B22',
   surfaceFloating: 'rgba(29, 30, 39, 0.88)',
   surfaceModal: 'rgba(29, 30, 39, 0.96)',
   surfaceNavigation: 'rgba(13, 13, 18, 0.88)',
   glass: 'rgba(23, 24, 32, 0.85)',
   glassStrong: 'rgba(23, 24, 32, 0.96)',
   secondary: '#1D1E27',
-
-  // Chrome (metallic accents)
-  chromeDark: '#555963', // Dark chrome - borders, inactive
+  chromeDark: '#555963',
   chromeDim: '#8A8E98',
-  chrome: '#BFC3CC', // Standard chrome - primary metallic
-  chromeHighlight: '#F1F2F5', // Chrome highlight - bright accents
-  chromeGlow: 'rgba(191, 195, 204, 0.15)', // Subtle chrome glow
+  chrome: '#BFC3CC',
+  chromeHighlight: '#F1F2F5',
+  chromeGlow: 'rgba(191, 195, 204, 0.15)',
   primaryDark: '#D4D8DD',
   onPrimary: '#09090C',
   neon: '#5A8A6E',
-
-  // Legacy color names (for backward compatibility)
-  primary: '#BFC3CC', // Maps to chrome
+  primary: '#BFC3CC',
   primaryLight: '#D4D8DD',
   primarySoft: '#E8EBEE',
   primaryUltraSoft: '#F1F2F5',
-  accent: '#B84F7D', // Wine/pink accent
+  accent: '#B84F7D',
   accentLight: '#C875A0',
   accentLavender: '#B8A8D8',
   accentSoft: 'rgba(184, 79, 125, 0.12)',
@@ -60,17 +137,13 @@ export const colors = {
   overlay: 'rgba(9, 9, 12, 0.8)',
   overlayLight: 'rgba(9, 9, 12, 0.4)',
   overlayStrong: 'rgba(9, 9, 12, 0.95)',
-
-  // Status
   success: '#2E7D4A',
   successSoft: '#1A3D2A',
   warning: '#B8860B',
   warningSoft: '#3D3510',
   error: '#C0392B',
   errorSoft: '#3D1A1A',
-
-  // Additional legacy colors
-
+  errorBackground: '#3D1A1A', // Soft error surface (background tint)
   accentDeep: '#651F42',
   accentSoftGlow: '#C875A0',
   accentGlow: 'rgba(184, 79, 125, 0.25)',
@@ -83,64 +156,9 @@ export const colors = {
   patternTintCool: 'rgba(142, 166, 197, 0.02)',
 };
 
-export const darkColors = colors;
+// Light theme palette (current active theme)
 export const lightColors = {
   ...colors,
-  background: '#FAFAF8',
-  backgroundSecondary: '#F2F1F4',
-  backgroundTertiary: '#EAE9EE',
-  backgroundElevated: '#FFFFFF',
-  surface: '#FFFFFF',
-  surfaceElevated: '#F5F4F7',
-  surfaceOverlay: '#ECEBF0',
-  surfaceWarm: '#F4F0F2',
-  surfaceFloating: 'rgba(255, 255, 255, 0.92)',
-  surfaceModal: 'rgba(255, 255, 255, 0.98)',
-  surfaceNavigation: 'rgba(255, 255, 255, 0.9)',
-  chromeDark: '#5B5E68',
-  chromeDim: '#777A83',
-  chrome: '#737782',
-  chromeHighlight: '#454852',
-  chromeGlow: 'rgba(80, 84, 98, 0.12)',
-  primary: '#545762',
-  primaryDark: '#454852',
-  onPrimary: '#FFFFFF',
-  primaryLight: '#41444F',
-  primarySoft: '#E3E4E8',
-  primaryUltraSoft: '#F1F1F4',
-  accent: '#934165',
-  accentLight: '#A95479',
-  accentSoft: 'rgba(147, 65, 101, 0.12)',
-  accentSubtle: 'rgba(147, 65, 101, 0.08)',
-  text: '#17171B',
-  textPrimary: '#17171B',
-  textSecondary: '#5E5D66',
-  textTertiary: '#777680',
-  textMuted: '#777680',
-  muted: '#5E5D66',
-  textInverse: '#FFFFFF',
-  textOnPrimary: '#FFFFFF',
-  textOnChrome: '#FFFFFF',
-  border: '#DEDEE3',
-  borderSubtle: '#E9E8ED',
-  borderDefault: '#D9D8DE',
-  borderEmphasized: '#C9C8D0',
-  borderSoft: '#ECEBF0',
-  borderHighlight: '#B7B8C0',
-  borderChrome: '#C7C8CF',
-  divider: '#E4E3E8',
-  dividerSoft: '#F0EFF2',
-  shadow: 'rgba(24, 23, 31, 0.12)',
-  shadowStrong: 'rgba(24, 23, 31, 0.2)',
-  overlay: 'rgba(24, 23, 31, 0.52)',
-  overlayLight: 'rgba(24, 23, 31, 0.22)',
-  overlayStrong: 'rgba(24, 23, 31, 0.78)',
-  success: '#2E7D4A',
-  successSoft: '#DDEDE3',
-  warning: '#946A00',
-  warningSoft: '#F3ECD4',
-  error: '#B43D32',
-  errorSoft: '#F4E1DF',
 };
 
 export type ThemeColors = typeof darkColors;
@@ -192,39 +210,39 @@ export const shadows = {
   xs: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 1,
     shadowRadius: 2,
     elevation: 1,
   },
   sm: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 1,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: colors.shadow,
+    shadowColor: colors.shadowStrong,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 3,
   },
   lg: {
-    shadowColor: colors.shadow,
+    shadowColor: colors.shadowStrong,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 5,
   },
   xl: {
     shadowColor: colors.shadowStrong,
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 1,
     shadowRadius: 24,
     elevation: 8,
   },
-  // Chrome-specific shadows (subtle metallic reflection)
+  // Chrome-specific shadows
   chrome: {
     shadowColor: colors.chromeGlow,
     shadowOffset: { width: 0, height: 2 },
@@ -262,21 +280,21 @@ export const shadows = {
   },
 };
 
-// Web-compatible shadow styles
+// Web-compatible shadow styles (light theme)
 export const webShadows = {
   none: { boxShadow: 'none' },
-  xs: { boxShadow: '0 1px 2px rgba(0, 0, 0, 0.15)' },
-  sm: { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' },
-  md: { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.25)' },
-  lg: { boxShadow: '0 8px 16px rgba(0, 0, 0, 0.3)' },
-  xl: { boxShadow: '0 16px 24px rgba(0, 0, 0, 0.35)' },
-  chrome: { boxShadow: '0 2px 4px rgba(191, 195, 204, 0.08)' },
-  chromeLg: { boxShadow: '0 8px 16px rgba(191, 195, 204, 0.08)' },
-  glowSm: { boxShadow: '0 0 8px rgba(184, 79, 125, 0.3)' },
-  glowMd: { boxShadow: '0 0 16px rgba(184, 79, 125, 0.25)' },
-  glowLg: { boxShadow: '0 0 24px rgba(184, 79, 125, 0.2)' },
+  xs: { boxShadow: '0 1px 3px rgba(23, 25, 29, 0.08)' },
+  sm: { boxShadow: '0 2px 6px rgba(23, 25, 29, 0.08), 0 1px 2px rgba(23, 25, 29, 0.06)' },
+  md: { boxShadow: '0 4px 12px rgba(23, 25, 29, 0.10), 0 2px 4px rgba(23, 25, 29, 0.06)' },
+  lg: { boxShadow: '0 8px 24px rgba(23, 25, 29, 0.12), 0 4px 8px rgba(23, 25, 29, 0.08)' },
+  xl: { boxShadow: '0 16px 40px rgba(23, 25, 29, 0.14), 0 8px 16px rgba(23, 25, 29, 0.08)' },
+  chrome: { boxShadow: '0 2px 4px rgba(129, 148, 123, 0.08)' },
+  chromeLg: { boxShadow: '0 8px 16px rgba(129, 148, 123, 0.08)' },
+  glowSm: { boxShadow: '0 0 8px rgba(129, 148, 123, 0.3)' },
+  glowMd: { boxShadow: '0 0 16px rgba(129, 148, 123, 0.25)' },
+  glowLg: { boxShadow: '0 0 24px rgba(129, 148, 123, 0.2)' },
   chromeReflection: {
-    boxShadow: 'inset 0 1px 0 rgba(191, 195, 204, 0.1), 0 1px 0 rgba(0, 0, 0, 0.3)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(23, 25, 29, 0.08)',
   },
 };
 
@@ -297,6 +315,91 @@ export const opacity = {
   patternAccent: 0.06,
   chromeReflection: 0.1,
   chromeHighlight: 0.15,
+};
+
+// Component style presets — single source of truth for reusable components.
+// Screens and composed components should consume these (or the tokens above)
+// instead of hardcoding style values. To restyle the whole app, change tokens here.
+export const componentStyles = {
+  card: {
+    resting: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    elevated: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      borderWidth: 0,
+    },
+    image: {
+      borderRadius: radius.xl,
+    },
+  },
+  button: {
+    primary: {
+      backgroundColor: colors.primary,
+      borderRadius: radius.md,
+      borderWidth: 0,
+    },
+    secondary: {
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      borderRadius: radius.md,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    accent: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      borderWidth: 0,
+    },
+    destructive: {
+      backgroundColor: colors.errorSoft,
+      borderRadius: radius.md,
+      borderWidth: borders.hairline,
+      borderColor: colors.error,
+    },
+  },
+  navBar: {
+    floatingPill: {
+      backgroundColor: colors.card,
+      borderRadius: 999,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  },
+  searchBar: {
+    field: {
+      backgroundColor: colors.card,
+      borderRadius: 999,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      paddingHorizontal: spacing.md,
+      minHeight: 48,
+    },
+  },
+  chip: {
+    resting: {
+      backgroundColor: colors.card,
+      borderRadius: 999,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    selected: {
+      backgroundColor: colors.accentSubtle,
+      borderWidth: borders.thin,
+      borderColor: colors.accent,
+    },
+  },
 };
 
 // Typography - iOS-style sans + editorial serif + technical mono
@@ -615,6 +718,12 @@ export const layout = {
   headerHeight: 56,
   safeAreaTop: 44,
   safeAreaBottom: 34,
+  // Responsive photo grid columns per breakpoint (favorites / related photos)
+  photoGridColumns: {
+    phone: 2,
+    tablet: 3,
+    desktop: 3,
+  },
 };
 
 export const animation = {
@@ -649,11 +758,11 @@ export const backgroundPattern = {
 export const effects = {
   chromeBorder: {
     borderWidth: borders.hairline,
-    borderColor: colors.chromeDark,
+    borderColor: colors.border,
   },
   chromeBorderActive: {
     borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    borderColor: colors.accent,
   },
   accentBorder: {
     borderWidth: borders.hairline,
@@ -664,11 +773,11 @@ export const effects = {
     borderColor: colors.accentSoft,
   },
   glassSurface: {
-    backgroundColor: 'rgba(23, 24, 32, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     backdropFilter: 'blur(20px)',
   },
   glassSurfaceWeb: {
-    backgroundColor: 'rgba(23, 24, 32, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
   },
@@ -697,11 +806,11 @@ export const variants = {
     immersive: { aspectRatio: 3 / 4, imageRadius: 0, padding: 0, gap: spacing.lg },
   },
   button: {
-    primary: { backgroundColor: colors.chrome, color: colors.textOnChrome },
-    primaryPressed: { backgroundColor: colors.chromeHighlight },
-    secondary: { backgroundColor: colors.surfaceElevated, borderColor: colors.chromeDark },
+    primary: { backgroundColor: colors.primary, color: colors.textOnPrimary },
+    primaryPressed: { backgroundColor: colors.accentDeep },
+    secondary: { backgroundColor: colors.surface, borderColor: colors.border },
     ghost: { backgroundColor: 'transparent', borderColor: colors.border },
-    accent: { backgroundColor: colors.accent, color: colors.textInverse },
+    accent: { backgroundColor: colors.accent, color: '#FFFFFF' },
     accentPressed: { backgroundColor: colors.accentDeep },
     destructive: { backgroundColor: colors.errorSoft, borderColor: colors.error },
   },

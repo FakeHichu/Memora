@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 export const REACTION_EMOJIS = [
   { type: 'heart', emoji: '❤️', label: 'Love' },
@@ -25,6 +26,9 @@ export function ReactionBar({
   onReact,
   compact = false,
 }: ReactionBarProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
       {REACTION_EMOJIS.map(({ emoji, label }) => {
@@ -41,10 +45,10 @@ export function ReactionBar({
             <Text style={[styles.emoji, compact && styles.emojiCompact]}>{emoji}</Text>
             {count > 0 && (
               <Text style={[
-                  styles.count,
-                  compact && styles.countCompact,
-                  isSelected && styles.countSelected,
-                ]}>
+                styles.count,
+                compact && styles.countCompact,
+                isSelected && styles.countSelected,
+              ]}>
                 {count}
               </Text>
             )}
@@ -55,60 +59,62 @@ export function ReactionBar({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flexWrap: 'wrap',
-    marginVertical: spacing.sm,
-  },
-  containerCompact: {
-    gap: 4,
-    marginVertical: 4,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundElevated,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.round,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    gap: 4,
-  },
-  pillCompact: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    gap: 2,
-  },
-  pillSelected: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-    borderWidth: borders.thin,
-  },
-  pillActive: {
-    backgroundColor: colors.surface,
-    borderColor: colors.borderDefault,
-  },
-  emoji: {
-    fontSize: 16,
-  },
-  emojiCompact: {
-    fontSize: 13,
-  },
-  count: {
-    ...typography.sans.caption,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  countCompact: {
-    fontSize: 10,
-  },
-  countSelected: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      flexWrap: 'wrap',
+      marginVertical: spacing.sm,
+    },
+    containerCompact: {
+      gap: 4,
+      marginVertical: 4,
+    },
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 6,
+      borderRadius: radius.round,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      gap: 4,
+    },
+    pillCompact: {
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      gap: 2,
+    },
+    pillSelected: {
+      backgroundColor: colors.accentSubtle,
+      borderColor: colors.accent,
+      borderWidth: borders.thin,
+    },
+    pillActive: {
+      backgroundColor: colors.card,
+      borderColor: colors.borderDefault,
+    },
+    emoji: {
+      fontSize: 16,
+    },
+    emojiCompact: {
+      fontSize: 13,
+    },
+    count: {
+      ...typography.sans.caption,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    countCompact: {
+      fontSize: 10,
+    },
+    countSelected: {
+      color: colors.accent,
+      fontWeight: '700',
+    },
+  });
+}

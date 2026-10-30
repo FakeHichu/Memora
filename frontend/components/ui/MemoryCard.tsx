@@ -1,18 +1,12 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
 
-import {
-  colors,
-  radius,
-  spacing,
-  typography,
-  shadows,
-  webShadows,
-  borders,
-} from '@/constants/theme';
+import { radius, spacing, typography, shadows, webShadows, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import { LocalPhotoPost } from '@/lib/photo-draft';
 import { ReactionBar } from './ReactionBar';
 import { TagList } from './TagBadge';
+import { Icon } from './Icons';
 
 type MemoryCardDensity = 'editorial' | 'compact' | 'immersive' | 'timeline';
 
@@ -51,6 +45,9 @@ export const MemoryCard = React.memo(function MemoryCard({
   isSelected = false,
   selectionMode = false,
 }: MemoryCardProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const date = new Date(memory.createdAt);
   const formattedDate = date.toLocaleDateString(undefined, {
     month: 'short',
@@ -79,7 +76,7 @@ export const MemoryCard = React.memo(function MemoryCard({
     },
     compact: {
       aspectRatio: aspectRatio || 1,
-      imageRadius: radius.lg,
+      imageRadius: radius.md,
       padding: 0,
       gap: spacing.xs,
       titleStyle: typography.sans.callout,
@@ -161,13 +158,13 @@ export const MemoryCard = React.memo(function MemoryCard({
           blurRadius={isBlurred ? 25 : 0}
           resizeMode="cover"
         />
-        {/* Subtle chrome accent on top edge — Y2K hardware reference */}
+        {/* Subtle chrome accent on top edge */}
         <View style={styles.chromeAccentTop} />
 
         {/* Favorite indicator */}
         {memory.isFavorite && !isBlurred && (
           <View style={styles.favoriteIndicator}>
-            <Text style={styles.favoriteIcon}>⭐</Text>
+            <Icon name="star" size={14} color={colors.accent} fill={colors.accent} />
           </View>
         )}
 
@@ -288,206 +285,208 @@ export const MemoryCard = React.memo(function MemoryCard({
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
-  },
-  noPadding: {
-    borderRadius: radius.xl,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  selectedContainer: {
-    borderWidth: borders.medium,
-    borderColor: colors.accent,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 0 2px rgba(122, 159, 216, 0.3)' }
-      : {
-          shadowColor: colors.accent,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.25,
-          shadowRadius: 8,
-        }),
-  },
-  imageWrapper: {
-    overflow: 'hidden',
-    backgroundColor: colors.backgroundElevated,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-  },
-  blurredImage: {
-    opacity: 0.6,
-  },
-  blurOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(8, 8, 12, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  blurText: {
-    ...typography.sans.caption,
-    fontWeight: '700',
-    color: '#ffffff',
-    backgroundColor: 'rgba(8, 8, 12, 0.7)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.round,
-    textAlign: 'center',
-  },
-  authorBadge: {
-    position: 'absolute',
-    bottom: spacing.sm,
-    left: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.75)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-  },
-  authorBadgeText: {
-    ...typography.sans.caption2,
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  favoriteIndicator: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.65)',
-    borderRadius: radius.round,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  favoriteIcon: {
-    fontSize: 13,
-  },
-  pinnedIndicator: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.65)',
-    borderRadius: radius.round,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pinnedIcon: {
-    fontSize: 13,
-  },
-  archivedBanner: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(8, 8, 12, 0.75)',
-    paddingVertical: spacing.xs,
-    alignItems: 'center',
-  },
-  archivedText: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 1,
-  },
-  selectionIndicator: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    zIndex: 10,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.round,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
-    backgroundColor: 'rgba(8, 8, 12, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxSelected: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  checkmark: {
-    fontSize: 12,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-  imageImmersive: {
-    borderRadius: 0,
-  },
-  chromeAccentTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: borders.hairline,
-    backgroundColor: colors.chromeGlow,
-  },
-  content: {
-    flex: 1,
-    paddingTop: spacing.sm,
-  },
-  memoryId: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: spacing.xs,
-  },
-  title: {
-    fontWeight: '600',
-  },
-  promptBadge: {
-    backgroundColor: colors.accentSubtle,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-    alignSelf: 'flex-start',
-    marginBottom: 2,
-  },
-  promptBadgeText: {
-    ...typography.sans.caption2,
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  caption: {
-    lineHeight: undefined,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flexWrap: 'wrap',
-  },
-  metaText: {
-    color: colors.textMuted,
-  },
-  metaDivider: {
-    color: colors.textMuted,
-    opacity: 0.5,
-  },
-  categoryBadge: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  locationText: {
-    color: colors.textMuted,
-    flex: 1,
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
+    },
+    noPadding: {
+      borderRadius: radius.xl,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    selectedContainer: {
+      borderWidth: borders.medium,
+      borderColor: colors.accent,
+      ...(Platform.OS === 'web'
+        ? { boxShadow: '0 0 0 2px rgba(122, 159, 216, 0.3)' }
+        : {
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+          }),
+    },
+    imageWrapper: {
+      overflow: 'hidden',
+      backgroundColor: colors.backgroundElevated,
+      position: 'relative',
+    },
+    image: {
+      width: '100%',
+    },
+    blurredImage: {
+      opacity: 0.6,
+    },
+    blurOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(8, 8, 12, 0.4)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.md,
+    },
+    blurText: {
+      ...typography.sans.caption,
+      fontWeight: '700',
+      color: '#ffffff',
+      backgroundColor: 'rgba(8, 8, 12, 0.7)',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.round,
+      textAlign: 'center',
+    },
+    authorBadge: {
+      position: 'absolute',
+      bottom: spacing.sm,
+      left: spacing.sm,
+      backgroundColor: 'rgba(8, 8, 12, 0.75)',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: radius.sm,
+    },
+    authorBadgeText: {
+      ...typography.sans.caption2,
+      color: '#ffffff',
+      fontWeight: '600',
+    },
+    favoriteIndicator: {
+      position: 'absolute',
+      top: spacing.sm,
+      right: spacing.sm,
+      backgroundColor: colors.card,
+      borderRadius: radius.round,
+      width: 30,
+      height: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
+    },
+    pinnedIndicator: {
+      position: 'absolute',
+      top: spacing.sm,
+      left: spacing.sm,
+      backgroundColor: colors.card,
+      borderRadius: radius.round,
+      width: 28,
+      height: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pinnedIcon: {
+      fontSize: 13,
+    },
+    archivedBanner: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: 'rgba(8, 8, 12, 0.75)',
+      paddingVertical: spacing.xs,
+      alignItems: 'center',
+    },
+    archivedText: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      letterSpacing: 1,
+    },
+    selectionIndicator: {
+      position: 'absolute',
+      top: spacing.sm,
+      right: spacing.sm,
+      zIndex: 10,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: radius.round,
+      borderWidth: borders.thin,
+      borderColor: colors.chrome,
+      backgroundColor: 'rgba(8, 8, 12, 0.7)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxSelected: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    checkmark: {
+      fontSize: 12,
+      color: colors.textInverse,
+      fontWeight: '700',
+    },
+    imageImmersive: {
+      borderRadius: 0,
+    },
+    chromeAccentTop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: borders.hairline,
+      backgroundColor: colors.chromeGlow,
+    },
+    content: {
+      flex: 1,
+      paddingTop: spacing.sm,
+    },
+    memoryId: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: spacing.xs,
+    },
+    title: {
+      fontWeight: '600',
+    },
+    promptBadge: {
+      backgroundColor: colors.accentSubtle,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: radius.sm,
+      alignSelf: 'flex-start',
+      marginBottom: 2,
+    },
+    promptBadgeText: {
+      ...typography.sans.caption2,
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    caption: {
+      lineHeight: undefined,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      flexWrap: 'wrap',
+    },
+    metaText: {
+      color: colors.textMuted,
+    },
+    metaDivider: {
+      color: colors.textMuted,
+      opacity: 0.5,
+    },
+    categoryBadge: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    locationText: {
+      color: colors.textMuted,
+      flex: 1,
+    },
+  });
+}

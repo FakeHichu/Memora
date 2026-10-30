@@ -37,14 +37,7 @@ export default function TabsLayout() {
           title: 'Home',
           tabBarAccessibilityLabel: 'Home tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
-              <TabIcon
-                name="home"
-                focused={focused}
-                activeColor={colors.accent}
-                inactiveColor={colors.textMuted}
-              />
-            </View>
+            <TabIcon name="home" focused={focused} activeColor={colors.accent} inactiveColor={colors.textMuted} />
           ),
         }}
       />
@@ -54,14 +47,12 @@ export default function TabsLayout() {
           title: 'Memories',
           tabBarAccessibilityLabel: 'Memories tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
-              <TabIcon
-                name="calendar"
-                focused={focused}
-                activeColor={colors.accent}
-                inactiveColor={colors.textMuted}
-              />
-            </View>
+            <TabIcon
+              name="calendar"
+              focused={focused}
+              activeColor={colors.accent}
+              inactiveColor={colors.textMuted}
+            />
           ),
         }}
       />
@@ -71,13 +62,11 @@ export default function TabsLayout() {
           title: 'Create',
           tabBarAccessibilityLabel: 'Create a new memory',
           tabBarIcon: ({ focused }) => (
-            <View
-              style={[styles.createIconContainer, focused && styles.createIconContainerFocused]}
-            >
+            <View style={[styles.createIconContainer, focused && styles.createIconContainerFocused]}>
               <TabIcon
                 name="plus"
                 focused={focused}
-                activeColor={colors.textOnChrome}
+                activeColor={colors.textOnPrimary}
                 inactiveColor={colors.chrome}
                 size={28}
               />
@@ -91,14 +80,7 @@ export default function TabsLayout() {
           title: 'Circle',
           tabBarAccessibilityLabel: 'Circle tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
-              <TabIcon
-                name="users"
-                focused={focused}
-                activeColor={colors.accent}
-                inactiveColor={colors.textMuted}
-              />
-            </View>
+            <TabIcon name="users" focused={focused} activeColor={colors.accent} inactiveColor={colors.textMuted} />
           ),
         }}
       />
@@ -108,14 +90,7 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarAccessibilityLabel: 'Profile tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
-              <TabIcon
-                name="user"
-                focused={focused}
-                activeColor={colors.accent}
-                inactiveColor={colors.textMuted}
-              />
-            </View>
+            <TabIcon name="user" focused={focused} activeColor={colors.accent} inactiveColor={colors.textMuted} />
           ),
         }}
       />
@@ -130,34 +105,20 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
-    borderTopWidth: borders.hairline,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
-    paddingTop: spacing.xs,
-    paddingHorizontal: spacing.md,
-    ...(Platform.OS === 'web'
-      ? {
-          ...webShadows.xl,
-          backdropFilter: 'blur(28px)',
-          WebkitBackdropFilter: 'blur(28px)',
-        }
-      : { ...shadows.xl }),
+    backgroundColor: colors.card,
+    borderWidth: borders.thin,
+    borderColor: colors.borderSoft,
+    borderRadius: radius.round,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(Platform.OS === 'web' ? webShadows.lg : shadows.lg),
   },
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
     fontFamily: 'System',
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.circle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconContainerFocused: {
-    backgroundColor: 'rgba(184, 79, 125, 0.14)',
+    color: colors.textMuted,
   },
   createIconContainer: {
     width: 52,
@@ -167,15 +128,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: -4,
     marginTop: -8,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.28)',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 18px rgba(184, 79, 125, 0.32), 0 4px 16px rgba(0, 0, 0, 0.3)' }
+      ? { boxShadow: '0 0 18px rgba(129, 148, 123, 0.32), 0 4px 16px rgba(0, 0, 0, 0.3)' }
       : { ...shadows.glowMd, ...shadows.md }),
   },
   createIconContainerFocused: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: colors.primaryLight,
     borderColor: 'rgba(255, 255, 255, 0.6)',
     transform: [{ scale: 1.03 }],
   },

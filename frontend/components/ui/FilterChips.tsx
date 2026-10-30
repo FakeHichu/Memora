@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle, ScrollView } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type FilterChipProps = {
   label: string;
@@ -11,6 +12,9 @@ type FilterChipProps = {
 };
 
 export function FilterChip({ label, selected, onPress, style }: FilterChipProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -43,6 +47,9 @@ export function FilterChips({
   style,
   scrollable = true,
 }: FilterChipsProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const content = (
     <View style={styles.container}>
       {filters.map((filter) => (
@@ -72,43 +79,45 @@ export function FilterChips({
   return <View style={[styles.container, style]}>{content}</View>;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  scrollView: {
-    paddingHorizontal: spacing.lg,
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    minHeight: 36,
-    justifyContent: 'center',
-  },
-  selected: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-    borderWidth: borders.thin,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  label: {
-    ...typography.sans.caption,
-    color: colors.textSecondary,
-  },
-  labelSelected: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    scrollView: {
+      paddingHorizontal: spacing.lg,
+    },
+    scrollContent: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    chip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.round,
+      backgroundColor: colors.card,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      minHeight: 36,
+      justifyContent: 'center',
+    },
+    selected: {
+      backgroundColor: colors.accentSubtle,
+      borderColor: colors.accent,
+      borderWidth: borders.thin,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    label: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+    },
+    labelSelected: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+  });
+}

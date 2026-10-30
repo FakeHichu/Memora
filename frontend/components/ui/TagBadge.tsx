@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type TagBadgeProps = {
   label: string;
@@ -19,6 +21,9 @@ export function TagBadge({
   size = 'sm',
   style,
 }: TagBadgeProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const content = (
     <View
       style={[
@@ -87,6 +92,9 @@ export function TagList({
   maxVisible,
   style,
 }: TagListProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const visible = maxVisible ? tags.slice(0, maxVisible) : tags;
   const remaining = maxVisible ? tags.length - maxVisible : 0;
 
@@ -113,62 +121,64 @@ export function TagList({
   );
 }
 
-const styles = StyleSheet.create({
-  tagList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: radius.round,
-    borderWidth: borders.hairline,
-  },
-  badgeSm: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    gap: 3,
-  },
-  badgeMd: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    gap: spacing.xs,
-  },
-  badgeDefault: {
-    backgroundColor: colors.backgroundElevated,
-    borderColor: colors.borderSubtle,
-  },
-  badgeActive: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-  },
-  label: {
-    color: colors.textSecondary,
-  },
-  labelSm: {
-    ...typography.sans.caption2,
-    fontSize: 11,
-  },
-  labelMd: {
-    ...typography.sans.caption,
-    fontWeight: '600',
-  },
-  labelDefault: {
-    color: colors.textSecondary,
-  },
-  labelActive: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  removeButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeIcon: {
-    fontSize: 14,
-    lineHeight: 16,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    tagList: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: radius.round,
+      borderWidth: borders.hairline,
+    },
+    badgeSm: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      gap: 3,
+    },
+    badgeMd: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      gap: spacing.xs,
+    },
+    badgeDefault: {
+      backgroundColor: colors.card,
+      borderColor: colors.borderSoft,
+    },
+    badgeActive: {
+      backgroundColor: colors.accentSubtle,
+      borderColor: colors.accent,
+    },
+    label: {
+      color: colors.textSecondary,
+    },
+    labelSm: {
+      ...typography.sans.caption2,
+      fontSize: 11,
+    },
+    labelMd: {
+      ...typography.sans.caption,
+      fontWeight: '600',
+    },
+    labelDefault: {
+      color: colors.textSecondary,
+    },
+    labelActive: {
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    removeButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    removeIcon: {
+      fontSize: 14,
+      lineHeight: 16,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+  });
+}

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
-import { colors, radius, borders, shadows, webShadows } from '@/constants/theme';
+import { radius, borders, shadows, webShadows } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type IconButtonProps = {
   icon: string;
@@ -22,6 +23,9 @@ export function IconButton({
   accessibilityLabel,
   disabled,
 }: IconButtonProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const sizeStyles = {
     sm: styles.sizeSm,
     md: styles.sizeMd,
@@ -40,8 +44,8 @@ export function IconButton({
 
   const iconColors = {
     default: colors.textPrimary,
-    chrome: colors.textInverse,
-    accent: colors.textInverse,
+    chrome: colors.textOnChrome,
+    accent: colors.textOnPrimary,
     ghost: colors.textSecondary,
     overlay: colors.textPrimary,
   };
@@ -67,64 +71,61 @@ export function IconButton({
   );
 }
 
-const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: radius.round,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...baseShadow,
-  },
-  sizeSm: {
-    width: 36,
-    height: 36,
-  },
-  sizeMd: {
-    width: 44,
-    height: 44,
-  },
-  sizeLg: {
-    width: 56,
-    height: 56,
-  },
-  // Default — Floating surface
-  variantDefault: {
-    backgroundColor: colors.surfaceFloating,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-  },
-  // Chrome — Chrome dim surface with chrome border
-  variantChrome: {
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
-  },
-  // Accent — Accent surface
-  variantAccent: {
-    backgroundColor: colors.accent,
-    borderWidth: 0,
-    ...shadows.glowSm,
-  },
-  // Ghost — Transparent with subtle border
-  variantGhost: {
-    backgroundColor: 'transparent',
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  // Overlay — Dark translucent for on-content controls
-  variantOverlay: {
-    backgroundColor: 'rgba(8, 8, 12, 0.6)',
-    borderWidth: borders.hairline,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  disabled: {
-    opacity: 0.35,
-  },
-  icon: {
-    fontWeight: '300',
-  },
-});
+  return StyleSheet.create({
+    base: {
+      borderRadius: radius.round,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...baseShadow,
+    },
+    sizeSm: {
+      width: 36,
+      height: 36,
+    },
+    sizeMd: {
+      width: 44,
+      height: 44,
+    },
+    sizeLg: {
+      width: 56,
+      height: 56,
+    },
+    variantDefault: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+    },
+    variantChrome: {
+      backgroundColor: colors.chromeDark,
+      borderWidth: 1,
+      borderColor: colors.chrome,
+    },
+    variantAccent: {
+      backgroundColor: colors.accent,
+      borderWidth: 0,
+      ...shadows.glowSm,
+    },
+    variantGhost: {
+      backgroundColor: 'transparent',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    variantOverlay: {
+      backgroundColor: 'rgba(23, 25, 29, 0.6)',
+      borderWidth: borders.hairline,
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    pressed: {
+      opacity: 0.8,
+    },
+    disabled: {
+      opacity: 0.35,
+    },
+    icon: {
+      fontWeight: '300',
+    },
+  });
+}

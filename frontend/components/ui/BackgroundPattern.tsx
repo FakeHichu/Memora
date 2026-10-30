@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, Text, Platform } from 'react-native';
-import { backgroundPattern, colors } from '@/constants/theme';
+import { backgroundPattern } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 // Symbol mapping from string codes to actual characters
 const SYMBOL_MAP: Record<string, string> = {
@@ -32,6 +33,10 @@ export function BackgroundPattern({
   scale = backgroundPattern.defaultScale,
   accentIntensity = 0,
 }: BackgroundPatternProps) {
+  const { colors } = useAppTheme();
+
+  const styles = createStyles(colors);
+
   // Generate a deterministic but varied pattern
   const patternElements = React.useMemo(() => {
     if (!enabled) return [];
@@ -97,7 +102,7 @@ export function BackgroundPattern({
     }
 
     return elements;
-  }, [enabled, density, opacity, scale, accentIntensity]);
+  }, [enabled, density, opacity, scale, accentIntensity, colors]);
 
   if (!enabled || patternElements.length === 0) return null;
 
@@ -150,33 +155,35 @@ export function BackgroundPattern({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-  },
-  containerWeb: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: 'hidden',
-    pointerEvents: 'none',
-  },
-  symbol: {
-    position: 'absolute',
-    fontWeight: '200',
-    fontFamily: 'System',
-    includeFontPadding: false,
-    textAlign: 'center',
-  },
-  symbolWeb: {
-    position: 'absolute',
-    fontWeight: '200',
-    fontFamily: 'System',
-    textAlign: 'center',
-    userSelect: 'none',
-    pointerEvents: 'none',
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      ...StyleSheet.absoluteFill,
+      overflow: 'hidden',
+    },
+    containerWeb: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+    },
+    symbol: {
+      position: 'absolute',
+      fontWeight: '200',
+      fontFamily: 'System',
+      includeFontPadding: false,
+      textAlign: 'center',
+    },
+    symbolWeb: {
+      position: 'absolute',
+      fontWeight: '200',
+      fontFamily: 'System',
+      textAlign: 'center',
+      userSelect: 'none',
+      pointerEvents: 'none',
+    },
+  });
+}

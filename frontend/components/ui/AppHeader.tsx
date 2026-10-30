@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, webShadows, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
 
 type AppHeaderProps = {
@@ -20,6 +21,7 @@ type AppHeaderProps = {
     accessibilityLabel?: string;
     badge?: number;
   };
+  avatar?: React.ReactNode;
   style?: ViewStyle;
   transparent?: boolean;
 };
@@ -30,9 +32,14 @@ export function AppHeader({
   greeting,
   leftAction,
   rightAction,
+  avatar,
   style,
   transparent = false,
 }: AppHeaderProps) {
+  const { colors } = useAppTheme();
+
+  const styles = createStyles(colors, transparent);
+
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={[styles.container, transparent && styles.containerTransparent, style]}>
@@ -53,7 +60,9 @@ export function AppHeader({
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
 
-        {rightAction && (
+        {avatar ? (
+          avatar
+        ) : rightAction ? (
           <Pressable
             onPress={rightAction.onPress}
             style={styles.actionButton}
@@ -64,102 +73,100 @@ export function AppHeader({
               <Icon name={rightAction.icon as any} size={22} color={colors.textPrimary} />
               {rightAction.badge && rightAction.badge > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {rightAction.badge > 9 ? '9+' : rightAction.badge}
-                  </Text>
+                  <Text style={styles.badgeText}>{rightAction.badge > 9 ? '9+' : rightAction.badge}</Text>
                 </View>
               )}
             </View>
           </Pressable>
-        )}
+        ) : null}
       </View>
       {!transparent && <View style={styles.bottomHairline} />}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: 'rgba(9, 9, 12, 0.68)',
-    ...Platform.select({
-      web: { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' },
-      default: undefined,
-    }),
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-    // Material 02 — Navigation surface
-    backgroundColor: 'transparent',
-    borderBottomWidth: borders.hairline,
-    borderBottomColor: 'rgba(255, 255, 255, 0.07)',
-  },
-  containerTransparent: {
-    paddingBottom: spacing.sm,
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
-  },
-  textContainer: {
-    flex: 1,
-    minWidth: 0,
-    paddingTop: spacing.xs,
-  },
-  greeting: {
-    ...typography.sans.callout,
-    color: colors.textMuted,
-  },
-  title: {
-    ...typography.sans.title2,
-    color: colors.textPrimary,
-    letterSpacing: -0.45,
-    marginTop: spacing.xs,
-  },
-  subtitle: {
-    ...typography.sans.callout,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.round,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    ...Platform.select({
-      web: webShadows.xs,
-      default: undefined,
-    }),
-  },
-  actionIconWrapper: {
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: radius.round,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    ...typography.sans.caption2,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-  bottomHairline: {
-    height: borders.hairline,
-    backgroundColor: colors.borderSubtle,
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], transparent: boolean) {
+  return StyleSheet.create({
+    safeArea: {
+      backgroundColor: colors.background,
+    },
+    container: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.md,
+      gap: spacing.md,
+      backgroundColor: 'transparent',
+      borderBottomWidth: transparent ? 0 : borders.hairline,
+      borderBottomColor: transparent ? 'transparent' : colors.borderSoft,
+    },
+    containerTransparent: {
+      paddingBottom: spacing.sm,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 0,
+    },
+    textContainer: {
+      flex: 1,
+      minWidth: 0,
+      paddingTop: spacing.xs,
+    },
+    greeting: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      fontWeight: '700',
+    },
+    title: {
+      ...typography.serif.title,
+      color: colors.textPrimary,
+      letterSpacing: -0.3,
+      marginTop: spacing.xs,
+    },
+    subtitle: {
+      ...typography.sans.callout,
+      color: colors.textSecondary,
+      marginTop: 1,
+    },
+    actionButton: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.round,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.card,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      ...Platform.select({
+        web: { boxShadow: '0 2px 8px rgba(23, 25, 29, 0.06)' },
+        default: {},
+      }),
+    },
+    actionIconWrapper: {
+      position: 'relative',
+    },
+    badge: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
+      minWidth: 18,
+      height: 18,
+      borderRadius: radius.round,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    badgeText: {
+      ...typography.sans.caption2,
+      color: colors.textOnPrimary,
+      fontWeight: '700',
+    },
+    bottomHairline: {
+      height: borders.hairline,
+      backgroundColor: colors.borderSoft,
+    },
+  });
+}

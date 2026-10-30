@@ -1,6 +1,7 @@
 import { Insets, Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
-import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
+import { radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type ButtonProps = {
   title: string;
@@ -27,6 +28,9 @@ export function Button({
   rightIcon,
   hitSlop,
 }: ButtonProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   const sizeStyles = {
     sm: styles.sizeSm,
     md: styles.sizeMd,
@@ -77,6 +81,8 @@ export function Button({
           variant === 'destructive' && styles.labelDestructive,
           variant === 'subtle' && styles.labelSubtle,
           variant === 'chrome' && styles.labelChrome,
+          variant === 'primary' && styles.labelPrimary,
+          variant === 'accent' && styles.labelAccent,
           sizeTextStyles,
         ]}
       >
@@ -87,104 +93,111 @@ export function Button({
   );
 }
 
-const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    ...baseShadow,
-  },
-  sizeSm: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    minHeight: 36,
-  },
-  sizeMd: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    minHeight: 48,
-  },
-  sizeLg: {
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.lg,
-    minHeight: 56,
-  },
-  fullWidth: {
-    width: '100%',
-  },
-  variantPrimary: {
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
-  },
-  variantSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: borders.thin,
-    borderColor: colors.borderChrome,
-  },
-  variantGhost: {
-    backgroundColor: 'transparent',
-    borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
-  },
-  variantChrome: {
-    backgroundColor: colors.chrome,
-    borderWidth: 0,
-  },
-  variantAccent: {
-    backgroundColor: colors.accent,
-    borderWidth: 0,
-    ...shadows.glowSm,
-  },
-  variantDestructive: {
-    backgroundColor: colors.errorSoft,
-    borderWidth: borders.hairline,
-    borderColor: colors.error,
-  },
-  variantSubtle: {
-    backgroundColor: colors.accentSubtle,
-    borderWidth: borders.hairline,
-    borderColor: 'rgba(184, 79, 125, 0.2)',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-  label: {
-    color: colors.textPrimary,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    fontFamily: 'System',
-  },
-  sizeSmText: {
-    fontSize: 13,
-  },
-  sizeMdText: {
-    fontSize: 16,
-  },
-  sizeLgText: {
-    fontSize: 17,
-  },
-  labelGhost: {
-    color: colors.accent,
-  },
-  labelDestructive: {
-    color: colors.error,
-  },
-  labelSubtle: {
-    color: colors.accent,
-  },
-  labelChrome: {
-    color: colors.textOnChrome,
-  },
-  icon: {
-    fontSize: 16,
-    lineHeight: 20,
-  },
-});
+  return StyleSheet.create({
+    base: {
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: spacing.sm,
+      ...baseShadow,
+    },
+    sizeSm: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      minHeight: 36,
+    },
+    sizeMd: {
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
+      minHeight: 48,
+    },
+    sizeLg: {
+      paddingHorizontal: spacing.xxl,
+      paddingVertical: spacing.lg,
+      minHeight: 56,
+    },
+    fullWidth: {
+      width: '100%',
+    },
+    variantPrimary: {
+      backgroundColor: colors.primary,
+      borderWidth: 0,
+    },
+    variantSecondary: {
+      backgroundColor: colors.card,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    variantGhost: {
+      backgroundColor: 'transparent',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    variantChrome: {
+      backgroundColor: colors.chrome,
+      borderWidth: 0,
+    },
+    variantAccent: {
+      backgroundColor: colors.accent,
+      borderWidth: 0,
+      ...shadows.glowSm,
+    },
+    variantDestructive: {
+      backgroundColor: colors.errorSoft,
+      borderWidth: borders.hairline,
+      borderColor: colors.error,
+    },
+    variantSubtle: {
+      backgroundColor: colors.accentSubtle,
+      borderWidth: borders.hairline,
+      borderColor: colors.accent,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    disabled: {
+      opacity: 0.4,
+    },
+    label: {
+      color: colors.textPrimary,
+      fontWeight: '600',
+      letterSpacing: 0.2,
+      fontFamily: 'System',
+    },
+    sizeSmText: {
+      fontSize: 13,
+    },
+    sizeMdText: {
+      fontSize: 16,
+    },
+    sizeLgText: {
+      fontSize: 17,
+    },
+    labelPrimary: {
+      color: colors.textOnPrimary,
+    },
+    labelAccent: {
+      color: colors.textOnPrimary,
+    },
+    labelGhost: {
+      color: colors.textSecondary,
+    },
+    labelDestructive: {
+      color: colors.error,
+    },
+    labelSubtle: {
+      color: colors.accent,
+    },
+    labelChrome: {
+      color: colors.textOnChrome,
+    },
+    icon: {
+      fontSize: 16,
+      lineHeight: 20,
+    },
+  });
+}

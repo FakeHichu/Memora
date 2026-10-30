@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 // ============================================================================
 // TYPES
@@ -41,6 +42,8 @@ const ToastContext = createContext<ToastContextValue>({
 // ============================================================================
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [toast, setToast] = useState<ToastItem | null>(null);
   const slideY = useRef(new Animated.Value(80));
   const opacity = useRef(new Animated.Value(0));
@@ -88,6 +91,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/refs
   const toastAnimatedStyle = { transform: [{ translateY: slideY.current }], opacity: opacity.current };
 
+  const variantStyle =
+    toast?.variant === 'success'
+      ? styles.variantSuccess
+      : toast?.variant === 'error'
+        ? styles.variantError
+        : toast?.variant === 'warning'
+          ? styles.variantWarning
+          : styles.variantDefault;
+
   return (
     <ToastContext.Provider value={{ showToast, dismissToast }}>
       {children}
@@ -95,7 +107,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         <Animated.View
           style={[
             styles.container,
-            variantStyles[toast.variant ?? 'default'],
+            variantStyle,
             toastAnimatedStyle,
           ]}
           accessibilityLiveRegion="assertive"
@@ -135,65 +147,65 @@ export function useToast() {
 // STYLES
 // ============================================================================
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 100,
-    left: spacing.lg,
-    right: spacing.lg,
-    maxWidth: 520,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: borders.hairline,
-    gap: spacing.md,
-    zIndex: 9999,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
-          elevation: 8,
-        }),
-  },
-  message: {
-    ...typography.sans.callout,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  actionButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  actionLabel: {
-    ...typography.sans.callout,
-    fontWeight: '700',
-    color: colors.accent,
-  },
-});
-
-const variantStyles = {
-  default: {
-    backgroundColor: colors.surfaceModal,
-    borderColor: colors.borderEmphasized,
-  },
-  success: {
-    backgroundColor: colors.successSoft,
-    borderColor: colors.success,
-  },
-  error: {
-    backgroundColor: colors.errorSoft,
-    borderColor: colors.error,
-  },
-  warning: {
-    backgroundColor: colors.warningSoft,
-    borderColor: colors.warning,
-  },
-};
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      position: 'absolute',
+      bottom: 100,
+      left: spacing.lg,
+      right: spacing.lg,
+      maxWidth: 520,
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      borderRadius: radius.lg,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderEmphasized,
+      gap: spacing.md,
+      zIndex: 9999,
+      ...(Platform.OS === 'web'
+        ? { boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }
+        : {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 8,
+          }),
+    },
+    message: {
+      ...typography.sans.callout,
+      color: colors.textPrimary,
+      flex: 1,
+    },
+    actionButton: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.sm,
+    },
+    actionLabel: {
+      ...typography.sans.callout,
+      fontWeight: '700',
+      color: colors.accent,
+    },
+    variantDefault: {
+      backgroundColor: colors.surfaceModal,
+      borderColor: colors.borderEmphasized,
+    },
+    variantSuccess: {
+      backgroundColor: colors.successSoft,
+      borderColor: colors.success,
+    },
+    variantError: {
+      backgroundColor: colors.errorSoft,
+      borderColor: colors.error,
+    },
+    variantWarning: {
+      backgroundColor: colors.warningSoft,
+      borderColor: colors.warning,
+    },
+  });
+}

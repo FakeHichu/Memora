@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
 
 type SearchBarProps = {
@@ -25,12 +26,14 @@ export function SearchBar({
   autoFocus = false,
   floating = false,
 }: SearchBarProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const hasText = value.length > 0;
 
   return (
     <View style={[styles.container, floating && styles.containerFloating, style]}>
       <View style={styles.inputWrapper}>
-        <Icon name="search" size={18} color={colors.textMuted} style={styles.icon} />
+        <Icon name="search" size={18} color={colors.textSecondary} style={styles.icon} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -54,36 +57,38 @@ export function SearchBar({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  containerFloating: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceFloating,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-    borderRadius: radius.round,
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  icon: {
-    // Icon component handles sizing
-  },
-  input: {
-    flex: 1,
-    ...typography.sans.body,
-    color: colors.textPrimary,
-    paddingVertical: spacing.sm,
-    minHeight: 44,
-  },
-  clearButton: {
-    padding: spacing.xs,
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    containerFloating: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      borderRadius: radius.round,
+      paddingHorizontal: spacing.md,
+      gap: spacing.sm,
+    },
+    icon: {
+      // Icon component handles sizing
+    },
+    input: {
+      flex: 1,
+      ...typography.sans.body,
+      color: colors.textPrimary,
+      paddingVertical: spacing.sm,
+      minHeight: 44,
+    },
+    clearButton: {
+      padding: spacing.xs,
+    },
+  });
+}

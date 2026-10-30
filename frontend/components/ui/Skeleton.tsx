@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
-import { colors, radius, spacing, borders } from '@/constants/theme';
+import { radius, spacing, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
 type SkeletonProps = {
   width?: number | string;
@@ -11,6 +12,8 @@ type SkeletonProps = {
 };
 
 export function Skeleton({ width = '100%', height = 16, borderRadius, style, animate = true }: SkeletonProps) {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonStyles(colors);
   const shimmerRef = useRef(new Animated.Value(0));
 
   useEffect(() => {
@@ -60,6 +63,8 @@ export function Skeleton({ width = '100%', height = 16, borderRadius, style, ani
 // Pre-built skeleton shapes
 
 export function SkeletonMemoryCard({ aspectRatio = 4 / 3, variant = 'timeline' }: { aspectRatio?: number; variant?: 'timeline' | 'compact' | 'editorial' }) {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonMemoryStyles(colors);
   const config = {
     timeline: { imageRadius: radius.lg, padding: spacing.md, gap: spacing.sm, titleWidth: '60%', subtitleWidth: '80%', metaWidth: '50%' },
     compact: { imageRadius: radius.md, padding: 0, gap: spacing.xs, titleWidth: '70%', subtitleWidth: '90%', metaWidth: '40%' },
@@ -67,11 +72,11 @@ export function SkeletonMemoryCard({ aspectRatio = 4 / 3, variant = 'timeline' }
   }[variant];
 
   return (
-    <View style={skeletonCardStyles.container}>
-      <View style={[skeletonCardStyles.image, { aspectRatio }]}>
-        <Skeleton width="100%" height={undefined} borderRadius={config.imageRadius} style={skeletonCardStyles.imageInner} />
+    <View style={styles.container}>
+      <View style={[styles.image, { aspectRatio }]}>
+        <Skeleton width="100%" height={undefined} borderRadius={config.imageRadius} style={styles.imageInner} />
       </View>
-      <View style={[skeletonCardStyles.content, { padding: config.padding, gap: config.gap }]}>
+      <View style={[styles.content, { padding: config.padding, gap: config.gap }]}>
         <Skeleton width={config.titleWidth} height={18} borderRadius={radius.xs} />
         <Skeleton width={config.subtitleWidth} height={14} borderRadius={radius.xs} />
         <Skeleton width={config.metaWidth} height={12} borderRadius={radius.xs} />
@@ -87,8 +92,11 @@ export function SkeletonText({
   lines?: number;
   lastLineWidth?: string;
 }) {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonStyles(colors);
+
   return (
-    <View style={{ gap: spacing.xs }}>
+    <View style={[styles.textContainer, { gap: spacing.xs }]}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
@@ -101,19 +109,22 @@ export function SkeletonText({
 }
 
 export function SkeletonProfileHeader() {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonProfileStyles(colors);
+
   return (
-    <View style={skeletonProfileStyles.container}>
-      <View style={skeletonProfileStyles.header}>
+    <View style={styles.container}>
+      <View style={styles.header}>
         <Skeleton width={64} height={64} borderRadius={radius.circle} />
-        <View style={[skeletonProfileStyles.info, { gap: spacing.sm }]}>
+        <View style={[styles.info, { gap: spacing.sm }]}>
           <Skeleton width="50%" height={22} />
           <Skeleton width="30%" height={14} />
           <Skeleton width="40%" height={12} />
         </View>
       </View>
-      <View style={[skeletonProfileStyles.stats, { gap: spacing.md }]}>
+      <View style={[styles.stats, { gap: spacing.md }]}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <View key={i} style={skeletonProfileStyles.statCard}>
+          <View key={i} style={styles.statCard}>
             <Skeleton width={48} height={28} borderRadius={radius.sm} />
             <Skeleton width={64} height={12} borderRadius={radius.xs} />
           </View>
@@ -124,11 +135,14 @@ export function SkeletonProfileHeader() {
 }
 
 export function SkeletonSettingsSection({ rows = 3 }: { rows?: number }) {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonSettingsStyles(colors);
+
   return (
-    <View style={[skeletonSettingsStyles.container, { gap: spacing.xs }]}>
+    <View style={[styles.container, { gap: spacing.xs }]}>
       <Skeleton width="30%" height={16} borderRadius={radius.xs} />
       {Array.from({ length: rows }).map((_, i) => (
-        <View key={i} style={[skeletonSettingsStyles.row, { gap: spacing.md }]}>
+        <View key={i} style={[styles.row, { gap: spacing.md }]}>
           <Skeleton width={24} height={24} borderRadius={radius.circle} />
           <View style={{ flex: 1, gap: 4 }}>
             <Skeleton width="40%" height={16} />
@@ -141,11 +155,14 @@ export function SkeletonSettingsSection({ rows = 3 }: { rows?: number }) {
 }
 
 export function SkeletonPostDetail() {
+  const { colors } = useAppTheme();
+  const styles = createSkeletonPostStyles(colors);
+
   return (
-    <View style={skeletonPostStyles.container}>
+    <View style={styles.container}>
       <Skeleton width="100%" height={undefined} style={{ aspectRatio: 3 / 4, borderRadius: 0 }} />
-      <View style={[skeletonPostStyles.details, { gap: spacing.lg }]}>
-        <View style={[skeletonPostStyles.header, { gap: spacing.md }]}>
+      <View style={[styles.details, { gap: spacing.lg }]}>
+        <View style={[styles.header, { gap: spacing.md }]}>
           <Skeleton width="80%" height={14} borderRadius={radius.xs} />
           <Skeleton width="60%" height={12} borderRadius={radius.xs} />
         </View>
@@ -155,12 +172,12 @@ export function SkeletonPostDetail() {
           <Skeleton width="80%" height={20} borderRadius={radius.xs} />
           <Skeleton width="60%" height={20} borderRadius={radius.xs} />
         </View>
-        <View style={[skeletonPostStyles.tags, { gap: spacing.xs }]}>
+        <View style={[styles.tags, { gap: spacing.xs }]}>
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} width={60} height={24} borderRadius={radius.round} />
           ))}
         </View>
-        <View style={[skeletonPostStyles.metadata, { gap: spacing.md }]}>
+        <View style={[styles.metadata, { gap: spacing.md }]}>
           {Array.from({ length: 3 }).map((_, i) => (
             <View key={i} style={{ flex: 1, gap: 4, alignItems: 'center' }}>
               <Skeleton width={40} height={16} borderRadius={radius.xs} />
@@ -178,14 +195,16 @@ export function SkeletonPostDetail() {
 }
 
 export function SkeletonAuthForm() {
+  const styles = createSkeletonAuthStyles();
+
   return (
-    <View style={[skeletonAuthStyles.container, { gap: spacing.lg }]}>
-      <Skeleton width="48" height={48} borderRadius={radius.md} />
+    <View style={[styles.container, { gap: spacing.lg }]}>
+      <Skeleton width={48} height={48} borderRadius={radius.md} />
       <Skeleton width="30%" height={28} borderRadius={radius.xs} />
       <Skeleton width="50%" height={16} borderRadius={radius.xs} />
-      <View style={[skeletonAuthStyles.form, { gap: spacing.md }]}>
+      <View style={[styles.form, { gap: spacing.md }]}>
         {Array.from({ length: 3 }).map((_, i) => (
-          <View key={i} style={[skeletonAuthStyles.field, { gap: spacing.xs }]}>
+          <View key={i} style={[styles.field, { gap: spacing.xs }]}>
             <Skeleton width="30%" height={12} borderRadius={radius.xs} />
             <Skeleton width="100%" height={50} borderRadius={radius.sm} />
           </View>
@@ -196,124 +215,139 @@ export function SkeletonAuthForm() {
   );
 }
 
-const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: colors.backgroundElevated,
-  },
-});
+function createSkeletonStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    skeleton: {
+      backgroundColor: colors.backgroundElevated,
+    },
+    textContainer: {
+      gap: spacing.xs,
+    },
+  });
+}
 
-const skeletonCardStyles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  image: {
-    width: '100%',
-    backgroundColor: colors.backgroundElevated,
-  },
-  imageInner: {
-    flex: 1,
-  },
-  content: {
-    padding: 12,
-    gap: 8,
-  },
-});
+function createSkeletonMemoryStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+    image: {
+      width: '100%',
+      backgroundColor: colors.backgroundElevated,
+    },
+    imageInner: {
+      flex: 1,
+    },
+    content: {
+      padding: 12,
+      gap: 8,
+    },
+  });
+}
 
-const skeletonProfileStyles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-  },
-  info: {
-    flex: 1,
-    gap: spacing.sm,
-  },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '22%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: 4,
-  },
-});
+function createSkeletonProfileStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.xl,
+      gap: spacing.xl,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.md,
+    },
+    info: {
+      flex: 1,
+      gap: spacing.sm,
+    },
+    stats: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    statCard: {
+      flex: 1,
+      minWidth: '22%',
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      padding: spacing.md,
+      alignItems: 'center',
+      gap: 4,
+    },
+  });
+}
 
-const skeletonSettingsStyles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-});
+function createSkeletonSettingsStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.xl,
+      gap: spacing.xs,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+  });
+}
 
-const skeletonPostStyles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  details: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xxxl,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  metadata: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-});
+function createSkeletonPostStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    container: {
+      width: '100%',
+    },
+    details: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.xl,
+      paddingBottom: spacing.xxxl,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    tags: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    metadata: {
+      flexDirection: 'row',
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      alignItems: 'center',
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+    },
+  });
+}
 
-const skeletonAuthStyles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxxl,
-    paddingBottom: spacing.massive,
-    maxWidth: 480,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  form: {
-    gap: spacing.md,
-    marginTop: spacing.lg,
-  },
-  field: {
-    gap: spacing.xs,
-  },
-});
+function createSkeletonAuthStyles() {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.xxxl,
+      paddingBottom: spacing.massive,
+      maxWidth: 480,
+      width: '100%',
+      alignSelf: 'center',
+    },
+    form: {
+      gap: spacing.md,
+      marginTop: spacing.lg,
+    },
+    field: {
+      gap: spacing.xs,
+    },
+  });
+}

@@ -3,14 +3,16 @@ import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders, shadows } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import {
   getLocalPhotoPosts,
   getTodayPost,
+  getFavoritePosts,
   hasPostedToday,
   setPhotoDraft,
   toggleLocalPhotoReaction,
-  getFavoritePosts,
+  getLocalProfile,
   computeCurrentStreak,
   type LocalPhotoPost,
 } from '@/lib/photo-draft';
@@ -25,6 +27,8 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
 import { Icon } from '@/components/ui/Icons';
+import { Avatar } from '@/components/ui/Avatar';
+import { SearchBar } from '@/components/ui/SearchBar';
 
 const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
 
@@ -65,13 +69,29 @@ function getYearsAgoText(postDate: Date): string {
 }
 
 export default function HomeScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [favorites, setFavorites] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [profileName, setProfileName] = useState('Memory Keeper');
   const { open: openCommandPalette } = useCommandPalette();
 
   const todayPrompt = getTodayPrompt();
+
+  React.useEffect(() => {
+    let isActive = true;
+    getLocalProfile()
+      .then((profile) => {
+        if (isActive) setProfileName(profile.name);
+      })
+      .catch(() => undefined);
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const loadPosts = useCallback(() => {
     let isActive = true;
@@ -120,14 +140,39 @@ export default function HomeScreen() {
     }
   };
 
+  const matchesSearch = (post: LocalPhotoPost): boolean => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    const caption = (post.caption || '').toLowerCase();
+    const title = (post.title || '').toLowerCase();
+    const location = (post.location || '').toLowerCase();
+    const tags = (post.tags || []).join(' ').toLowerCase();
+    const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
+    return caption.includes(query) || title.includes(query) || location.includes(query) || tags.includes(query) || dateStr.includes(query);
+  };
+
   const filteredPosts = activePosts.filter((post) => {
-    if (selectedFilter === 'All') return true;
-    return post.category === selectedFilter;
+    const matchesFilter = selectedFilter === 'All' || post.category === selectedFilter;
+    return matchesFilter && matchesSearch(post);
   });
 
   const recentPosts = filteredPosts
     .filter((p) => !p.isPinned)
     .slice(0, 8);
+
+  const todayMemoryCard = todayMemory
+    ? (
+      <MemoryCard
+        memory={todayMemory}
+        density="editorial"
+        aspectRatio={16 / 9}
+        onPress={() => router.push(`/post/${todayMemory.id}`)}
+        showMetadata={true}
+        showReactions={true}
+        onReact={(emoji) => handleReact(todayMemory.id, emoji)}
+      />
+    )
+    : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -139,13 +184,20 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AppHeader
           greeting={getGreeting()}
-          title="A little piece of your life"
-          rightAction={{
-            icon: 'search',
-            onPress: () => router.push('/(tabs)/search'),
-            accessibilityLabel: 'Search memories',
-          }}
+          title="Let's revisit your memories."
+          avatar={
+            <Avatar name={profileName} size={44} ring />
+          }
         />
+
+        <View style={styles.searchContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search your memories…"
+            onClear={() => setSearchQuery('')}
+          />
+        </View>
 
         {/* Stats Row */}
         {!isLoading && activePosts.length > 0 && (
@@ -199,7 +251,7 @@ export default function HomeScreen() {
             accessibilityLabel="Create a memory"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="camera" size={19} color={colors.accentLight} />
+              <Icon name="camera" size={19} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>New memory</Text>
           </Pressable>
@@ -210,7 +262,7 @@ export default function HomeScreen() {
             accessibilityLabel="View favorites"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="star" size={19} color={colors.accentLight} />
+              <Icon name="star" size={19} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>Favorites</Text>
           </Pressable>
@@ -221,7 +273,7 @@ export default function HomeScreen() {
             accessibilityLabel="View collections"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="bookmark" size={19} color={colors.accentLight} />
+              <Icon name="bookmark" size={19} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>Collections</Text>
           </Pressable>
@@ -232,7 +284,7 @@ export default function HomeScreen() {
             accessibilityLabel="Open command palette"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="cog" size={19} color={colors.accentLight} />
+              <Icon name="cog" size={19} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>Commands</Text>
           </Pressable>
@@ -254,18 +306,10 @@ export default function HomeScreen() {
             <View style={styles.promptActionWrapper}>
               <Skeleton width="100%" height={44} borderRadius={radius.round} />
             </View>
-          ) : postedToday && todayMemory ? (
+          ) : postedToday && todayMemory && todayMemoryCard ? (
             <View style={styles.todayMemoryWrapper}>
               <Text style={styles.todayMemoryLabel}>YOUR MOMENT TODAY</Text>
-              <MemoryCard
-                memory={todayMemory}
-                density="editorial"
-                aspectRatio={16 / 9}
-                onPress={() => router.push(`/post/${todayMemory.id}`)}
-                showMetadata={true}
-                showReactions={true}
-                onReact={(emoji) => handleReact(todayMemory.id, emoji)}
-              />
+              {todayMemoryCard}
             </View>
           ) : (
             <View style={styles.promptActionWrapper}>
@@ -330,7 +374,6 @@ export default function HomeScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Favorite memory from ${new Date(post.createdAt).toLocaleDateString()}`}
                 >
-                  {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
                   <MemoryCard
                     memory={post}
                     density="compact"
@@ -418,8 +461,8 @@ export default function HomeScreen() {
               <MemoryCard
                 key={post.id}
                 memory={post}
-                density="timeline"
-                aspectRatio={4 / 3}
+                density="editorial"
+                aspectRatio={4 / 5}
                 onPress={() => router.push(`/post/${post.id}`)}
                 showMemoryId={true}
                 showReactions={true}
@@ -444,244 +487,235 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  ambientBackdrop: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-  },
-  ambientGlow: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: radius.circle,
-  },
-  ambientGlowPrimary: {
-    top: 90,
-    right: -150,
-    backgroundColor: 'rgba(184, 79, 125, 0.09)',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 110px 72px rgba(184, 79, 125, 0.12)' }
-      : {}),
-  },
-  ambientGlowSecondary: {
-    top: 360,
-    left: -180,
-    width: 230,
-    height: 230,
-    backgroundColor: 'rgba(104, 82, 151, 0.08)',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 100px 68px rgba(104, 82, 151, 0.1)' }
-      : {}),
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.maxContentWidth,
-    alignSelf: 'center',
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    backgroundColor: 'rgba(29, 30, 39, 0.58)',
-    borderRadius: radius.xl,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    ...(Platform.OS === 'web'
-      ? { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
-      : {}),
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 3,
-    paddingVertical: spacing.xs,
-  },
-  statValue: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  statLabel: {
-    ...typography.sans.caption2,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: borders.hairline,
-    height: 28,
-    backgroundColor: colors.borderSubtle,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-    gap: spacing.xs,
-  },
-  quickAction: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xs,
-    backgroundColor: 'rgba(29, 30, 39, 0.42)',
-    borderRadius: radius.lg,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    gap: spacing.xs,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
-  },
-  quickActionIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.circle,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(184, 79, 125, 0.12)',
-    borderWidth: borders.hairline,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  quickActionLabel: {
-    ...typography.sans.caption2,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  promptHeroCard: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-    padding: spacing.xl,
-    backgroundColor: 'rgba(30, 25, 36, 0.76)',
-    borderRadius: radius.xxl,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(200, 145, 178, 0.2)',
-    ...(Platform.OS === 'web'
-      ? {
-          backdropFilter: 'blur(28px)',
-          WebkitBackdropFilter: 'blur(28px)',
-          boxShadow: '0 18px 48px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
-        }
-      : {}),
-  },
-  promptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  promptTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  promptDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.warning,
-  },
-  promptDotCompleted: {
-    backgroundColor: colors.success,
-  },
-  promptTagText: {
-    ...typography.mono.micro,
-    color: colors.accentLight,
-    letterSpacing: 0.8,
-    fontWeight: '700',
-  },
-  streakBadge: {
-    ...typography.sans.caption2,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    backgroundColor: colors.backgroundElevated,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.round,
-  },
-  promptQuestion: {
-    ...typography.serif.title2,
-    color: colors.textPrimary,
-    lineHeight: 30,
-    marginBottom: spacing.md,
-  },
-  promptSubtext: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    marginBottom: spacing.md,
-  },
-  promptActionWrapper: {
-    paddingTop: spacing.xs,
-  },
-  promptButton: {
-    width: '100%',
-  },
-  todayMemoryWrapper: {
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  todayMemoryLabel: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.8,
-  },
-  sectionBlock: {
-    marginBottom: spacing.xl,
-  },
-  favoritesStrip: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  favoriteThumb: {
-    width: 100,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  onThisDaySection: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  onThisDayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  onThisDayLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  onThisDayDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.accent,
-  },
-  onThisDayLabelText: {
-    ...typography.mono.micro,
-    color: colors.accent,
-    letterSpacing: 0.8,
-    fontWeight: '700',
-  },
-  onThisDayYearsAgo: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-  },
-  memoriesFeed: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.lg,
-  },
-  emptyState: {
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.xxl,
-  },
-  bottomSpacer: {
-    height: 40,
-  },
-});
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    ambientBackdrop: {
+      ...StyleSheet.absoluteFill,
+      overflow: 'hidden',
+    },
+    ambientGlow: {
+      position: 'absolute',
+      width: 220,
+      height: 220,
+      borderRadius: radius.round,
+    },
+    ambientGlowPrimary: {
+      top: 90,
+      right: -150,
+      backgroundColor: colors.accentSoft,
+    },
+    ambientGlowSecondary: {
+      top: 360,
+      left: -180,
+      width: 230,
+      height: 230,
+      backgroundColor: colors.accentSoft,
+    },
+    content: {
+      width: '100%',
+      maxWidth: layout.maxContentWidth,
+      alignSelf: 'center',
+      paddingBottom: spacing.xxxl + layout.tabBarHeight,
+    },
+    searchContainer: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+      ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(23, 25, 29, 0.06)' } : { ...shadows.sm }),
+    },
+    statItem: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 3,
+      paddingVertical: spacing.xs,
+    },
+    statValue: {
+      ...typography.serif.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    statLabel: {
+      ...typography.sans.caption2,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    statDivider: {
+      width: borders.hairline,
+      height: 28,
+      backgroundColor: colors.borderSoft,
+    },
+    quickActions: {
+      flexDirection: 'row',
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+      gap: spacing.sm,
+    },
+    quickAction: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xs,
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      gap: spacing.xs,
+    },
+    quickActionIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.circle,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accentSubtle,
+    },
+    quickActionLabel: {
+      ...typography.sans.caption2,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    promptHeroCard: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+      padding: spacing.xl,
+      backgroundColor: colors.card,
+      borderRadius: radius.xxl,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSoft,
+      ...(Platform.OS === 'web'
+        ? { boxShadow: '0 12px 32px rgba(23, 25, 29, 0.08)' }
+        : { ...shadows.lg }),
+    },
+    promptHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    promptTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    promptDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.warning,
+    },
+    promptDotCompleted: {
+      backgroundColor: colors.success,
+    },
+    promptTagText: {
+      ...typography.mono.micro,
+      color: colors.accent,
+      letterSpacing: 0.8,
+      fontWeight: '700',
+    },
+    streakBadge: {
+      ...typography.sans.caption2,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      backgroundColor: colors.backgroundSecondary,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: radius.round,
+    },
+    promptQuestion: {
+      ...typography.serif.title2,
+      color: colors.textPrimary,
+      lineHeight: 30,
+      marginBottom: spacing.md,
+    },
+    promptSubtext: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      marginBottom: spacing.md,
+    },
+    promptActionWrapper: {
+      paddingTop: spacing.xs,
+    },
+    promptButton: {
+      width: '100%',
+    },
+    todayMemoryWrapper: {
+      marginTop: spacing.sm,
+      gap: spacing.xs,
+    },
+    todayMemoryLabel: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      letterSpacing: 0.8,
+    },
+    sectionBlock: {
+      marginBottom: spacing.xl,
+    },
+    favoritesStrip: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.sm,
+    },
+    favoriteThumb: {
+      width: 100,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+    },
+    onThisDaySection: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+    },
+    onThisDayHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    onThisDayLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    onThisDayDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.accent,
+    },
+    onThisDayLabelText: {
+      ...typography.mono.micro,
+      color: colors.accent,
+      letterSpacing: 0.8,
+      fontWeight: '700',
+    },
+    onThisDayYearsAgo: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+    },
+    memoriesFeed: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.lg,
+    },
+    emptyState: {
+      marginHorizontal: spacing.lg,
+      paddingVertical: spacing.xxl,
+    },
+    bottomSpacer: {
+      height: 40,
+    },
+  });
+}
