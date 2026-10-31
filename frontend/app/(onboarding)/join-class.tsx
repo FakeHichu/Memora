@@ -1,18 +1,64 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colors, radius, spacing, typography } from '@/constants/theme';
+import { supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function JoinClassScreen() {
-  const [code, setCode] = useState('7K9A-PQ2T');
+  const [code, setCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [className, setClassName] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [academicYear, setAcademicYear] = useState<number | null>(null);
+  const [memberRole, setMemberRole] = useState<string>('member');
 
-  const handleJoin = () => {
-    router.replace('/(tabs)/home');
+  const handleJoin = async () => {
+    if (!supabase) {
+      setErrorMessage('Configure Supabase in frontend/.env before joining a class.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !data.session) throw new Error('Sign in before joining a class.');
+
+      const cleanCode = code.trim().toUpperCase();
+
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const response = await fetch(`${backendUrl}/api/classes/join`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${data.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ joinCode: cleanCode }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message ?? 'Could not join class.');
+
+      // Show class details
+      setClassName(result.class.name);
+      setSchoolName(result.class.school_name);
+      setAcademicYear(result.class.academic_year);
+      setMemberRole(result.member.role);
+
+      // Navigate to home - user is now a member of the class
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Could not join class.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -30,10 +76,29 @@ export default function JoinClassScreen() {
             autoCapitalize="characters"
             style={styles.input}
             placeholder="ABCD-1234"
+            returnKeyType="done"
           />
 
-          <Button title="Join class" onPress={handleJoin} variant="accent" />
+          <Button title="Join class" onPress={handleJoin} variant="accent" fullWidth />
         </Card>
+
+        {errorMessage && (
+          <Text style={styles.errorMessage}>{errorMessage}</Text>
+        )}
+
+        {className && (
+          <View style={styles.classDetails}>
+            <Text style={styles.classDetailLabel}>You've joined</Text>
+            <Text style={styles.classDetailValue}>{className}</Text>
+            {schoolName && <Text style={styles.classDetailValue}>{schoolName}</Text>}
+            {academicYear && (
+              <Text style={styles.classDetailValue}>
+                Academic year {academicYear}
+              </Text>
+            )}
+            <Text style={styles.classDetailLabel}>Role: {memberRole}</Text>
+          </View>
+        )}
 
         <View style={styles.helperWrap}>
           <Text style={styles.helperTitle}>Private by design</Text>
@@ -84,6 +149,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     color: colors.textPrimary,
     ...typography.mono.body,
+  },
+  errorMessage: {
+    ...typography.footnote,
+    color: colors.error,
+    marginBottom: spacing.md,
+  },
+  classDetails: {
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceOverlay,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  classDetailLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+  },
+  classDetailValue: {
+    ...typography.serif.title2,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   helperWrap: {
     marginTop: spacing.xl,

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
@@ -11,11 +11,12 @@ import { supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 
 export default function CreateClassScreen() {
-  const [name, setName] = useState('12-A');
-  const [school, setSchool] = useState('Northfield Academy');
-  const [year, setYear] = useState('2026');
+  const [name, setName] = useState('');
+  const [school, setSchool] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [showJoinCode, setShowJoinCode] = useState(false);
 
   const handleCreate = async () => {
     if (!supabase) {
@@ -23,7 +24,6 @@ export default function CreateClassScreen() {
       return;
     }
 
-    setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
@@ -46,10 +46,14 @@ export default function CreateClassScreen() {
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.message ?? 'Could not create class.');
+
+      // Store the join code and navigate to home
+      setJoinCode(result.class.join_code);
+      setShowJoinCode(true);
+      // Navigate to home - owner will see join code
       router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not create class.');
-      setIsSubmitting(false);
     }
   };
 
@@ -62,25 +66,50 @@ export default function CreateClassScreen() {
 
         <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class name</Text>
-          <TextInput value={name} onChangeText={setName} style={styles.input} />
+          <TextInput value={name} onChangeText={setName} style={styles.input} placeholder="e.g. 12-A" />
 
           <Text style={styles.fieldLabel}>School</Text>
-          <TextInput value={school} onChangeText={setSchool} style={styles.input} />
+          <TextInput value={school} onChangeText={setSchool} style={styles.input} placeholder="e.g. Northfield Academy" />
 
           <Text style={styles.fieldLabel}>Academic year</Text>
-          <TextInput value={year} onChangeText={setYear} style={styles.input} />
+          <TextInput value={year.toString()} onChangeText={(text) => setYear(Number(text))} style={styles.input} placeholder="2026" keyboardType="number-pad" />
 
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+
           <Button
-            title={isSubmitting ? 'Creating class…' : 'Create class'}
+            title="Create class"
             onPress={handleCreate}
-            disabled={isSubmitting}
             variant="accent"
+            fullWidth
           />
         </Card>
 
+        {/* Join code display after successful creation */}
+        {joinCode && (
+          <View style={styles.joinCodeContainer}>
+            <Text style={styles.joinCodeText}>Class created! Share this join code with your classmates:</Text>
+            <View style={styles.joinCodeBox}>
+              <Text style={styles.joinCodeValue}>{joinCode}</Text>
+              <Pressable
+                onPress={() => {
+                  setShowJoinCode(!showJoinCode);
+                }}
+                style={styles.copyButton}
+              >
+                <Text style={styles.copyButtonText}>Copy</Text>
+              </Pressable>
+            </View>
+            <Button
+              title="Go to Home"
+              variant="secondary"
+              onPress={() => router.replace('/(tabs)/home')}
+              style={styles.goHomeButton}
+            />
+          </View>
+        )}
+
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Want to join instead?</Text>
+          <Text style={{ color: colors.textMuted, ...typography.body }}>Want to join instead?</Text>
           <Button
             title="Join class"
             variant="secondary"
@@ -140,9 +169,50 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginBottom: spacing.md,
   },
-  footerText: {
+  joinCodeContainer: {
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceOverlay,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  joinCodeText: {
     ...typography.body,
-    color: colors.textMuted,
-    textAlign: 'center',
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  joinCodeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  joinCodeValue: {
+    fontFamily: 'Georgia',
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  copyButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+  },
+  copyButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  goHomeButton: {
+    marginTop: spacing.md,
+    width: '100%',
   },
 });
