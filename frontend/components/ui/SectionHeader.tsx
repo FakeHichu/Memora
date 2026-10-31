@@ -44,23 +44,23 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    ...typography.serif.title2,
+    ...typography.sans.title2,
+    fontWeight: '700',
+    letterSpacing: -0.3,
     color: colors.textPrimary,
   },
   subtitle: {
-    ...typography.sans.callout,
-    color: colors.textMuted,
+    ...typography.sans.subheadline,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   action: {
     paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   actionLabel: {
-    ...typography.sans.caption,
+    ...typography.sans.subheadline,
     color: colors.accent,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
 });

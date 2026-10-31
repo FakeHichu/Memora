@@ -291,40 +291,41 @@ export const MemoryCard = React.memo(function MemoryCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
+    borderColor: colors.border,
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   noPadding: {
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
   },
   pressed: {
     opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   selectedContainer: {
     borderWidth: borders.medium,
     borderColor: colors.accent,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 0 2px rgba(122, 159, 216, 0.3)' }
+      ? { boxShadow: '0 0 0 2px rgba(0, 122, 255, 0.25)' }
       : {
           shadowColor: colors.accent,
           shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.25,
+          shadowOpacity: 0.2,
           shadowRadius: 8,
         }),
   },
   imageWrapper: {
     overflow: 'hidden',
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.backgroundTertiary,
     position: 'relative',
   },
   image: {
     width: '100%',
   },
   blurredImage: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   blurOverlay: {
     position: 'absolute',
@@ -332,16 +333,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(8, 8, 12, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
   },
   blurText: {
     ...typography.sans.caption,
-    fontWeight: '700',
-    color: '#ffffff',
-    backgroundColor: 'rgba(8, 8, 12, 0.7)',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radius.round,
@@ -351,26 +352,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: spacing.sm,
     left: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.75)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.sm,
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   authorBadgeText: {
     ...typography.sans.caption2,
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   favoriteIndicator: {
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.65)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: radius.round,
     width: 28,
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   favoriteIcon: {
     fontSize: 13,
@@ -379,12 +382,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.sm,
     left: spacing.sm,
-    backgroundColor: 'rgba(8, 8, 12, 0.65)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: radius.round,
     width: 28,
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   pinnedIcon: {
     fontSize: 13,
@@ -394,13 +398,13 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(8, 8, 12, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingVertical: spacing.xs,
     alignItems: 'center',
   },
   archivedText: {
     ...typography.mono.micro,
-    color: colors.textMuted,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
   selectionIndicator: {
@@ -414,8 +418,8 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: radius.round,
     borderWidth: borders.thin,
-    borderColor: colors.chrome,
-    backgroundColor: 'rgba(8, 8, 12, 0.7)',
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -425,19 +429,14 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 12,
-    color: colors.textInverse,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   imageImmersive: {
     borderRadius: 0,
   },
   chromeAccentTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: borders.hairline,
-    backgroundColor: colors.chromeGlow,
+    height: 0,
   },
   content: {
     flex: 1,
@@ -445,16 +444,17 @@ const styles = StyleSheet.create({
   },
   memoryId: {
     ...typography.mono.micro,
-    color: colors.textMuted,
+    color: colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: spacing.xs,
   },
   title: {
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   promptBadge: {
-    backgroundColor: colors.accentSubtle,
+    backgroundColor: colors.accentSoft,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.sm,
@@ -467,6 +467,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   caption: {
+    color: colors.textSecondary,
     lineHeight: undefined,
   },
   metaRow: {
@@ -476,10 +477,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   metaText: {
-    color: colors.textMuted,
+    color: colors.textTertiary,
   },
   metaDivider: {
-    color: colors.textMuted,
+    color: colors.textTertiary,
     opacity: 0.5,
   },
   categoryBadge: {
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   locationText: {
-    color: colors.textMuted,
+    color: colors.textTertiary,
     flex: 1,
   },
 });

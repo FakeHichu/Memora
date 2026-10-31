@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography, layout } from '@/constants/theme';
 import { clearLocalPhotoPosts, getLocalPhotoPosts, getLocalProfile } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -227,28 +227,27 @@ const styles = StyleSheet.create({
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: radius.xl,
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    borderRadius: radius.circle,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    ...typography.display,
-    color: colors.textOnChrome,
+    ...typography.sans.title2,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    ...typography.serif.title2,
+    ...typography.sans.title3,
     color: colors.textPrimary,
+    fontWeight: '600',
   },
   profileStatus: {
-    ...typography.subheadline,
-    color: colors.textMuted,
+    ...typography.sans.subheadline,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   bottomSpacer: {

@@ -34,7 +34,7 @@ export function AppHeader({
   transparent = false,
 }: AppHeaderProps) {
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, transparent && styles.safeAreaTransparent]}>
       <View style={[styles.container, transparent && styles.containerTransparent, style]}>
         {leftAction && (
           <Pressable
@@ -43,7 +43,7 @@ export function AppHeader({
             accessibilityLabel={leftAction.accessibilityLabel || 'Menu'}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon name={leftAction.icon as any} size={22} color={colors.textPrimary} />
+            <Icon name={leftAction.icon as any} size={20} color={colors.textPrimary} />
           </Pressable>
         )}
 
@@ -61,7 +61,7 @@ export function AppHeader({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View style={styles.actionIconWrapper}>
-              <Icon name={rightAction.icon as any} size={22} color={colors.textPrimary} />
+              <Icon name={rightAction.icon as any} size={20} color={colors.textPrimary} />
               {rightAction.badge && rightAction.badge > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -80,59 +80,60 @@ export function AppHeader({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: 'rgba(9, 9, 12, 0.68)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     ...Platform.select({
-      web: { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' },
+      web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' },
       default: undefined,
     }),
   },
+  safeAreaTransparent: {
+    backgroundColor: 'transparent',
+  },
   container: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
     gap: spacing.md,
-    // Material 02 — Navigation surface
     backgroundColor: 'transparent',
-    borderBottomWidth: borders.hairline,
-    borderBottomColor: 'rgba(255, 255, 255, 0.07)',
   },
   containerTransparent: {
     paddingBottom: spacing.sm,
     backgroundColor: 'transparent',
-    borderBottomWidth: 0,
   },
   textContainer: {
     flex: 1,
     minWidth: 0,
-    paddingTop: spacing.xs,
   },
   greeting: {
-    ...typography.sans.callout,
-    color: colors.textMuted,
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   title: {
-    ...typography.sans.title2,
+    ...typography.sans.title,
     color: colors.textPrimary,
-    letterSpacing: -0.45,
-    marginTop: spacing.xs,
+    letterSpacing: -0.5,
+    marginTop: 2,
   },
   subtitle: {
-    ...typography.sans.callout,
+    ...typography.sans.subheadline,
     color: colors.textSecondary,
     marginTop: 1,
   },
   actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.round,
+    width: 38,
+    height: 38,
+    borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: colors.backgroundTertiary,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
     ...Platform.select({
       web: webShadows.xs,
       default: undefined,
@@ -143,12 +144,12 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
     borderRadius: radius.round,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
@@ -157,9 +158,10 @@ const styles = StyleSheet.create({
     ...typography.sans.caption2,
     color: colors.textInverse,
     fontWeight: '700',
+    fontSize: 10,
   },
   bottomHairline: {
     height: borders.hairline,
-    backgroundColor: colors.borderSubtle,
+    backgroundColor: colors.border,
   },
 });

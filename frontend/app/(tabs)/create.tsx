@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders, shadows } from '@/constants/theme';
 import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
 import { Icon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
@@ -467,28 +467,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.lg,
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
     gap: spacing.md,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 2,
-        }),
+      ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' }
+      : shadows.xs),
   },
   optionCardDisabled: {
     opacity: 0.6,
   },
   optionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    backgroundColor: colors.accentSubtle,
+    width: 48,
+    height: 48,
+    borderRadius: radius.circle,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -501,16 +495,16 @@ const styles = StyleSheet.create({
   },
   optionSubtitle: {
     ...typography.sans.subheadline,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   photoPreviewContainer: {
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.backgroundTertiary,
     aspectRatio: 3 / 4,
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
   photoPreview: {
     width: '100%',
@@ -524,18 +518,17 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     ...typography.sans.caption,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontWeight: '600',
   },
   textInput: {
     marginTop: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    borderRadius: radius.md,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: radius.sm,
     color: colors.textPrimary,
     ...typography.sans.body,
   },
@@ -554,13 +547,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    backgroundColor: colors.backgroundTertiary,
   },
   categoryPillActive: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
+    backgroundColor: colors.accent,
   },
   categoryPillText: {
     ...typography.sans.caption,
@@ -568,8 +558,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   categoryPillTextActive: {
-    color: colors.accent,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   tagsList: {
     flexDirection: 'row',

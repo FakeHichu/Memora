@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borders, colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
 import { TabIcon } from '@/components/ui/Icons';
 
-const MIN_TAB_BAR_HEIGHT = 56;
+const MIN_TAB_BAR_HEIGHT = 54;
 const TAB_LABEL_HEIGHT = 16;
 
 export default function TabsLayout() {
@@ -37,12 +37,13 @@ export default function TabsLayout() {
           title: 'Home',
           tabBarAccessibilityLabel: 'Home tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
+            <View style={styles.iconContainer}>
               <TabIcon
                 name="home"
                 focused={focused}
                 activeColor={colors.accent}
                 inactiveColor={colors.textMuted}
+                size={22}
               />
             </View>
           ),
@@ -54,12 +55,13 @@ export default function TabsLayout() {
           title: 'Memories',
           tabBarAccessibilityLabel: 'Memories tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
+            <View style={styles.iconContainer}>
               <TabIcon
                 name="calendar"
                 focused={focused}
                 activeColor={colors.accent}
                 inactiveColor={colors.textMuted}
+                size={22}
               />
             </View>
           ),
@@ -77,9 +79,9 @@ export default function TabsLayout() {
               <TabIcon
                 name="plus"
                 focused={focused}
-                activeColor={colors.textOnChrome}
-                inactiveColor={colors.chrome}
-                size={28}
+                activeColor="#FFFFFF"
+                inactiveColor="#FFFFFF"
+                size={24}
               />
             </View>
           ),
@@ -91,12 +93,13 @@ export default function TabsLayout() {
           title: 'Circle',
           tabBarAccessibilityLabel: 'Circle tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
+            <View style={styles.iconContainer}>
               <TabIcon
                 name="users"
                 focused={focused}
                 activeColor={colors.accent}
                 inactiveColor={colors.textMuted}
+                size={22}
               />
             </View>
           ),
@@ -108,12 +111,13 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarAccessibilityLabel: 'Profile tab',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && styles.iconContainerFocused]}>
+            <View style={styles.iconContainer}>
               <TabIcon
                 name="user"
                 focused={focused}
                 activeColor={colors.accent}
                 inactiveColor={colors.textMuted}
+                size={22}
               />
             </View>
           ),
@@ -130,53 +134,46 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: 'rgba(16, 16, 22, 0.88)',
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
     borderTopWidth: borders.hairline,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    borderTopColor: colors.border,
     paddingTop: spacing.xs,
     paddingHorizontal: spacing.md,
     ...(Platform.OS === 'web'
       ? {
-          ...webShadows.xl,
-          backdropFilter: 'blur(28px)',
-          WebkitBackdropFilter: 'blur(28px)',
+          ...webShadows.md,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }
-      : { ...shadows.xl }),
+      : { ...shadows.md }),
   },
   tabLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
     fontFamily: 'System',
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.circle,
+    width: 44,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconContainerFocused: {
-    backgroundColor: 'rgba(184, 79, 125, 0.14)',
-  },
   createIconContainer: {
-    width: 52,
-    height: 52,
+    width: 46,
+    height: 46,
     borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -4,
-    marginTop: -8,
+    marginTop: -10,
     backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.28)',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 18px rgba(184, 79, 125, 0.32), 0 4px 16px rgba(0, 0, 0, 0.3)' }
-      : { ...shadows.glowMd, ...shadows.md }),
+      ? { boxShadow: '0 4px 14px rgba(0, 122, 255, 0.35)' }
+      : { ...shadows.glowSm, ...shadows.sm }),
   },
   createIconContainerFocused: {
-    backgroundColor: colors.accentLight,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    transform: [{ scale: 1.03 }],
+    backgroundColor: colors.primaryDark,
+    transform: [{ scale: 1.05 }],
   },
 });

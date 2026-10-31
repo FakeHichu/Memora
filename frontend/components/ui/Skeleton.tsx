@@ -198,7 +198,7 @@ export function SkeletonAuthForm() {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.backgroundTertiary,
   },
 });
 

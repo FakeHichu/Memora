@@ -39,16 +39,14 @@ export function Card({
         ? webShadows.md
         : variant === 'editorial'
           ? webShadows.lg
-          : variant === 'chrome'
-            ? webShadows.md
-            : webShadows.sm
+          : variant === 'glass'
+            ? webShadows.sm
+            : webShadows.xs
       : variant === 'elevated'
         ? shadows.md
         : variant === 'editorial'
           ? shadows.lg
-          : variant === 'chrome'
-            ? shadows.md
-            : shadows.sm;
+          : shadows.xs;
 
   return (
     <View {...props} style={[styles.card, variantStyles, paddingStyles, shadowStyle, style]}>
@@ -59,39 +57,42 @@ export function Card({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
   },
   variantDefault: {
     backgroundColor: colors.surface,
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.border,
   },
   variantElevated: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 0,
+    backgroundColor: colors.surface,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
   },
   variantOutlined: {
     backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.border,
   },
   variantFilled: {
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundTertiary,
     borderWidth: 0,
   },
   variantEditorial: {
     backgroundColor: colors.surface,
-    borderWidth: 0,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
   },
   variantChrome: {
     backgroundColor: colors.surface,
     borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    borderColor: colors.accent,
   },
   variantGlass: {
-    backgroundColor: 'rgba(23, 24, 32, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.90)',
     borderWidth: borders.hairline,
-    borderColor: 'rgba(191, 195, 204, 0.1)',
+    borderColor: colors.border,
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } : {}),
   },
   paddingNone: {
     padding: 0,

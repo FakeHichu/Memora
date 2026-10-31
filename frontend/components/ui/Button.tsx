@@ -1,3 +1,4 @@
+import React from 'react';
 import { Insets, Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
 
 import { colors, radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
@@ -51,6 +52,8 @@ export function Button({
 
   const pressedStyle = Platform.OS === 'web' ? webShadows.xs : shadows.xs;
 
+  const isLightText = variant === 'primary' || variant === 'accent' || variant === 'chrome';
+
   return (
     <Pressable
       onPress={onPress}
@@ -69,25 +72,23 @@ export function Button({
         style,
       ]}
     >
-      {leftIcon && <Text style={styles.icon}>{leftIcon}</Text>}
+      {leftIcon && <Text style={[styles.icon, isLightText && styles.labelInverse]}>{leftIcon}</Text>}
       <Text
         style={[
           styles.label,
+          isLightText && styles.labelInverse,
           variant === 'ghost' && styles.labelGhost,
           variant === 'destructive' && styles.labelDestructive,
           variant === 'subtle' && styles.labelSubtle,
-          variant === 'chrome' && styles.labelChrome,
           sizeTextStyles,
         ]}
       >
         {title}
       </Text>
-      {rightIcon && <Text style={styles.icon}>{rightIcon}</Text>}
+      {rightIcon && <Text style={[styles.icon, isLightText && styles.labelInverse]}>{rightIcon}</Text>}
     </Pressable>
   );
 }
-
-const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
 
 const styles = StyleSheet.create({
   base: {
@@ -96,49 +97,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-    ...baseShadow,
   },
   sizeSm: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    minHeight: 36,
+    minHeight: 34,
+    borderRadius: radius.sm,
   },
   sizeMd: {
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    minHeight: 48,
+    paddingVertical: spacing.sm,
+    minHeight: 44,
+    borderRadius: radius.md,
   },
   sizeLg: {
     paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.lg,
-    minHeight: 56,
+    paddingVertical: spacing.md,
+    minHeight: 52,
+    borderRadius: radius.lg,
   },
   fullWidth: {
     width: '100%',
   },
   variantPrimary: {
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    backgroundColor: colors.accent,
+    borderWidth: 0,
+    ...(Platform.OS === 'web' ? { boxShadow: '0 2px 8px rgba(0, 122, 255, 0.25)' } : shadows.glowSm),
   },
   variantSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: borders.thin,
-    borderColor: colors.borderChrome,
+    backgroundColor: colors.backgroundTertiary,
+    borderWidth: 0,
   },
   variantGhost: {
     backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: colors.borderChrome,
+    borderColor: colors.border,
   },
   variantChrome: {
-    backgroundColor: colors.chrome,
+    backgroundColor: colors.accent,
     borderWidth: 0,
   },
   variantAccent: {
     backgroundColor: colors.accent,
     borderWidth: 0,
-    ...shadows.glowSm,
   },
   variantDestructive: {
     backgroundColor: colors.errorSoft,
@@ -146,12 +147,12 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   variantSubtle: {
-    backgroundColor: colors.accentSubtle,
-    borderWidth: borders.hairline,
-    borderColor: 'rgba(184, 79, 125, 0.2)',
+    backgroundColor: colors.accentSoft,
+    borderWidth: 0,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   disabled: {
     opacity: 0.4,
@@ -159,14 +160,17 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textPrimary,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: -0.2,
     fontFamily: 'System',
+  },
+  labelInverse: {
+    color: '#FFFFFF',
   },
   sizeSmText: {
     fontSize: 13,
   },
   sizeMdText: {
-    fontSize: 16,
+    fontSize: 15,
   },
   sizeLgText: {
     fontSize: 17,
@@ -179,9 +183,6 @@ const styles = StyleSheet.create({
   },
   labelSubtle: {
     color: colors.accent,
-  },
-  labelChrome: {
-    color: colors.textOnChrome,
   },
   icon: {
     fontSize: 16,

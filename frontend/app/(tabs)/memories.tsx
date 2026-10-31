@@ -165,7 +165,7 @@ export default function MemoriesScreen() {
               density="timeline"
               aspectRatio={4 / 3}
               onPress={() => router.push(`/post/${item.id}`)}
-              showMemoryId={true}
+              showMemoryId={false}
               showReactions={true}
               showTags={true}
             />

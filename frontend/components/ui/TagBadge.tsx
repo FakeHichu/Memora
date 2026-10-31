@@ -136,11 +136,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   badgeDefault: {
-    backgroundColor: colors.backgroundElevated,
-    borderColor: colors.borderSubtle,
+    backgroundColor: colors.backgroundTertiary,
+    borderColor: 'transparent',
   },
   badgeActive: {
-    backgroundColor: colors.accentSubtle,
+    backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
   label: {
@@ -152,14 +152,14 @@ const styles = StyleSheet.create({
   },
   labelMd: {
     ...typography.sans.caption,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   labelDefault: {
     color: colors.textSecondary,
   },
   labelActive: {
-    color: colors.accent,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   removeButton: {
     alignItems: 'center',

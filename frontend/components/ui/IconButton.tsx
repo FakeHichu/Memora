@@ -90,33 +90,31 @@ const styles = StyleSheet.create({
   },
   // Default — Floating surface
   variantDefault: {
-    backgroundColor: colors.surfaceFloating,
+    backgroundColor: colors.surface,
     borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
+    borderColor: colors.border,
   },
-  // Chrome — Chrome dim surface with chrome border
+  // Chrome — Apple Blue
   variantChrome: {
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
+    backgroundColor: colors.accent,
+    borderWidth: 0,
   },
   // Accent — Accent surface
   variantAccent: {
     backgroundColor: colors.accent,
     borderWidth: 0,
-    ...shadows.glowSm,
   },
   // Ghost — Transparent with subtle border
   variantGhost: {
     backgroundColor: 'transparent',
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
-  // Overlay — Dark translucent for on-content controls
+  // Overlay — Translucent white
   variantOverlay: {
-    backgroundColor: 'rgba(8, 8, 12, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: borders.hairline,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: colors.border,
   },
   pressed: {
     opacity: 0.8,

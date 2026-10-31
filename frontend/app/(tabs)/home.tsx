@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography, layout, borders, webShadows, shadows } from '@/constants/theme';
 import {
   getLocalPhotoPosts,
   getTodayPost,
@@ -21,7 +21,6 @@ import { FilterChips } from '@/components/ui/FilterChips';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { Button } from '@/components/ui/Button';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
 import { Icon } from '@/components/ui/Icons';
@@ -131,15 +130,11 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
-      <View pointerEvents="none" style={styles.ambientBackdrop}>
-        <View style={[styles.ambientGlow, styles.ambientGlowPrimary]} />
-        <View style={[styles.ambientGlow, styles.ambientGlowSecondary]} />
-      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AppHeader
           greeting={getGreeting()}
-          title="A little piece of your life"
+          title="Today"
+          subtitle="A little piece of your life"
           rightAction={{
             icon: 'search',
             onPress: () => router.push('/(tabs)/search'),
@@ -199,9 +194,9 @@ export default function HomeScreen() {
             accessibilityLabel="Create a memory"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="camera" size={19} color={colors.accentLight} />
+              <Icon name="camera" size={18} color={colors.accent} />
             </View>
-            <Text style={styles.quickActionLabel}>New memory</Text>
+            <Text style={styles.quickActionLabel}>New Memory</Text>
           </Pressable>
           <Pressable
             style={styles.quickAction}
@@ -210,7 +205,7 @@ export default function HomeScreen() {
             accessibilityLabel="View favorites"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="star" size={19} color={colors.accentLight} />
+              <Icon name="star" size={18} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>Favorites</Text>
           </Pressable>
@@ -221,7 +216,7 @@ export default function HomeScreen() {
             accessibilityLabel="View collections"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="bookmark" size={19} color={colors.accentLight} />
+              <Icon name="bookmark" size={18} color={colors.accent} />
             </View>
             <Text style={styles.quickActionLabel}>Collections</Text>
           </Pressable>
@@ -232,9 +227,9 @@ export default function HomeScreen() {
             accessibilityLabel="Open command palette"
           >
             <View style={styles.quickActionIconWrap}>
-              <Icon name="cog" size={19} color={colors.accentLight} />
+              <Icon name="cog" size={18} color={colors.accent} />
             </View>
-            <Text style={styles.quickActionLabel}>Commands</Text>
+            <Text style={styles.quickActionLabel}>Actions</Text>
           </Pressable>
         </View>
 
@@ -245,7 +240,7 @@ export default function HomeScreen() {
               <View style={[styles.promptDot, postedToday && styles.promptDotCompleted]} />
               <Text style={styles.promptTagText}>TODAY'S PROMPT</Text>
             </View>
-            <Text style={styles.streakBadge}>{postedToday ? 'Today complete' : 'Your daily moment'}</Text>
+            <Text style={styles.streakBadge}>{postedToday ? 'Completed' : 'Daily'}</Text>
           </View>
 
           <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
@@ -270,11 +265,11 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.promptActionWrapper}>
               <Text style={styles.promptSubtext}>
-                Take or upload one photo today to keep your daily streak alive.
+                Capture one memory today to maintain your daily streak.
               </Text>
               <Button
-                title="Capture Today's Photo"
-                variant="accent"
+                title="Capture Today's Memory"
+                variant="primary"
                 onPress={handleCaptureWithPrompt}
                 style={styles.promptButton}
               />
@@ -297,7 +292,7 @@ export default function HomeScreen() {
                   density="timeline"
                   aspectRatio={4 / 3}
                   onPress={() => router.push(`/post/${post.id}`)}
-                  showMemoryId={true}
+                  showMemoryId={false}
                   showReactions={true}
                   onReact={(emoji) => handleReact(post.id, emoji)}
                 />
@@ -330,7 +325,6 @@ export default function HomeScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Favorite memory from ${new Date(post.createdAt).toLocaleDateString()}`}
                 >
-                  {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
                   <MemoryCard
                     memory={post}
                     density="compact"
@@ -365,7 +359,7 @@ export default function HomeScreen() {
               aspectRatio={4 / 5}
               onPress={() => router.push(`/post/${featuredMemory.id}`)}
               showMetadata={false}
-              showMemoryId={true}
+              showMemoryId={false}
               showReactions={true}
               onReact={(emoji) => handleReact(featuredMemory.id, emoji)}
             />
@@ -374,7 +368,7 @@ export default function HomeScreen() {
 
         {/* Your Memories Section */}
         <SectionHeader
-          title="Your Memories"
+          title="Recent Memories"
           subtitle={
             activePosts.length > 0
               ? `${activePosts.length} ${activePosts.length === 1 ? 'memory' : 'memories'}`
@@ -387,11 +381,13 @@ export default function HomeScreen() {
           }
         />
 
-        <FilterChips
-          filters={HOME_FILTERS}
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-        />
+        <View style={styles.filtersWrapper}>
+          <FilterChips
+            filters={HOME_FILTERS}
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
+          />
+        </View>
 
         {isLoading ? (
           <View style={styles.memoriesFeed}>
@@ -401,8 +397,8 @@ export default function HomeScreen() {
           </View>
         ) : recentPosts.length === 0 ? (
           <EmptyState
-            title={selectedFilter === 'All' ? 'Start with one moment' : `No ${selectedFilter} memories`}
-            message="Photos you take will appear here, organized by time and category."
+            title={selectedFilter === 'All' ? 'Start your journal' : `No ${selectedFilter} memories`}
+            message="Capture a photo today to start your memory timeline."
             variant="camera"
             action={{
               label: 'Create a memory',
@@ -421,7 +417,7 @@ export default function HomeScreen() {
                 density="timeline"
                 aspectRatio={4 / 3}
                 onPress={() => router.push(`/post/${post.id}`)}
-                showMemoryId={true}
+                showMemoryId={false}
                 showReactions={true}
                 showTags={true}
                 onReact={(emoji) => handleReact(post.id, emoji)}
@@ -449,34 +445,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  ambientBackdrop: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-  },
-  ambientGlow: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: radius.circle,
-  },
-  ambientGlowPrimary: {
-    top: 90,
-    right: -150,
-    backgroundColor: 'rgba(184, 79, 125, 0.09)',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 110px 72px rgba(184, 79, 125, 0.12)' }
-      : {}),
-  },
-  ambientGlowSecondary: {
-    top: 360,
-    left: -180,
-    width: 230,
-    height: 230,
-    backgroundColor: 'rgba(104, 82, 151, 0.08)',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 0 100px 68px rgba(104, 82, 151, 0.1)' }
-      : {}),
-  },
   content: {
     width: '100%',
     maxWidth: layout.maxContentWidth,
@@ -486,16 +454,15 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
-    backgroundColor: 'rgba(29, 30, 39, 0.58)',
-    borderRadius: radius.xl,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    ...(Platform.OS === 'web'
-      ? { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
-      : {}),
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   statItem: {
     flex: 1,
@@ -504,38 +471,37 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   statValue: {
-    ...typography.serif.title3,
+    ...typography.sans.title2,
     color: colors.textPrimary,
     fontWeight: '700',
   },
   statLabel: {
-    ...typography.sans.caption2,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   statDivider: {
     width: borders.hairline,
     height: 28,
-    backgroundColor: colors.borderSubtle,
+    backgroundColor: colors.border,
   },
   quickActions: {
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-    gap: spacing.xs,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   quickAction: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xs,
-    backgroundColor: 'rgba(29, 30, 39, 0.42)',
-    borderRadius: radius.lg,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
     gap: spacing.xs,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', ...webShadows.xs } : shadows.xs),
   },
   quickActionIconWrap: {
     width: 36,
@@ -543,31 +509,24 @@ const styles = StyleSheet.create({
     borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(184, 79, 125, 0.12)',
-    borderWidth: borders.hairline,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: colors.accentSoft,
   },
   quickActionLabel: {
-    ...typography.sans.caption2,
-    color: colors.textSecondary,
+    ...typography.sans.caption,
+    color: colors.textPrimary,
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '500',
+    fontSize: 12,
   },
   promptHeroCard: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.xl,
     padding: spacing.xl,
-    backgroundColor: 'rgba(30, 25, 36, 0.76)',
-    borderRadius: radius.xxl,
-    borderWidth: borders.thin,
-    borderColor: 'rgba(200, 145, 178, 0.2)',
-    ...(Platform.OS === 'web'
-      ? {
-          backdropFilter: 'blur(28px)',
-          WebkitBackdropFilter: 'blur(28px)',
-          boxShadow: '0 18px 48px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
-        }
-      : {}),
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
+    ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
   },
   promptHeader: {
     flexDirection: 'row',
@@ -584,35 +543,36 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.warning,
+    backgroundColor: colors.accent,
   },
   promptDotCompleted: {
     backgroundColor: colors.success,
   },
   promptTagText: {
-    ...typography.mono.micro,
-    color: colors.accentLight,
-    letterSpacing: 0.8,
+    ...typography.sans.caption,
+    color: colors.accent,
+    letterSpacing: 0.5,
     fontWeight: '700',
   },
   streakBadge: {
-    ...typography.sans.caption2,
+    ...typography.sans.caption,
     color: colors.textSecondary,
     fontWeight: '600',
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.backgroundTertiary,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.round,
   },
   promptQuestion: {
-    ...typography.serif.title2,
+    ...typography.sans.title3,
     color: colors.textPrimary,
-    lineHeight: 30,
+    lineHeight: 28,
+    fontWeight: '600',
     marginBottom: spacing.md,
   },
   promptSubtext: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
+    ...typography.sans.subheadline,
+    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
   promptActionWrapper: {
@@ -626,9 +586,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   todayMemoryLabel: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.8,
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    fontWeight: '600',
   },
   sectionBlock: {
     marginBottom: spacing.xl,
@@ -639,7 +600,7 @@ const styles = StyleSheet.create({
   },
   favoriteThumb: {
     width: 100,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     overflow: 'hidden',
   },
   onThisDaySection: {
@@ -664,14 +625,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   onThisDayLabelText: {
-    ...typography.mono.micro,
+    ...typography.sans.caption,
     color: colors.accent,
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
     fontWeight: '700',
   },
   onThisDayYearsAgo: {
     ...typography.sans.caption,
-    color: colors.textMuted,
+    color: colors.textSecondary,
+  },
+  filtersWrapper: {
+    marginBottom: spacing.md,
   },
   memoriesFeed: {
     paddingHorizontal: spacing.lg,

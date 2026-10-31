@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, ViewStyle, ScrollView } from 'react-native';
+import { Pressable, StyleSheet, Text, View, ViewStyle, ScrollView, Platform } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders, webShadows, shadows } from '@/constants/theme';
 
 type FilterChipProps = {
   label: string;
@@ -86,29 +86,31 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xs,
     borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.surface,
     borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    minHeight: 36,
+    borderColor: colors.border,
+    minHeight: 34,
     justifyContent: 'center',
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   selected: {
-    backgroundColor: colors.accentSubtle,
+    backgroundColor: colors.accent,
     borderColor: colors.accent,
-    borderWidth: borders.thin,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.7,
   },
   label: {
-    ...typography.sans.caption,
+    ...typography.sans.footnote,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   labelSelected: {
-    color: colors.accent,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 });

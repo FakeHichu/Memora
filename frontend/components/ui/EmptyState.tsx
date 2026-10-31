@@ -166,9 +166,10 @@ const styles = StyleSheet.create({
     borderWidth: borders.thin,
   },
   title: {
-    ...typography.serif.title2,
+    ...typography.sans.title2,
     color: colors.textPrimary,
     textAlign: 'center',
+    fontWeight: '700',
     maxWidth: 320,
   },
   message: {

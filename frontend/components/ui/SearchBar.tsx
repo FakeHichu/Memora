@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
 
 type SearchBarProps = {
@@ -30,7 +30,7 @@ export function SearchBar({
   return (
     <View style={[styles.container, floating && styles.containerFloating, style]}>
       <View style={styles.inputWrapper}>
-        <Icon name="search" size={18} color={colors.textMuted} style={styles.icon} />
+        <Icon name="search" size={17} color={colors.textSecondary} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -66,22 +66,18 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceFloating,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-    borderRadius: radius.round,
+    backgroundColor: colors.backgroundTertiary,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
-  },
-  icon: {
-    // Icon component handles sizing
+    minHeight: 38,
   },
   input: {
     flex: 1,
-    ...typography.sans.body,
+    ...typography.sans.subheadline,
     color: colors.textPrimary,
-    paddingVertical: spacing.sm,
-    minHeight: 44,
+    paddingVertical: spacing.xs,
+    fontSize: 16,
   },
   clearButton: {
     padding: spacing.xs,

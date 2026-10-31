@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
 
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { colors, radius, spacing, typography, borders, webShadows, shadows } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
 
 type ProfileSectionProps = {
@@ -16,7 +16,7 @@ type ProfileSectionProps = {
 
 export function ProfileSection({ title, children, style, action }: ProfileSectionProps) {
   return (
-    <View style={[styles.section, style]}>
+    <View style={[styles.sectionWrapper, style]}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
         {action && (
@@ -25,7 +25,7 @@ export function ProfileSection({ title, children, style, action }: ProfileSectio
           </Pressable>
         )}
       </View>
-      <View style={styles.content}>{children}</View>
+      <View style={styles.card}>{children}</View>
     </View>
   );
 }
@@ -60,13 +60,19 @@ export function ProfileRow({
       accessibilityRole={onPress ? 'button' : undefined}
     >
       <View style={styles.rowLeft}>
-        {icon && <Icon name={icon as any} size={20} color={colors.textSecondary} />}
-        <View style={styles.textContainer}>
-          <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>{label}</Text>
-          <Text style={[styles.rowValue, destructive && styles.rowValueDestructive]}>{value}</Text>
-        </View>
+        {icon && (
+          <View style={styles.iconContainer}>
+            <Icon name={icon as any} size={18} color={destructive ? colors.error : colors.accent} />
+          </View>
+        )}
+        <Text style={[styles.rowLabel, destructive && styles.rowLabelDestructive]}>{label}</Text>
       </View>
-      {onPress && <Icon name="chevron-right" size={20} color={colors.textMuted} />}
+      <View style={styles.rowRight}>
+        {value ? (
+          <Text style={[styles.rowValue, destructive && styles.rowValueDestructive]}>{value}</Text>
+        ) : null}
+        {onPress && <Icon name="chevron-right" size={16} color={colors.textTertiary} />}
+      </View>
     </Pressable>
   );
 }
@@ -80,49 +86,52 @@ export function ProfileDivider({ style }: ProfileDividerProps) {
 }
 
 const styles = StyleSheet.create({
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
+  sectionWrapper: {
+    marginBottom: spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   title: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
+    ...typography.sans.caption,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    fontWeight: '500',
   },
   action: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
   },
   actionLabel: {
-    ...typography.sans.caption,
+    ...typography.sans.subheadline,
     color: colors.accent,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '500',
   },
-  content: {
-    gap: spacing.sm,
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: borders.hairline,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? webShadows.xs : shadows.xs),
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    minHeight: 48,
+    paddingVertical: spacing.md,
+    minHeight: 46,
   },
   rowInteractive: {
     backgroundColor: 'transparent',
   },
   rowPressed: {
-    backgroundColor: colors.backgroundElevated,
+    opacity: 0.7,
   },
   rowDestructive: {},
   rowLeft: {
@@ -131,31 +140,39 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     flex: 1,
   },
-  textContainer: {
-    flex: 1,
-    minWidth: 0,
+  iconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.xs,
+    backgroundColor: colors.backgroundTertiary,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   rowLabel: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    ...typography.sans.body,
+    color: colors.textPrimary,
+    fontWeight: '400',
+    fontSize: 16,
   },
   rowLabelDestructive: {
     color: colors.error,
   },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   rowValue: {
     ...typography.sans.body,
-    color: colors.textPrimary,
-    marginTop: 1,
+    color: colors.textSecondary,
+    fontSize: 15,
   },
   rowValueDestructive: {
     color: colors.error,
   },
   divider: {
     height: borders.hairline,
-    backgroundColor: colors.borderSoft,
-    marginVertical: spacing.sm,
+    backgroundColor: colors.border,
+    marginLeft: 36,
   },
 });
