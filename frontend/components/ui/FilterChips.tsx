@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, ViewStyle, ScrollView } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, ViewStyle, ScrollView } from 'react-native';
 
-import { radius, spacing, typography, borders } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 
 type FilterChipProps = {
@@ -12,22 +12,24 @@ type FilterChipProps = {
 };
 
 export function FilterChip({ label, selected, onPress, style }: FilterChipProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode);
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        selected && styles.selected,
-        pressed && !selected && styles.pressed,
+        selected ? styles.selectedChip : styles.unselectedChip,
+        pressed && styles.pressed,
         style,
       ]}
       accessibilityRole="button"
       accessibilityState={{ selected }}
     >
-      <Text style={[styles.label, selected && styles.labelSelected]}>{label}</Text>
+      <Text style={[styles.label, selected ? styles.selectedLabel : styles.unselectedLabel]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -47,8 +49,8 @@ export function FilterChips({
   style,
   scrollable = true,
 }: FilterChipsProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode);
 
   const content = (
     <View style={styles.container}>
@@ -79,45 +81,71 @@ export function FilterChips({
   return <View style={[styles.container, style]}>{content}</View>;
 }
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
+  const isDark = mode === 'dark';
+
+  // Active pill is dark pill in light mode, or accent purple in dark mode
+  const activeBg = isDark ? '#8052C8' : '#261D32';
+  const activeText = '#FFFFFF';
+  const inactiveBg = colors.card;
+  const inactiveText = colors.textSecondary;
+
   return StyleSheet.create({
     container: {
       flexDirection: 'row',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
+      gap: 10,
     },
     scrollView: {
       paddingHorizontal: spacing.lg,
     },
     scrollContent: {
       flexDirection: 'row',
-      gap: spacing.sm,
+      gap: 10,
+      paddingVertical: 6,
     },
     chip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-      borderRadius: radius.round,
-      backgroundColor: colors.card,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      minHeight: 36,
+      paddingHorizontal: 18,
+      paddingVertical: 9,
+      borderRadius: 999,
+      alignItems: 'center',
       justifyContent: 'center',
     },
-    selected: {
-      backgroundColor: colors.accentSubtle,
-      borderColor: colors.accent,
-      borderWidth: borders.thin,
+    selectedChip: {
+      backgroundColor: activeBg,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 4px 14px rgba(128, 82, 200, 0.4)'
+              : '0 4px 14px rgba(38, 29, 50, 0.25)',
+          } as any)
+        : {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 3,
+          }),
     },
-    pressed: {
-      opacity: 0.85,
+    unselectedChip: {
+      backgroundColor: inactiveBg,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
     },
     label: {
-      ...typography.sans.caption,
-      color: colors.textSecondary,
-    },
-    labelSelected: {
-      color: colors.accent,
+      fontSize: 14,
       fontWeight: '600',
+      letterSpacing: -0.2,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'normal',
+    },
+    selectedLabel: {
+      color: activeText,
+    },
+    unselectedLabel: {
+      color: inactiveText,
+    },
+    pressed: {
+      opacity: 0.82,
+      transform: [{ scale: 0.96 }],
     },
   });
 }

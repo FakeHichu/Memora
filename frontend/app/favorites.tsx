@@ -1,9 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { radius, spacing, typography, layout, borders, breakpoints } from '@/constants/theme';
+import { spacing, layout, breakpoints, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { getFavoritePosts, toggleFavorite, type LocalPhotoPost } from '@/lib/photo-draft';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -12,15 +12,17 @@ import { SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { IconButton } from '@/components/ui/IconButton';
 import { SearchBar } from '@/components/ui/SearchBar';
+import { Icon } from '@/components/ui/Icons';
 
 export default function FavoritesScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode);
   const { showToast } = useToast();
   const { width: screenWidth } = useWindowDimensions();
   const [favorites, setFavorites] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const loadFavorites = useCallback(() => {
     let isActive = true;
@@ -55,34 +57,37 @@ export default function FavoritesScreen() {
     }
   };
 
-  const matchesSearch = (post: LocalPhotoPost): boolean => {
+  const visibleFavorites = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return true;
-    const caption = (post.caption || '').toLowerCase();
-    const title = (post.title || '').toLowerCase();
-    const location = (post.location || '').toLowerCase();
-    const tags = (post.tags || []).join(' ').toLowerCase();
-    const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
-    return caption.includes(query) || title.includes(query) || location.includes(query) || tags.includes(query) || dateStr.includes(query);
-  };
-
-  const visibleFavorites = useMemo(
-    () => favorites.filter((post) => !post.isArchived && matchesSearch(post)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [favorites, searchQuery],
-  );
+    return favorites.filter((post) => {
+      if (post.isArchived) return false;
+      if (!query) return true;
+      const caption = (post.caption || '').toLowerCase();
+      const title = (post.title || '').toLowerCase();
+      const location = (post.location || '').toLowerCase();
+      const tags = (post.tags || []).join(' ').toLowerCase();
+      const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
+      return (
+        caption.includes(query) ||
+        title.includes(query) ||
+        location.includes(query) ||
+        tags.includes(query) ||
+        dateStr.includes(query)
+      );
+    });
+  }, [favorites, searchQuery]);
 
   const columns =
     screenWidth >= breakpoints.desktop
       ? layout.photoGridColumns.desktop
       : screenWidth >= breakpoints.tablet
         ? layout.photoGridColumns.tablet
-        : layout.photoGridColumns.phone;
+        : 2; // Always clean 2-column on phone matching reference image Screen 3
 
   const horizontalPadding = spacing.lg * 2;
-  const gridGap = spacing.sm;
+  const gridGap = 14;
   const tileWidth = (screenWidth - horizontalPadding - gridGap * (columns - 1)) / columns;
-  const tileHeight = tileWidth;
+  const tileImageHeight = tileWidth * 0.95;
 
   const rows = useMemo(() => {
     const result: LocalPhotoPost[][] = [];
@@ -96,32 +101,47 @@ export default function FavoritesScreen() {
     new Date(post.createdAt).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     });
 
-  const renderTile = (post: LocalPhotoPost) => (
+  const renderCard = (post: LocalPhotoPost) => (
     <Pressable
-      style={[styles.tile, { width: tileWidth }]}
+      key={post.id}
+      style={[styles.recipeCard, { width: tileWidth }]}
       onPress={() => router.push(`/post/${post.id}`)}
-      onLongPress={() => handleToggleFavorite(post.id)}
       accessibilityRole="button"
-      accessibilityLabel={`Favorite memory: ${post.caption || post.title || 'Untitled memory'}`}
+      accessibilityLabel={`Favorite memory: ${post.title || post.caption || 'Untitled memory'}`}
     >
-      <Image source={{ uri: post.uri }} style={[styles.tileImage, { height: tileHeight }]} resizeMode="cover" />
-      <View style={styles.tileCaption}>
-        <Text style={styles.tileCaptionText} numberOfLines={2}>
-          {post.title || post.caption || 'Untitled memory'}
+      {/* Top Header Row of Card (Title on left, circular heart on right) */}
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {post.title || post.caption || 'Memory'}
         </Text>
-        <Text style={styles.tileCaptionDate}>{formatMemoryDate(post)}</Text>
+        <Pressable
+          onPress={() => handleToggleFavorite(post.id)}
+          style={styles.cardHeartButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Remove from favorites"
+        >
+          <Icon name="heart" size={15} color={colors.highlight} fill={colors.highlight} />
+        </Pressable>
       </View>
-      <IconButton
-        icon="star"
-        onPress={() => handleToggleFavorite(post.id)}
-        variant={post.isFavorite ? 'accent' : 'default'}
-        size="sm"
-        style={styles.favoriteToggle}
-        accessibilityLabel="Remove from favorites"
-      />
+
+      {/* Centered Rounded Image */}
+      <View style={styles.cardImageContainer}>
+        <Image
+          source={{ uri: post.uri }}
+          style={[styles.cardImage, { height: tileImageHeight }]}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Bottom Subtitle / Time badge */}
+      <View style={styles.cardFooter}>
+        <Text style={styles.cardSubtitle} numberOfLines={1}>
+          {post.location || post.category || 'Special Moment'}
+        </Text>
+        <Text style={styles.cardTimeText}>{formatMemoryDate(post)}</Text>
+      </View>
     </Pressable>
   );
 
@@ -129,8 +149,8 @@ export default function FavoritesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Top Navigation Row (matching Screen 3) */}
+        <View style={styles.navRow}>
           <IconButton
             icon="arrow-left"
             onPress={() => router.back()}
@@ -138,30 +158,37 @@ export default function FavoritesScreen() {
             size="sm"
             accessibilityLabel="Go back"
           />
-          <View style={styles.headerTitle}>
-            <Text style={styles.title}>Your favorite moments.</Text>
-          </View>
-          <View style={styles.headerSpacer} />
-        </View>
-
-        {!isLoading && favorites.length > 0 && (
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{favorites.length} favorited</Text>
-          </View>
-        )}
-
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search your favorites…"
-            onClear={() => setSearchQuery('')}
+          <Text style={styles.navCenterTitle}>Favorites</Text>
+          <IconButton
+            icon="search"
+            onPress={() => setShowSearch(!showSearch)}
+            variant={showSearch ? 'accent' : 'default'}
+            size="sm"
+            accessibilityLabel="Search favorites"
           />
         </View>
 
+        {/* Big Headline (matching Screen 3 "Favorite recipes") */}
+        <View style={styles.headingBlock}>
+          <Text style={styles.headingText}>Favorite memories</Text>
+        </View>
+
+        {/* Collapsible Search Bar */}
+        {showSearch && (
+          <View style={styles.searchSection}>
+            <SearchBar
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search your favorites…"
+              onClear={() => setSearchQuery('')}
+              autoFocus={true}
+            />
+          </View>
+        )}
+
         {isLoading ? (
           <View style={styles.loadingGrid}>
-            {[0, 1, 2, 4, 5, 6].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <SkeletonMemoryCard key={i} aspectRatio={1} variant="compact" />
             ))}
           </View>
@@ -171,7 +198,7 @@ export default function FavoritesScreen() {
             message={
               searchQuery
                 ? `No favorites match "${searchQuery}".`
-                : 'Tap the star ⭐ on any memory to save it here for quick access.'
+                : 'Tap the heart on any memory to save it here for quick access.'
             }
             variant={searchQuery ? 'search' : 'star'}
             action={
@@ -189,7 +216,7 @@ export default function FavoritesScreen() {
           <View style={styles.grid}>
             {rows.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.gridRow}>
-                {row.map((post) => renderTile(post))}
+                {row.map((post) => renderCard(post))}
               </View>
             ))}
           </View>
@@ -201,7 +228,9 @@ export default function FavoritesScreen() {
   );
 }
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
+  const isDark = mode === 'dark';
+
   return StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -211,46 +240,35 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       width: '100%',
       maxWidth: layout.maxContentWidth,
       alignSelf: 'center',
-      paddingBottom: spacing.xxxl,
+      paddingBottom: 110,
     },
-    header: {
+    navRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.lg,
+      paddingVertical: spacing.md,
     },
-    headerTitle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
-    title: {
-      ...typography.serif.title2,
-      color: colors.textPrimary,
-    },
-    headerSpacer: {
-      width: 36,
-    },
-    countBadge: {
-      alignSelf: 'flex-start',
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-      backgroundColor: colors.accentSubtle,
-      borderRadius: radius.round,
-      borderWidth: borders.hairline,
-      borderColor: colors.accent,
-    },
-    countText: {
-      ...typography.sans.caption,
-      color: colors.accent,
+    navCenterTitle: {
+      fontSize: 17,
       fontWeight: '700',
+      color: colors.textPrimary,
+      letterSpacing: -0.2,
     },
-    searchContainer: {
+    headingBlock: {
       paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
+      marginTop: 6,
+      marginBottom: 16,
+    },
+    headingText: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: colors.textPrimary,
+      letterSpacing: -0.5,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'normal',
+    },
+    searchSection: {
+      marginBottom: 12,
     },
     loadingGrid: {
       paddingHorizontal: spacing.lg,
@@ -265,40 +283,72 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     },
     gridRow: {
       flexDirection: 'row',
-      gap: spacing.sm,
-      marginBottom: spacing.lg,
+      gap: 14,
+      marginBottom: 16,
     },
-    tile: {
-      borderRadius: radius.md,
-      overflow: 'hidden',
-      backgroundColor: colors.backgroundSecondary,
-    },
-    tileImage: {
-      width: '100%',
-      backgroundColor: colors.backgroundSecondary,
-    },
-    tileCaption: {
-      padding: spacing.sm,
-      paddingTop: spacing.xs,
+    recipeCard: {
       backgroundColor: colors.card,
+      borderRadius: 24,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      gap: 10,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 6px 20px rgba(0, 0, 0, 0.4)'
+              : '0 4px 16px rgba(48, 36, 61, 0.05)',
+          } as any)
+        : shadows.sm),
     },
-    tileCaptionText: {
-      ...typography.sans.callout,
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 2,
+    },
+    cardTitle: {
+      fontSize: 15,
+      fontWeight: '700',
       color: colors.textPrimary,
-      fontWeight: '600',
+      flex: 1,
+      letterSpacing: -0.2,
+      marginRight: 6,
     },
-    tileCaptionDate: {
-      ...typography.sans.caption2,
+    cardHeartButton: {
+      width: 28,
+      height: 28,
+      borderRadius: 999,
+      backgroundColor: colors.surfaceOverlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+    },
+    cardImageContainer: {
+      borderRadius: 18,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceOverlay,
+    },
+    cardImage: {
+      width: '100%',
+    },
+    cardFooter: {
+      paddingHorizontal: 2,
+      gap: 2,
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    cardTimeText: {
+      fontSize: 11,
       color: colors.textMuted,
-      marginTop: 2,
-    },
-    favoriteToggle: {
-      position: 'absolute',
-      top: spacing.xs,
-      right: spacing.xs,
+      fontWeight: '400',
     },
     bottomSpacer: {
-      height: 40,
+      height: 30,
     },
   });
 }

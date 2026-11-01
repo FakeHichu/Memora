@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { radius, spacing, typography, layout, borders, shadows } from '@/constants/theme';
+import { radius, spacing, typography, layout, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import {
   getLocalPhotoPosts,
@@ -26,7 +26,6 @@ import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
-import { Icon } from '@/components/ui/Icons';
 import { Avatar } from '@/components/ui/Avatar';
 import { SearchBar } from '@/components/ui/SearchBar';
 
@@ -60,12 +59,6 @@ function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
       !post.isArchived
     );
   });
-}
-
-function getYearsAgoText(postDate: Date): string {
-  const yearsAgo = new Date().getFullYear() - postDate.getFullYear();
-  if (yearsAgo === 1) return '1 year ago';
-  return `${yearsAgo} years ago`;
 }
 
 export default function HomeScreen() {
@@ -124,7 +117,7 @@ export default function HomeScreen() {
   const postedToday = hasPostedToday(activePosts);
   const todayMemory = getTodayPost(activePosts);
   const onThisDayMemories = getOnThisDayMemories(posts);
-  const featuredMemory = onThisDayMemories[0];
+  const featuredMemory = onThisDayMemories[0] || activePosts[0];
   const pinnedMemories = activePosts.filter((p) => p.isPinned);
   const streak = computeCurrentStreak(posts);
 
@@ -148,7 +141,13 @@ export default function HomeScreen() {
     const location = (post.location || '').toLowerCase();
     const tags = (post.tags || []).join(' ').toLowerCase();
     const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
-    return caption.includes(query) || title.includes(query) || location.includes(query) || tags.includes(query) || dateStr.includes(query);
+    return (
+      caption.includes(query) ||
+      title.includes(query) ||
+      location.includes(query) ||
+      tags.includes(query) ||
+      dateStr.includes(query)
+    );
   };
 
   const filteredPosts = activePosts.filter((post) => {
@@ -156,23 +155,7 @@ export default function HomeScreen() {
     return matchesFilter && matchesSearch(post);
   });
 
-  const recentPosts = filteredPosts
-    .filter((p) => !p.isPinned)
-    .slice(0, 8);
-
-  const todayMemoryCard = todayMemory
-    ? (
-      <MemoryCard
-        memory={todayMemory}
-        density="editorial"
-        aspectRatio={16 / 9}
-        onPress={() => router.push(`/post/${todayMemory.id}`)}
-        showMetadata={true}
-        showReactions={true}
-        onReact={(emoji) => handleReact(todayMemory.id, emoji)}
-      />
-    )
-    : null;
+  const recentPosts = filteredPosts.filter((p) => !p.isPinned).slice(0, 8);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -181,21 +164,44 @@ export default function HomeScreen() {
         <View style={[styles.ambientGlow, styles.ambientGlowPrimary]} />
         <View style={[styles.ambientGlow, styles.ambientGlowSecondary]} />
       </View>
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Modern App Header matching reference Screen 1 */}
         <AppHeader
           greeting={getGreeting()}
-          title="Let's revisit your memories."
-          avatar={
-            <Avatar name={profileName} size={44} ring />
-          }
+          userName={profileName}
+          title="Let's revisit your best memories!"
+          avatar={<Avatar name={profileName} size={46} ring />}
+          actions={[
+            {
+              icon: 'star',
+              onPress: () => router.push('/favorites'),
+              accessibilityLabel: 'Favorites',
+            },
+            {
+              icon: 'cog',
+              onPress: openCommandPalette,
+              accessibilityLabel: 'Settings and commands',
+            },
+          ]}
         />
 
+        {/* Pill Search Bar with Embedded Right Search Button */}
         <View style={styles.searchContainer}>
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search your memories…"
+            placeholder="Search memories, places, people…"
             onClear={() => setSearchQuery('')}
+          />
+        </View>
+
+        {/* Category Pill Filters */}
+        <View style={styles.filterSection}>
+          <FilterChips
+            filters={HOME_FILTERS}
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
           />
         </View>
 
@@ -228,76 +234,39 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-        {isLoading && (
-          <View style={styles.statsRow}>
-            {[0, 1, 2].map((i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <View style={styles.statDivider} />}
-                <View style={styles.statItem}>
-                  <Skeleton width={32} height={24} />
-                  <Skeleton width={52} height={12} />
-                </View>
-              </React.Fragment>
-            ))}
+
+        {/* Most Popular / Featured Memory Hero Section (matching reference image Screen 1) */}
+        {featuredMemory && (
+          <View style={styles.heroSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeaderTitle}>Most popular memories</Text>
+              <Pressable onPress={() => router.push('/favorites')}>
+                <Text style={styles.sectionHeaderAction}>See all</Text>
+              </Pressable>
+            </View>
+
+            <MemoryCard
+              memory={featuredMemory}
+              density="editorial"
+              aspectRatio={16 / 11}
+              onPress={() => router.push(`/post/${featuredMemory.id}`)}
+              showMemoryId={true}
+              showReactions={true}
+              onReact={(emoji) => handleReact(featuredMemory.id, emoji)}
+            />
           </View>
         )}
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Pressable
-            style={styles.quickAction}
-            onPress={() => router.push('/(tabs)/create')}
-            accessibilityRole="button"
-            accessibilityLabel="Create a memory"
-          >
-            <View style={styles.quickActionIconWrap}>
-              <Icon name="camera" size={19} color={colors.accent} />
-            </View>
-            <Text style={styles.quickActionLabel}>New memory</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickAction}
-            onPress={() => router.push('/favorites')}
-            accessibilityRole="button"
-            accessibilityLabel="View favorites"
-          >
-            <View style={styles.quickActionIconWrap}>
-              <Icon name="star" size={19} color={colors.accent} />
-            </View>
-            <Text style={styles.quickActionLabel}>Favorites</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickAction}
-            onPress={() => router.push('/collections')}
-            accessibilityRole="button"
-            accessibilityLabel="View collections"
-          >
-            <View style={styles.quickActionIconWrap}>
-              <Icon name="bookmark" size={19} color={colors.accent} />
-            </View>
-            <Text style={styles.quickActionLabel}>Collections</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickAction}
-            onPress={openCommandPalette}
-            accessibilityRole="button"
-            accessibilityLabel="Open command palette"
-          >
-            <View style={styles.quickActionIconWrap}>
-              <Icon name="cog" size={19} color={colors.accent} />
-            </View>
-            <Text style={styles.quickActionLabel}>Commands</Text>
-          </Pressable>
-        </View>
-
-        {/* Daily Prompt Hero Section */}
+        {/* Daily Prompt Hero Card */}
         <View style={styles.promptHeroCard}>
           <View style={styles.promptHeader}>
             <View style={styles.promptTag}>
               <View style={[styles.promptDot, postedToday && styles.promptDotCompleted]} />
               <Text style={styles.promptTagText}>TODAY'S PROMPT</Text>
             </View>
-            <Text style={styles.streakBadge}>{postedToday ? 'Today complete' : 'Your daily moment'}</Text>
+            <Text style={styles.streakBadge}>
+              {postedToday ? 'Today complete' : 'Your daily moment'}
+            </Text>
           </View>
 
           <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
@@ -306,10 +275,18 @@ export default function HomeScreen() {
             <View style={styles.promptActionWrapper}>
               <Skeleton width="100%" height={44} borderRadius={radius.round} />
             </View>
-          ) : postedToday && todayMemory && todayMemoryCard ? (
+          ) : postedToday && todayMemory ? (
             <View style={styles.todayMemoryWrapper}>
               <Text style={styles.todayMemoryLabel}>YOUR MOMENT TODAY</Text>
-              {todayMemoryCard}
+              <MemoryCard
+                memory={todayMemory}
+                density="editorial"
+                aspectRatio={16 / 9}
+                onPress={() => router.push(`/post/${todayMemory.id}`)}
+                showMetadata={true}
+                showReactions={true}
+                onReact={(emoji) => handleReact(todayMemory.id, emoji)}
+              />
             </View>
           ) : (
             <View style={styles.promptActionWrapper}>
@@ -329,10 +306,7 @@ export default function HomeScreen() {
         {/* Pinned Memories Section */}
         {pinnedMemories.length > 0 && (
           <View style={styles.sectionBlock}>
-            <SectionHeader
-              title="Pinned"
-              subtitle={`${pinnedMemories.length} pinned`}
-            />
+            <SectionHeader title="Pinned" subtitle={`${pinnedMemories.length} pinned`} />
             <View style={styles.memoriesFeed}>
               {pinnedMemories.slice(0, 3).map((post) => (
                 <MemoryCard
@@ -350,136 +324,68 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Favorites Strip */}
-        {favorites.length > 0 && (
-          <View style={styles.sectionBlock}>
-            <SectionHeader
-              title="Favorites"
-              subtitle={`${favorites.length} memories`}
-              action={{
-                label: 'See all',
-                onPress: () => router.push('/favorites'),
-              }}
-            />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.favoritesStrip}
-            >
-              {favorites.slice(0, 8).map((post) => (
-                <Pressable
-                  key={post.id}
-                  style={styles.favoriteThumb}
-                  onPress={() => router.push(`/post/${post.id}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Favorite memory from ${new Date(post.createdAt).toLocaleDateString()}`}
-                >
-                  <MemoryCard
-                    memory={post}
-                    density="compact"
-                    aspectRatio={1}
-                    onPress={() => router.push(`/post/${post.id}`)}
-                    showMetadata={false}
-                    showReactions={false}
-                    showTags={false}
-                  />
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* On This Day Section */}
-        {featuredMemory && (
-          <View style={styles.onThisDaySection}>
-            <View style={styles.onThisDayHeader}>
-              <View style={styles.onThisDayLabel}>
-                <View style={styles.onThisDayDot} />
-                <Text style={styles.onThisDayLabelText}>ON THIS DAY</Text>
-              </View>
-              <Text style={styles.onThisDayYearsAgo}>
-                {getYearsAgoText(new Date(featuredMemory.createdAt))}
-              </Text>
-            </View>
-
-            <MemoryCard
-              memory={featuredMemory}
-              density="editorial"
-              aspectRatio={4 / 5}
-              onPress={() => router.push(`/post/${featuredMemory.id}`)}
-              showMetadata={false}
-              showMemoryId={true}
-              showReactions={true}
-              onReact={(emoji) => handleReact(featuredMemory.id, emoji)}
-            />
-          </View>
-        )}
-
-        {/* Your Memories Section */}
-        <SectionHeader
-          title="Your Memories"
-          subtitle={
-            activePosts.length > 0
-              ? `${activePosts.length} ${activePosts.length === 1 ? 'memory' : 'memories'}`
-              : undefined
-          }
-          action={
-            activePosts.length > 6
-              ? { label: 'See all', onPress: () => router.push('/(tabs)/memories') }
-              : undefined
-          }
-        />
-
-        <FilterChips
-          filters={HOME_FILTERS}
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-        />
-
-        {isLoading ? (
-          <View style={styles.memoriesFeed}>
-            {[0, 1, 2].map((i) => (
-              <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
-            ))}
-          </View>
-        ) : recentPosts.length === 0 ? (
-          <EmptyState
-            title={selectedFilter === 'All' ? 'Start with one moment' : `No ${selectedFilter} memories`}
-            message="Photos you take will appear here, organized by time and category."
-            variant="camera"
-            action={{
-              label: 'Create a memory',
-              onPress: () => router.push('/(tabs)/create'),
-              variant: 'accent',
-            }}
-            style={styles.emptyState}
-            accessibilityLabel={selectedFilter === 'All' ? 'No memories yet. Create your first memory.' : `No ${selectedFilter} memories found.`}
+        {/* Recent Memories Feed */}
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            title="Recent Memories"
+            subtitle={
+              activePosts.length > 0
+                ? `${activePosts.length} ${activePosts.length === 1 ? 'memory' : 'memories'}`
+                : undefined
+            }
+            action={
+              activePosts.length > 6
+                ? { label: 'See all', onPress: () => router.push('/(tabs)/memories') }
+                : undefined
+            }
           />
-        ) : (
-          <View style={styles.memoriesFeed}>
-            {recentPosts.map((post) => (
-              <MemoryCard
-                key={post.id}
-                memory={post}
-                density="editorial"
-                aspectRatio={4 / 5}
-                onPress={() => router.push(`/post/${post.id}`)}
-                showMemoryId={true}
-                showReactions={true}
-                showTags={true}
-                onReact={(emoji) => handleReact(post.id, emoji)}
-              />
-            ))}
-            {activePosts.length > 8 && (
-              <Button
-                title={`See all ${activePosts.length} memories`}
-                variant="secondary"
-                onPress={() => router.push('/(tabs)/memories')}
-                fullWidth
-              />
-            )}
-          </View>
-        )}
+
+          {isLoading ? (
+            <View style={styles.memoriesFeed}>
+              {[0, 1, 2].map((i) => (
+                <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
+              ))}
+            </View>
+          ) : recentPosts.length === 0 ? (
+            <EmptyState
+              title={
+                selectedFilter === 'All' ? 'Start with one moment' : `No ${selectedFilter} memories`
+              }
+              message="Photos you take will appear here, organized by time and category."
+              variant="camera"
+              action={{
+                label: 'Create a memory',
+                onPress: () => router.push('/(tabs)/create'),
+                variant: 'accent',
+              }}
+              style={styles.emptyState}
+            />
+          ) : (
+            <View style={styles.memoriesFeed}>
+              {recentPosts.map((post) => (
+                <MemoryCard
+                  key={post.id}
+                  memory={post}
+                  density="editorial"
+                  aspectRatio={4 / 5}
+                  onPress={() => router.push(`/post/${post.id}`)}
+                  showMemoryId={true}
+                  showReactions={true}
+                  showTags={true}
+                  onReact={(emoji) => handleReact(post.id, emoji)}
+                />
+              ))}
+              {activePosts.length > 8 && (
+                <Button
+                  title={`See all ${activePosts.length} memories`}
+                  variant="secondary"
+                  onPress={() => router.push('/(tabs)/memories')}
+                  fullWidth
+                />
+              )}
+            </View>
+          )}
+        </View>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -519,23 +425,48 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       width: '100%',
       maxWidth: layout.maxContentWidth,
       alignSelf: 'center',
-      paddingBottom: spacing.xxxl + layout.tabBarHeight,
+      paddingBottom: 110, // Generous spacing for floating bottom tab bar
     },
     searchContainer: {
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.sm,
+    },
+    filterSection: {
+      marginBottom: spacing.md,
+    },
+    heroSection: {
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    sectionHeaderTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors.textPrimary,
+      letterSpacing: -0.3,
+    },
+    sectionHeaderAction: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.accent,
     },
     statsRow: {
       flexDirection: 'row',
       marginHorizontal: spacing.lg,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.xl,
       backgroundColor: colors.card,
-      borderRadius: radius.xl,
-      borderWidth: borders.hairline,
+      borderRadius: 20,
+      borderWidth: 1,
       borderColor: colors.borderSoft,
       paddingVertical: spacing.md,
       alignItems: 'center',
-      ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(23, 25, 29, 0.06)' } : { ...shadows.sm }),
+      ...(Platform.OS === 'web'
+        ? ({ boxShadow: '0 4px 16px rgba(48, 36, 61, 0.05)' } as any)
+        : shadows.sm),
     },
     statItem: {
       flex: 1,
@@ -549,58 +480,28 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       fontWeight: '700',
     },
     statLabel: {
-      ...typography.sans.caption2,
+      fontSize: 11,
       color: colors.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
+      fontWeight: '600',
     },
     statDivider: {
-      width: borders.hairline,
+      width: 1,
       height: 28,
       backgroundColor: colors.borderSoft,
-    },
-    quickActions: {
-      flexDirection: 'row',
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.xl,
-      gap: spacing.sm,
-    },
-    quickAction: {
-      flex: 1,
-      alignItems: 'center',
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.xs,
-      backgroundColor: colors.card,
-      borderRadius: radius.lg,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      gap: spacing.xs,
-    },
-    quickActionIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.circle,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.accentSubtle,
-    },
-    quickActionLabel: {
-      ...typography.sans.caption2,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      fontWeight: '600',
     },
     promptHeroCard: {
       marginHorizontal: spacing.lg,
       marginBottom: spacing.xl,
       padding: spacing.xl,
       backgroundColor: colors.card,
-      borderRadius: radius.xxl,
-      borderWidth: borders.hairline,
+      borderRadius: 26,
+      borderWidth: 1,
       borderColor: colors.borderSoft,
       ...(Platform.OS === 'web'
-        ? { boxShadow: '0 12px 32px rgba(23, 25, 29, 0.08)' }
-        : { ...shadows.lg }),
+        ? ({ boxShadow: '0 8px 24px rgba(48, 36, 61, 0.06)' } as any)
+        : shadows.md),
     },
     promptHeader: {
       flexDirection: 'row',
@@ -623,16 +524,16 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       backgroundColor: colors.success,
     },
     promptTagText: {
-      ...typography.mono.micro,
+      fontSize: 11,
       color: colors.accent,
       letterSpacing: 0.8,
-      fontWeight: '700',
+      fontWeight: '800',
     },
     streakBadge: {
-      ...typography.sans.caption2,
+      fontSize: 12,
       color: colors.textSecondary,
       fontWeight: '600',
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: colors.surfaceOverlay,
       paddingHorizontal: spacing.sm,
       paddingVertical: 3,
       borderRadius: radius.round,
@@ -644,9 +545,10 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       marginBottom: spacing.md,
     },
     promptSubtext: {
-      ...typography.sans.caption,
+      fontSize: 13,
       color: colors.textMuted,
       marginBottom: spacing.md,
+      lineHeight: 18,
     },
     promptActionWrapper: {
       paddingTop: spacing.xs,
@@ -659,52 +561,13 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       gap: spacing.xs,
     },
     todayMemoryLabel: {
-      ...typography.mono.micro,
+      fontSize: 11,
+      fontWeight: '700',
       color: colors.textMuted,
       letterSpacing: 0.8,
     },
     sectionBlock: {
       marginBottom: spacing.xl,
-    },
-    favoritesStrip: {
-      paddingHorizontal: spacing.lg,
-      gap: spacing.sm,
-    },
-    favoriteThumb: {
-      width: 100,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-    },
-    onThisDaySection: {
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.xl,
-    },
-    onThisDayHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: spacing.sm,
-    },
-    onThisDayLabel: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    onThisDayDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.accent,
-    },
-    onThisDayLabelText: {
-      ...typography.mono.micro,
-      color: colors.accent,
-      letterSpacing: 0.8,
-      fontWeight: '700',
-    },
-    onThisDayYearsAgo: {
-      ...typography.sans.caption,
-      color: colors.textMuted,
     },
     memoriesFeed: {
       paddingHorizontal: spacing.lg,
@@ -715,7 +578,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       paddingVertical: spacing.xxl,
     },
     bottomSpacer: {
-      height: 40,
+      height: 20,
     },
   });
 }

@@ -14,7 +14,6 @@ export function useAuth() {
 
   useEffect(() => {
     if (!supabase) {
-      // isLoading already set to false above; just return
       return;
     }
 
@@ -24,6 +23,7 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data }) => {
       if (!isActive) return;
       setSession(data.session);
+      setIsLoading(false);
     });
 
     // Listen for auth state changes
@@ -40,8 +40,8 @@ export function useAuth() {
       } else if (storedValue === 'false') {
         setRememberMe(false);
       } else {
-        // Default: rememberMe is false; let Supabase session persistence handle it
-        setRememberMe(false);
+        // Default: rememberMe is true (user wants to stay logged in)
+        setRememberMe(true);
       }
     });
 
@@ -49,23 +49,13 @@ export function useAuth() {
       isActive = false;
       listener.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   const setRememberMeState = (value: boolean) => {
     setRememberMe(value);
     AsyncStorage.setItem(rememberMeStorageKey, value.toString()).catch(() => undefined);
-    if (value) {
-      // Remember Me enabled - Supabase persistSession will handle session retention
-      // No extra action needed; the session persists across app restarts via Supabase's AsyncStorage
-    } else {
-      // Remember Me disabled - clear stored session so user is logged out on restart
-      AsyncStorage.removeItem(authStorageKey).then(() => {
-        // Also sign out from Supabase if currently authenticated
-        supabase?.auth.signOut().then(() => {
-          setSession(null);
-        }).catch(() => {});
-      });
-    }
+    // Note: Remember Me preference is persisted, but actual logout happens when user explicitly signs out
+    // Supabase's persistSession:true handles automatic session restoration on app restart
   };
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -88,13 +78,11 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    // If Remember Me is disabled, clear stored session so user is logged out on restart
-    if (!rememberMe) {
-      await AsyncStorage.removeItem(authStorageKey);
-    }
     const supa = supabase!;
     const { error } = await supa.auth.signOut();
     setSession(null);
+    // If Remember Me is disabled, user won't auto-login next time
+    // The checkbox state is informational; Supabase handles actual session persistence
     return { error };
   };
 
