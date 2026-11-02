@@ -1,26 +1,25 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { radius, spacing, typography, borders } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
+
+type HeaderAction = {
+  icon: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+  badge?: number;
+};
 
 type AppHeaderProps = {
   title?: string;
   subtitle?: string;
   greeting?: string;
-  leftAction?: {
-    icon: string;
-    onPress: () => void;
-    accessibilityLabel?: string;
-  };
-  rightAction?: {
-    icon: string;
-    onPress: () => void;
-    accessibilityLabel?: string;
-    badge?: number;
-  };
+  userName?: string;
+  leftAction?: HeaderAction;
+  rightAction?: HeaderAction;
+  actions?: HeaderAction[];
   avatar?: React.ReactNode;
   style?: ViewStyle;
   transparent?: boolean;
@@ -30,122 +29,269 @@ export function AppHeader({
   title,
   subtitle,
   greeting,
+  userName,
   leftAction,
   rightAction,
+  actions,
   avatar,
   style,
-  transparent = false,
+  transparent = true,
 }: AppHeaderProps) {
-  const { colors } = useAppTheme();
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode, transparent);
 
-  const styles = createStyles(colors, transparent);
+  // Mode 1: Modern Feed / Home Header (Avatar + Greeting + Actions, then Big Title)
+  if (avatar && greeting) {
+    return (
+      <View style={[styles.modernContainer, style]}>
+        {/* Top Profile + Actions Row */}
+        <View style={styles.topRow}>
+          <View style={styles.profileBlock}>
+            {avatar}
+            <View style={styles.greetingBlock}>
+              <Text style={styles.greetingText}>{greeting},</Text>
+              <Text style={styles.userNameText} numberOfLines={1}>
+                {userName || 'Memory Keeper'}
+              </Text>
+            </View>
+          </View>
 
-  return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <View style={[styles.container, transparent && styles.containerTransparent, style]}>
-        {leftAction && (
-          <Pressable
-            onPress={leftAction.onPress}
-            style={styles.actionButton}
-            accessibilityLabel={leftAction.accessibilityLabel || 'Menu'}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Icon name={leftAction.icon as any} size={22} color={colors.textPrimary} />
-          </Pressable>
-        )}
-
-        <View style={styles.textContainer}>
-          {greeting && <Text style={styles.greeting}>{greeting}</Text>}
-          {title && <Text style={styles.title}>{title}</Text>}
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          <View style={styles.actionsRow}>
+            {actions && actions.length > 0 ? (
+              actions.map((act, i) => (
+                <Pressable
+                  key={i}
+                  onPress={act.onPress}
+                  style={({ pressed }) => [
+                    styles.circleActionButton,
+                    pressed && styles.pressed,
+                  ]}
+                  accessibilityLabel={act.accessibilityLabel || 'Action'}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Icon name={act.icon as any} size={20} color={colors.textPrimary} />
+                  {act.badge && act.badge > 0 && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{act.badge > 9 ? '9+' : act.badge}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              ))
+            ) : rightAction ? (
+              <Pressable
+                onPress={rightAction.onPress}
+                style={({ pressed }) => [
+                  styles.circleActionButton,
+                  pressed && styles.pressed,
+                ]}
+                accessibilityLabel={rightAction.accessibilityLabel || 'Action'}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name={rightAction.icon as any} size={20} color={colors.textPrimary} />
+                {rightAction.badge && rightAction.badge > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{rightAction.badge > 9 ? '9+' : rightAction.badge}</Text>
+                  </View>
+                )}
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
-        {avatar ? (
-          avatar
-        ) : rightAction ? (
+        {/* Big Bold Greeting Title */}
+        {title && (
+          <View style={styles.bigTitleBlock}>
+            <Text style={styles.bigTitleText}>{title}</Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // Mode 2: Standard / Sub-screen Header (e.g. Details / Favorites)
+  return (
+    <View style={[styles.container, style]}>
+      <View style={styles.navRow}>
+        {leftAction ? (
           <Pressable
-            onPress={rightAction.onPress}
-            style={styles.actionButton}
-            accessibilityLabel={rightAction.accessibilityLabel || 'Action'}
+            onPress={leftAction.onPress}
+            style={({ pressed }) => [
+              styles.circleActionButton,
+              pressed && styles.pressed,
+            ]}
+            accessibilityLabel={leftAction.accessibilityLabel || 'Back'}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <View style={styles.actionIconWrapper}>
-              <Icon name={rightAction.icon as any} size={22} color={colors.textPrimary} />
-              {rightAction.badge && rightAction.badge > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{rightAction.badge > 9 ? '9+' : rightAction.badge}</Text>
-                </View>
-              )}
-            </View>
+            <Icon name={leftAction.icon as any} size={18} color={colors.textPrimary} />
           </Pressable>
-        ) : null}
+        ) : (
+          <View style={styles.circlePlaceholder} />
+        )}
+
+        <View style={styles.centerTitleContainer}>
+          <Text style={styles.centerTitleText} numberOfLines={1}>
+            {title}
+          </Text>
+        </View>
+
+        <View style={styles.actionsRow}>
+          {actions && actions.length > 0 ? (
+            actions.map((act, i) => (
+              <Pressable
+                key={i}
+                onPress={act.onPress}
+                style={({ pressed }) => [
+                  styles.circleActionButton,
+                  pressed && styles.pressed,
+                ]}
+                accessibilityLabel={act.accessibilityLabel || 'Action'}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name={act.icon as any} size={18} color={colors.textPrimary} />
+              </Pressable>
+            ))
+          ) : rightAction ? (
+            <Pressable
+              onPress={rightAction.onPress}
+              style={({ pressed }) => [
+                styles.circleActionButton,
+                pressed && styles.pressed,
+              ]}
+              accessibilityLabel={rightAction.accessibilityLabel || 'Action'}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon name={rightAction.icon as any} size={18} color={colors.textPrimary} />
+            </Pressable>
+          ) : (
+            <View style={styles.circlePlaceholder} />
+          )}
+        </View>
       </View>
-      {!transparent && <View style={styles.bottomHairline} />}
-    </SafeAreaView>
+
+      {subtitle && (
+        <View style={styles.subtextBlock}>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </View>
+      )}
+    </View>
   );
 }
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], transparent: boolean) {
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light', transparent: boolean) {
+  const isDark = mode === 'dark';
+
   return StyleSheet.create({
-    safeArea: {
-      backgroundColor: colors.background,
-    },
-    container: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
+    modernContainer: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.sm,
       paddingBottom: spacing.md,
-      gap: spacing.md,
       backgroundColor: 'transparent',
-      borderBottomWidth: transparent ? 0 : borders.hairline,
-      borderBottomColor: transparent ? 'transparent' : colors.borderSoft,
     },
-    containerTransparent: {
-      paddingBottom: spacing.sm,
-      backgroundColor: 'transparent',
-      borderBottomWidth: 0,
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.lg,
     },
-    textContainer: {
+    profileBlock: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
       flex: 1,
-      minWidth: 0,
-      paddingTop: spacing.xs,
     },
-    greeting: {
-      ...typography.sans.caption,
+    greetingBlock: {
+      justifyContent: 'center',
+    },
+    greetingText: {
+      fontSize: 13,
+      fontWeight: '500',
       color: colors.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.8,
+      marginBottom: 2,
+    },
+    userNameText: {
+      fontSize: 16,
       fontWeight: '700',
-    },
-    title: {
-      ...typography.serif.title,
       color: colors.textPrimary,
-      letterSpacing: -0.3,
-      marginTop: spacing.xs,
+      letterSpacing: -0.2,
     },
-    subtitle: {
-      ...typography.sans.callout,
-      color: colors.textSecondary,
-      marginTop: 1,
+    actionsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
     },
-    actionButton: {
+    circleActionButton: {
       width: 44,
       height: 44,
-      borderRadius: radius.round,
+      borderRadius: 999,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.card,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      ...Platform.select({
-        web: { boxShadow: '0 2px 8px rgba(23, 25, 29, 0.06)' },
-        default: {},
-      }),
-    },
-    actionIconWrapper: {
       position: 'relative',
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+              : '0 2px 8px rgba(48, 36, 61, 0.05)',
+          } as any)
+        : {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: isDark ? 0.25 : 0.05,
+            shadowRadius: 4,
+            elevation: 2,
+          }),
+    },
+    circlePlaceholder: {
+      width: 44,
+      height: 44,
+    },
+    bigTitleBlock: {
+      marginTop: 2,
+      marginBottom: 6,
+    },
+    bigTitleText: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: colors.textPrimary,
+      letterSpacing: -0.6,
+      lineHeight: 38,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'normal',
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 4,
+    },
+    container: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.sm,
+      backgroundColor: 'transparent',
+    },
+    navRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 48,
+    },
+    centerTitleContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.sm,
+    },
+    centerTitleText: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      letterSpacing: -0.2,
+    },
+    subtextBlock: {
+      alignItems: 'center',
+      marginTop: 4,
     },
     badge: {
       position: 'absolute',
@@ -153,20 +299,20 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], transpar
       right: -2,
       minWidth: 18,
       height: 18,
-      borderRadius: radius.round,
+      borderRadius: 999,
       backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 4,
     },
     badgeText: {
-      ...typography.sans.caption2,
-      color: colors.textOnPrimary,
+      fontSize: 10,
+      color: '#FFFFFF',
       fontWeight: '700',
     },
-    bottomHairline: {
-      height: borders.hairline,
-      backgroundColor: colors.borderSoft,
+    pressed: {
+      opacity: 0.8,
+      transform: [{ scale: 0.94 }],
     },
   });
 }

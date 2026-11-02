@@ -6,33 +6,56 @@ export class ClassService {
     name: string,
     schoolName: string | null,
     academicYear: number,
-    ownerUserId: string,
+    userId: string,
   ): Promise<ClassEntity> {
     return ClassRepository.createClassWithOwner(
       name,
       schoolName,
       academicYear,
-      ownerUserId,
+      userId,
     );
   }
 
   static async joinClassByCode(
     joinCode: string,
     userId: string,
-  ): Promise<{ classEntity: ClassEntity; member: ClassMemberEntity }> {
-    const classEntity = await ClassRepository.findByJoinCode(joinCode);
+  ): Promise<{ classEntity: ClassEntity; member: ClassMemberEntity; alreadyJoined: boolean }> {
+    // Normalize the code consistently, including uppercase handling
+    const cleanCode = joinCode.trim().toUpperCase();
+
+    // Find class by join code
+    const classEntity = await ClassRepository.findByJoinCode(cleanCode);
     if (!classEntity) {
       throw new Error(
         "Class not found. Please verify the 8-character invite code.",
       );
     }
 
+    // Check if the class is archived
+    if (classEntity.status === 'archived') {
+      throw new Error("This class has been archived and cannot be joined.");
+    }
+
+    // Check if the user is already a member
+    const isAlreadyMember = await ClassRepository.isMember(
+      classEntity.id,
+      userId,
+    );
+    if (isAlreadyMember) {
+      // User is already a member - return the existing class and membership info
+      const existingMember = await ClassRepository.getMembers(classEntity.id);
+      const member = existingMember.find((m) => m.user_id === userId);
+      return { classEntity, member, alreadyJoined: true };
+    }
+
+    // Add the user to class_members with 'member' role
     const member = await ClassRepository.addMember(
       classEntity.id,
       userId,
       "member",
     );
-    return { classEntity, member };
+
+    return { classEntity, member, alreadyJoined: false };
   }
 
   static async getClassDetails(

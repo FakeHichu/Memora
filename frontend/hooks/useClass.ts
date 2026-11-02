@@ -171,6 +171,57 @@ export function useClass() {
     return newClass;
   };
 
+  const createClass = async (
+    name: string,
+    schoolName?: string,
+    year?: number,
+  ): Promise<{ success: boolean; class?: ClassRecord; message: string }> => {
+    try {
+      if (supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          const response = await fetch(
+            `${Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000'}/api/classes`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${sessionData.session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name,
+                schoolName: schoolName ?? null,
+                academicYear: year ?? new Date().getFullYear(),
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            return { success: false, message: result.message || 'Could not create class.' };
+          }
+
+          await loadClasses();
+
+          return {
+            success: true,
+            class: result.class,
+            message: 'Class created successfully!',
+          };
+        }
+      }
+
+      const localResult = await createClassLocally(name, schoolName, year);
+      return { success: true, class: localResult, message: 'Class created locally!' };
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Could not create class.',
+      };
+    }
+  };
+
   return {
     classes,
     activeClass,
@@ -180,6 +231,7 @@ export function useClass() {
     refreshClasses: loadClasses,
     selectClass,
     joinClass,
+    createClass,
     createClassLocally,
   };
 }

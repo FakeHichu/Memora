@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 
-import { radius, spacing, typography, borders } from '@/constants/theme';
+import { spacing, typography } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
 
@@ -26,14 +26,17 @@ export function SearchBar({
   autoFocus = false,
   floating = false,
 }: SearchBarProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode);
   const hasText = value.length > 0;
 
   return (
     <View style={[styles.container, floating && styles.containerFloating, style]}>
-      <View style={styles.inputWrapper}>
-        <Icon name="search" size={18} color={colors.textSecondary} style={styles.icon} />
+      <View style={styles.pillTrack}>
+        <View style={styles.leftIconContainer}>
+          <Icon name="search" size={19} color={colors.textSecondary} />
+        </View>
+
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -46,10 +49,25 @@ export function SearchBar({
           autoCapitalize="none"
           autoComplete="off"
           spellCheck={false}
+          returnKeyType="search"
         />
-        {hasText && onClear && (
-          <Pressable onPress={onClear} style={styles.clearButton} accessibilityLabel="Clear search">
-            <Icon name="close" size={14} color={colors.textMuted} />
+
+        {hasText && onClear ? (
+          <Pressable
+            onPress={onClear}
+            style={styles.actionPillButton}
+            accessibilityLabel="Clear search"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Icon name="close" size={14} color={colors.textSecondary} />
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={onSubmit ? () => onSubmit(value) : undefined}
+            style={styles.actionPillButton}
+            accessibilityLabel="Search"
+          >
+            <Icon name="search" size={16} color={colors.textPrimary} />
           </Pressable>
         )}
       </View>
@@ -57,38 +75,63 @@ export function SearchBar({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
+  const isDark = mode === 'dark';
+
   return StyleSheet.create({
     container: {
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
+      paddingVertical: spacing.xs,
     },
     containerFloating: {
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.md,
     },
-    inputWrapper: {
+    pillTrack: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.card,
-      borderWidth: borders.hairline,
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 5,
+      borderWidth: 1,
       borderColor: colors.borderSoft,
-      borderRadius: radius.round,
-      paddingHorizontal: spacing.md,
-      gap: spacing.sm,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 4px 20px rgba(0, 0, 0, 0.4)'
+              : '0 4px 18px rgba(48, 36, 61, 0.05)',
+          } as any)
+        : {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.3 : 0.06,
+            shadowRadius: 8,
+            elevation: 2,
+          }),
     },
-    icon: {
-      // Icon component handles sizing
+    leftIconContainer: {
+      paddingLeft: 10,
+      paddingRight: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     input: {
       flex: 1,
       ...typography.sans.body,
       color: colors.textPrimary,
-      paddingVertical: spacing.sm,
-      minHeight: 44,
+      paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+      fontSize: 15,
     },
-    clearButton: {
-      padding: spacing.xs,
+    actionPillButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 999,
+      backgroundColor: colors.surfaceOverlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
     },
   });
 }

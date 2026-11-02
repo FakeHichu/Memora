@@ -55,10 +55,21 @@ export class ClassController {
         parsed.data.joinCode,
         req.userId,
       );
+
+      if (result.alreadyJoined) {
+        return res.json({
+          ok: true,
+          class: result.classEntity,
+          member: result.member,
+          alreadyJoined: true,
+        });
+      }
+
       return res.json({
         ok: true,
         class: result.classEntity,
         member: result.member,
+        alreadyJoined: false,
       });
     } catch (err) {
       next(err);

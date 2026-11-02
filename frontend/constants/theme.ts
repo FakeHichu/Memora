@@ -1,164 +1,219 @@
-// Memora Design System - Soft Minimalist Light Theme
+// Memora Design System - Dual Theme (Midnight Dark & Warm Minimalist Light)
 
-export const colors = {
-  // Backgrounds
-  background: '#E8EDF0', // Primary - soft blue-grey
-  backgroundSecondary: '#DFE4E8', // Secondary
-  backgroundTertiary: '#D6DCE0', // Tertiary
-  backgroundElevated: '#FFFFFF',
-  card: '#FFFFFF',
+export const catppuccin = {
+  rosewater: '#f5e0dc',
+  flamingo: '#f2cdcd',
+  pink: '#f5c2e7',
+  mauve: '#cba6f7',
+  red: '#f38ba8',
+  maroon: '#eba0ac',
+  peach: '#fab387',
+  yellow: '#f9e2af',
+  green: '#a6e3a1',
+  teal: '#94e2d5',
+  sky: '#89dceb',
+  sapphire: '#74c7ec',
+  blue: '#89b4fa',
+  lavender: '#b4befe',
+  catppuccinText: '#cdd6f4',
+  subtext1: '#bac2de',
+  subtext0: '#a6adc8',
+  overlay2: '#9399b2',
+  overlay1: '#7f849c',
+  overlay0: '#6c7086',
+  surface2: '#585b70',
+  surface1: '#45475a',
+  surface0: '#313244',
+  base: '#1e1e2e',
+  mantle: '#181825',
+  crust: '#11111b',
+};
 
-  // Surfaces
-  surface: '#FFFFFF', // Default card/surface - white
-  surfaceElevated: '#F8FAFB', // Elevated surfaces
-  surfaceOverlay: '#F0F4F6', // Overlay surfaces
-  surfaceWarm: '#F5F2EF', // Warm surface
-  surfaceFloating: 'rgba(255, 255, 255, 0.95)',
-  surfaceModal: 'rgba(255, 255, 255, 0.98)',
-  surfaceNavigation: 'rgba(23, 25, 29, 0.92)',
-  glass: 'rgba(255, 255, 255, 0.85)',
-  glassStrong: 'rgba(255, 255, 255, 0.96)',
-  secondary: '#F0F4F6',
+// Light theme palette (Warm Minimalist Light) - VERIFIED EXACT SPEC
+export const lightColors = {
+  // Backgrounds - VERIFIED EXACT SPEC
+  background: '#F7F2E9', // Warm linen background ✓
+  backgroundSecondary: '#EFE7DA',
+  backgroundTertiary: '#E4DAC8',
+  backgroundElevated: '#FFFDF8', // Card surfaces ✓
+  card: '#FFFDF8', // Card surfaces ✓
 
-  // Accent / Chrome
-  chromeDark: '#8A9099',
-  chromeDim: '#A0A8B0',
-  chrome: '#81947B', // Sage green
-  chromeHighlight: '#6B7D66',
-  chromeGlow: 'rgba(129, 148, 123, 0.15)',
-  primaryDark: '#6B7D66',
+  // Surfaces - VERIFIED EXACT SPEC
+  surface: '#FFFDF8', // Card surfaces ✓
+  surfaceElevated: '#FFFDF8',
+  surfaceOverlay: '#E9DFF3', // Secondary surfaces ✓
+  surfaceWarm: '#F7F2E9',
+  surfaceSecondary: '#E9DFF3', // Secondary surfaces ✓
+  surfaceFloating: 'rgba(255, 253, 248, 0.95)',
+  surfaceModal: 'rgba(255, 253, 248, 0.98)',
+  surfaceNavigation: 'rgba(48, 36, 61, 0.92)',
+  glass: 'rgba(255, 253, 248, 0.85)',
+  glassStrong: 'rgba(255, 253, 248, 0.96)',
+  secondary: '#E9DFF3',
+
+  // Accent / Chrome - VERIFIED EXACT SPEC
+  chromeDark: '#75677E', // Secondary text ✓
+  chromeDim: '#9D8EA8',
+  chrome: '#80658F', // Primary accent ✓
+  chromeHighlight: '#684E77',
+  chromeGlow: 'rgba(128, 101, 143, 0.18)',
+  primaryDark: '#5E446D',
   onPrimary: '#FFFFFF',
-  neon: '#81947B',
+  neon: '#80658F',
 
-  // Semantic color names
-  primary: '#81947B', // Sage green
-  primaryLight: '#9AAD94',
-  primarySoft: '#C5D1C0',
-  primaryUltraSoft: '#EAF0E8',
-  accent: '#81947B', // Sage green accent
-  accentLight: '#9AAD94',
-  accentLavender: '#B8C4D4',
-  accentSoft: 'rgba(129, 148, 123, 0.12)',
-  text: '#17191D',
-  textPrimary: '#17191D', // Near-black
-  textSecondary: '#707983', // Medium grey
-  textTertiary: '#9BA3AA',
-  textMuted: '#9BA3AA', // Light grey
-  muted: '#707983',
-  textInverse: '#FFFFFF',
+  // Semantic color names - VERIFIED EXACT SPEC
+  primary: '#80658F', // Primary accent ✓
+  primaryLight: '#9E84AD',
+  primarySoft: '#E9DFF3',
+  primaryUltraSoft: '#F6F0FA',
+  accent: '#80658F', // Primary accent ✓
+  accentLight: '#9E84AD',
+  accentLavender: '#C3A6F2',
+  accentSoft: 'rgba(128, 101, 143, 0.12)',
+  highlight: '#E6B957', // Highlight ✓
+  accentOptional1: '#E9C9C5', // Optional accent 1
+  accentOptional2: '#C8D3BF', // Optional accent 2
+
+  text: '#30243D', // Primary text ✓
+  textPrimary: '#30243D', // Primary text ✓
+  textSecondary: '#75677E', // Secondary text ✓
+  textTertiary: '#9E92A6',
+  textMuted: '#9E92A6',
+  muted: '#75677E',
+  textInverse: '#FFFDF8',
   textOnPrimary: '#FFFFFF',
   textOnChrome: '#FFFFFF',
-  border: '#E4E8EB', // Light border
-  borderSubtle: 'rgba(0, 0, 0, 0.06)',
-  borderDefault: 'rgba(0, 0, 0, 0.08)',
-  borderEmphasized: 'rgba(0, 0, 0, 0.12)',
-  borderSoft: '#EEF1F3',
-  divider: '#E4E8EB',
-  dividerSoft: '#F0F4F6',
-  shadow: 'rgba(23, 25, 29, 0.08)', // Light shadow
-  shadowStrong: 'rgba(23, 25, 29, 0.15)',
-  overlay: 'rgba(23, 25, 29, 0.6)',
-  overlayLight: 'rgba(23, 25, 29, 0.3)',
-  overlayStrong: 'rgba(23, 25, 29, 0.85)',
+  border: '#E8DECE',
+  borderSubtle: 'rgba(48, 36, 61, 0.05)',
+  borderDefault: 'rgba(48, 36, 61, 0.08)',
+  borderEmphasized: 'rgba(48, 36, 61, 0.14)',
+  borderSoft: '#EFE6D8',
+  divider: '#E8DECE',
+  dividerSoft: '#F3ECE0',
+  shadow: 'rgba(48, 36, 61, 0.06)',
+  shadowStrong: 'rgba(48, 36, 61, 0.12)',
+  overlay: 'rgba(48, 36, 61, 0.6)',
+  overlayLight: 'rgba(48, 36, 61, 0.3)',
+  overlayStrong: 'rgba(48, 36, 61, 0.85)',
 
   // Status
-  success: '#4A8A62',
-  successSoft: '#E8F5ED',
-  warning: '#C49A2A',
-  warningSoft: '#FBF5E0',
-  error: '#C0392B',
-  errorSoft: '#FDECEA',
-  errorBackground: '#FDECEA', // Soft error surface (background tint)
+  success: '#5A9468',
+  successSoft: '#EBF4ED',
+  warning: '#E6B957',
+  warningSoft: '#FDF7E7',
+  error: '#C85252',
+  errorSoft: '#FBEBEB',
+  errorBackground: '#FBEBEB',
 
   // Additional
-  accentDeep: '#5C7056',
-  accentSoftGlow: '#9AAD94',
-  accentGlow: 'rgba(129, 148, 123, 0.25)',
-  coolHighlight: '#8EA6C5',
-  coolGlow: 'rgba(142, 166, 197, 0.15)',
-  borderChrome: '#D0D8DC',
-  borderHighlight: '#C0C8CC',
-  accentSubtle: 'rgba(129, 148, 123, 0.12)',
-  patternTint: 'rgba(129, 148, 123, 0.03)',
-  patternTintCool: 'rgba(142, 166, 197, 0.02)',
+  accentDeep: '#5E446D',
+  accentSoftGlow: '#9E84AD',
+  accentGlow: 'rgba(128, 101, 143, 0.22)',
+  coolHighlight: '#9E84AD',
+  coolGlow: 'rgba(128, 101, 143, 0.15)',
+  borderChrome: '#DACEDF',
+  borderHighlight: '#CBBED2',
+  accentSubtle: 'rgba(128, 101, 143, 0.12)',
+  patternTint: 'rgba(128, 101, 143, 0.04)',
+  patternTintCool: 'rgba(128, 101, 143, 0.03)',
+
+  // Catppuccin palette visual elements
+  ...catppuccin,
 };
 
-// Dark theme palette (preserved for dark mode support)
+// Default export aliases to lightColors for backwards compatibility
+export const colors = lightColors;
+
+// Dark theme palette (Midnight & Deep Purple with Catppuccin visual elements)
 export const darkColors = {
-  background: '#09090C',
-  backgroundSecondary: '#101116',
-  backgroundTertiary: '#14151A',
-  backgroundElevated: '#1D1E27',
-  card: '#171820',
-  surface: '#171820',
-  surfaceElevated: '#1D1E27',
-  surfaceOverlay: '#22232C',
-  surfaceWarm: '#1A1B22',
-  surfaceFloating: 'rgba(29, 30, 39, 0.88)',
-  surfaceModal: 'rgba(29, 30, 39, 0.96)',
-  surfaceNavigation: 'rgba(13, 13, 18, 0.88)',
-  glass: 'rgba(23, 24, 32, 0.85)',
-  glassStrong: 'rgba(23, 24, 32, 0.96)',
-  secondary: '#1D1E27',
-  chromeDark: '#555963',
-  chromeDim: '#8A8E98',
-  chrome: '#BFC3CC',
-  chromeHighlight: '#F1F2F5',
-  chromeGlow: 'rgba(191, 195, 204, 0.15)',
-  primaryDark: '#D4D8DD',
-  onPrimary: '#09090C',
-  neon: '#5A8A6E',
-  primary: '#BFC3CC',
-  primaryLight: '#D4D8DD',
-  primarySoft: '#E8EBEE',
-  primaryUltraSoft: '#F1F2F5',
-  accent: '#B84F7D',
-  accentLight: '#C875A0',
-  accentLavender: '#B8A8D8',
-  accentSoft: 'rgba(184, 79, 125, 0.12)',
-  text: '#F4F2F5',
-  textPrimary: '#F4F2F5',
-  textSecondary: '#96949E',
-  textTertiary: '#65646D',
-  textMuted: '#65646D',
-  muted: '#96949E',
-  textInverse: '#09090C',
-  textOnPrimary: '#09090C',
-  textOnChrome: '#09090C',
-  border: '#2A2C35',
-  borderSubtle: 'rgba(255, 255, 255, 0.06)',
-  borderDefault: 'rgba(255, 255, 255, 0.08)',
-  borderEmphasized: 'rgba(255, 255, 255, 0.12)',
-  borderSoft: '#1F2028',
-  divider: '#252630',
-  dividerSoft: '#1A1B22',
-  shadow: 'rgba(0, 0, 0, 0.4)',
-  shadowStrong: 'rgba(0, 0, 0, 0.6)',
-  overlay: 'rgba(9, 9, 12, 0.8)',
-  overlayLight: 'rgba(9, 9, 12, 0.4)',
-  overlayStrong: 'rgba(9, 9, 12, 0.95)',
-  success: '#2E7D4A',
-  successSoft: '#1A3D2A',
-  warning: '#B8860B',
-  warningSoft: '#3D3510',
-  error: '#C0392B',
-  errorSoft: '#3D1A1A',
-  errorBackground: '#3D1A1A', // Soft error surface (background tint)
-  accentDeep: '#651F42',
-  accentSoftGlow: '#C875A0',
-  accentGlow: 'rgba(184, 79, 125, 0.25)',
-  coolHighlight: '#8EA6C5',
-  coolGlow: 'rgba(142, 166, 197, 0.15)',
-  borderChrome: '#4A4E58',
-  borderHighlight: '#6E7380',
-  accentSubtle: 'rgba(184, 79, 125, 0.12)',
-  patternTint: 'rgba(184, 79, 125, 0.03)',
-  patternTintCool: 'rgba(142, 166, 197, 0.02)',
-};
+  // Backgrounds - VERIFIED EXACT SPEC
+  background: '#0B0813', // Midnight background ✓
+  backgroundSecondary: '#151022',
+  backgroundTertiary: '#1C152D',
+  backgroundElevated: '#211633', // Deep purple ✓
+  card: '#211633', // Deep purple ✓
 
-// Light theme palette (current active theme)
-export const lightColors = {
-  ...colors,
+  // Surfaces
+  surface: '#211633', // Deep purple ✓
+  surfaceElevated: '#2C1D44',
+  surfaceOverlay: '#382556',
+  surfaceWarm: '#211633',
+  surfaceSecondary: '#2C1D44',
+  surfaceFloating: 'rgba(33, 22, 51, 0.92)',
+  surfaceModal: 'rgba(33, 22, 51, 0.98)',
+  surfaceNavigation: 'rgba(11, 8, 19, 0.94)',
+  glass: 'rgba(33, 22, 51, 0.82)',
+  glassStrong: 'rgba(33, 22, 51, 0.95)',
+  secondary: '#2C1D44',
+
+  // Accent / Chrome - VERIFIED EXACT SPEC
+  chromeDark: '#4A336E',
+  chromeDim: '#704B9F',
+  chrome: '#8052C8', // Purple accent ✓
+  chromeHighlight: '#C3A6F2', // Lavender ✓
+  chromeGlow: 'rgba(128, 82, 200, 0.25)',
+  primaryDark: '#5E389B',
+  onPrimary: '#0B0813',
+  neon: '#C3A6F2',
+
+  // Semantic color names - VERIFIED EXACT SPEC
+  primary: '#8052C8', // Purple accent ✓
+  primaryLight: '#9E72DF',
+  primarySoft: '#C3A6F2', // Lavender ✓
+  primaryUltraSoft: '#E6D9FC',
+  accent: '#8052C8', // Purple accent ✓
+  accentLight: '#C3A6F2', // Lavender ✓
+  accentLavender: '#C3A6F2', // Lavender ✓
+  accentSoft: 'rgba(128, 82, 200, 0.16)',
+  highlight: '#FFC857', // Warm yellow ✓
+  accentOptional1: '#E9C9C5',
+  accentOptional2: '#C8D3BF',
+
+  text: '#F6F0FF', // Primary text ✓
+  textPrimary: '#F6F0FF', // Primary text ✓
+  textSecondary: '#A99BB9', // Secondary text ✓
+  textTertiary: '#867697',
+  textMuted: '#736483',
+  muted: '#A99BB9',
+  textInverse: '#0B0813',
+  textOnPrimary: '#FFFFFF',
+  textOnChrome: '#FFFFFF',
+  border: '#33234E',
+  borderSubtle: 'rgba(195, 166, 242, 0.08)',
+  borderDefault: 'rgba(195, 166, 242, 0.12)',
+  borderEmphasized: 'rgba(195, 166, 242, 0.22)',
+  borderSoft: '#291B3F',
+  divider: '#2C1C45',
+  dividerSoft: '#201534',
+  shadow: 'rgba(0, 0, 0, 0.55)',
+  shadowStrong: 'rgba(0, 0, 0, 0.75)',
+  overlay: 'rgba(11, 8, 19, 0.82)',
+  overlayLight: 'rgba(11, 8, 19, 0.45)',
+  overlayStrong: 'rgba(11, 8, 19, 0.96)',
+
+  // Status
+  success: '#a6e3a1',
+  successSoft: '#1e3828',
+  warning: '#FFC857',
+  warningSoft: '#423312',
+  error: '#f38ba8',
+  errorSoft: '#441824',
+  errorBackground: '#441824',
+
+  // Additional
+  accentDeep: '#532D8A',
+  accentSoftGlow: '#C3A6F2',
+  accentGlow: 'rgba(128, 82, 200, 0.35)',
+  coolHighlight: '#C3A6F2',
+  coolGlow: 'rgba(195, 166, 242, 0.20)',
+  borderChrome: '#4F3574',
+  borderHighlight: '#6F4E9E',
+  accentSubtle: 'rgba(128, 82, 200, 0.18)',
+  patternTint: 'rgba(195, 166, 242, 0.04)',
+  patternTintCool: 'rgba(128, 82, 200, 0.03)',
+
+  // Catppuccin palette visual elements
+  ...catppuccin,
 };
 
 export type ThemeColors = typeof darkColors;

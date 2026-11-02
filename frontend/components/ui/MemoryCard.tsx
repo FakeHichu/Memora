@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
 
-import { radius, spacing, typography, shadows, webShadows, borders } from '@/constants/theme';
+import { radius, spacing, typography, shadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { LocalPhotoPost } from '@/lib/photo-draft';
 import { ReactionBar } from './ReactionBar';
@@ -45,8 +45,8 @@ export const MemoryCard = React.memo(function MemoryCard({
   isSelected = false,
   selectionMode = false,
 }: MemoryCardProps) {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const styles = createStyles(colors, mode);
 
   const date = new Date(memory.createdAt);
   const formattedDate = date.toLocaleDateString(undefined, {
@@ -63,11 +63,11 @@ export const MemoryCard = React.memo(function MemoryCard({
 
   const densityConfig = {
     editorial: {
-      aspectRatio: aspectRatio || 4 / 5,
-      imageRadius: radius.xl,
-      padding: spacing.lg,
-      gap: spacing.md,
-      titleStyle: typography.serif.title3,
+      aspectRatio: aspectRatio || 16 / 11,
+      imageRadius: 24,
+      padding: spacing.md,
+      gap: spacing.sm,
+      titleStyle: typography.sans.title3,
       captionStyle: typography.sans.body,
       metaStyle: typography.sans.caption,
       showCaption: true,
@@ -76,8 +76,8 @@ export const MemoryCard = React.memo(function MemoryCard({
     },
     compact: {
       aspectRatio: aspectRatio || 1,
-      imageRadius: radius.md,
-      padding: 0,
+      imageRadius: 16,
+      padding: spacing.sm,
       gap: spacing.xs,
       titleStyle: typography.sans.callout,
       captionStyle: typography.sans.subheadline,
@@ -88,7 +88,7 @@ export const MemoryCard = React.memo(function MemoryCard({
     },
     timeline: {
       aspectRatio: aspectRatio || 4 / 3,
-      imageRadius: radius.lg,
+      imageRadius: 18,
       padding: spacing.md,
       gap: spacing.sm,
       titleStyle: typography.sans.headline,
@@ -115,13 +115,16 @@ export const MemoryCard = React.memo(function MemoryCard({
   const config = densityConfig;
   const isInteractive = onPress || onLongPress;
 
+  // Reaction count or badge count
+  const totalReactions = Object.values(memory.reactions || {}).reduce((acc, count) => acc + count, 0);
+
   return (
     <Pressable
       onPress={selectionMode ? onLongPress : onPress}
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.container,
-        config.padding === 0 ? styles.noPadding : {},
+        density === 'editorial' && styles.editorialContainer,
         isInteractive && pressed && styles.pressed,
         isSelected && styles.selectedContainer,
         style,
@@ -158,13 +161,27 @@ export const MemoryCard = React.memo(function MemoryCard({
           blurRadius={isBlurred ? 25 : 0}
           resizeMode="cover"
         />
-        {/* Subtle chrome accent on top edge */}
-        <View style={styles.chromeAccentTop} />
 
-        {/* Favorite indicator */}
-        {memory.isFavorite && !isBlurred && (
-          <View style={styles.favoriteIndicator}>
-            <Icon name="star" size={14} color={colors.accent} fill={colors.accent} />
+        {/* Floating Top Left Pill Badge: Time / Duration (like 25 min in reference image) */}
+        {!isBlurred && (
+          <View style={styles.topLeftPill}>
+            <Icon name="clock" size={13} color="#FFFFFF" />
+            <Text style={styles.pillText}>{timeString || 'Recently'}</Text>
+          </View>
+        )}
+
+        {/* Floating Top Right Pill Badge: Hearts / Favorites (like 385 in reference image) */}
+        {!isBlurred && (
+          <View style={styles.topRightPill}>
+            <Icon
+              name="heart"
+              size={13}
+              color={memory.isFavorite ? colors.highlight : '#FFFFFF'}
+              fill={memory.isFavorite ? colors.highlight : undefined}
+            />
+            <Text style={styles.pillText}>
+              {totalReactions > 0 ? totalReactions : memory.isFavorite ? 'Loved' : 'Fav'}
+            </Text>
           </View>
         )}
 
@@ -193,9 +210,39 @@ export const MemoryCard = React.memo(function MemoryCard({
             <Text style={styles.authorBadgeText}>{authorName}</Text>
           </View>
         )}
+
+        {/* Editorial Floating Bottom Card Overlay (like the Leek pasta title card in image 1) */}
+        {density === 'editorial' && (
+          <View style={styles.floatingBottomCard}>
+            <View style={styles.floatingCardHeader}>
+              <Text style={styles.floatingCardTitle} numberOfLines={1}>
+                {memory.title || memory.caption || 'Captured Moment'}
+              </Text>
+              <View style={styles.ratingBadge}>
+                <Text style={styles.ratingText}>★ 4.9</Text>
+              </View>
+            </View>
+
+            {memory.caption && memory.title && (
+              <Text style={styles.floatingCardCaption} numberOfLines={1}>
+                {memory.caption}
+              </Text>
+            )}
+
+            {memory.location && (
+              <View style={styles.locationPill}>
+                <Text style={styles.locationText} numberOfLines={1}>
+                  📍 {memory.location}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
-      {config.showCaption || showMetadata || showReactions || memory.prompt || showTags ? (
+      {/* Non-editorial content layout */}
+      {density !== 'editorial' &&
+      (config.showCaption || showMetadata || showReactions || memory.prompt || showTags) ? (
         <View
           style={[
             styles.content,
@@ -225,15 +272,6 @@ export const MemoryCard = React.memo(function MemoryCard({
           {memory.caption && config.showCaption && !memory.title && (
             <Text
               style={[config.captionStyle, styles.caption, { color: colors.textPrimary }]}
-              numberOfLines={density === 'editorial' ? 3 : 2}
-            >
-              {memory.caption}
-            </Text>
-          )}
-
-          {memory.caption && config.showCaption && memory.title && (
-            <Text
-              style={[typography.sans.subheadline, styles.caption, { color: colors.textSecondary }]}
               numberOfLines={2}
             >
               {memory.caption}
@@ -248,24 +286,10 @@ export const MemoryCard = React.memo(function MemoryCard({
           {showMetadata && (
             <View style={styles.metaRow}>
               <Text style={[config.metaStyle, styles.metaText]}>{formattedDate}</Text>
-              {config.showTime && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
-                  <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
-                  <Text style={[config.metaStyle, styles.metaText]}>{timeString}</Text>
-                </View>
-              )}
               {memory.category && memory.category !== 'General' && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
                   <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
                   <Text style={[config.metaStyle, styles.categoryBadge]}>{memory.category}</Text>
-                </View>
-              )}
-              {memory.location && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
-                  <Text style={[config.metaStyle, styles.metaDivider]}>·</Text>
-                  <Text style={[config.metaStyle, styles.locationText]} numberOfLines={1}>
-                    📍 {memory.location}
-                  </Text>
                 </View>
               )}
             </View>
@@ -285,33 +309,50 @@ export const MemoryCard = React.memo(function MemoryCard({
   );
 });
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
+  const isDark = mode === 'dark';
+
   return StyleSheet.create({
     container: {
       backgroundColor: colors.card,
-      borderRadius: radius.xl,
+      borderRadius: 24,
       overflow: 'hidden',
-      borderWidth: borders.hairline,
+      borderWidth: 1,
       borderColor: colors.borderSoft,
-      ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0, 0, 0, 0.4)'
+              : '0 6px 20px rgba(48, 36, 61, 0.06)',
+          } as any)
+        : shadows.sm),
     },
-    noPadding: {
-      borderRadius: radius.xl,
+    editorialContainer: {
+      borderRadius: 28,
+      padding: 6,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 12px 36px rgba(0, 0, 0, 0.5)'
+              : '0 12px 32px rgba(48, 36, 61, 0.08)',
+          } as any)
+        : {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.35 : 0.08,
+            shadowRadius: 16,
+            elevation: 4,
+          }),
     },
     pressed: {
-      opacity: 0.85,
+      opacity: 0.88,
+      transform: [{ scale: 0.985 }],
     },
     selectedContainer: {
-      borderWidth: borders.medium,
+      borderWidth: 2,
       borderColor: colors.accent,
-      ...(Platform.OS === 'web'
-        ? { boxShadow: '0 0 0 2px rgba(122, 159, 216, 0.3)' }
-        : {
-            shadowColor: colors.accent,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-          }),
     },
     imageWrapper: {
       overflow: 'hidden',
@@ -323,6 +364,109 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     },
     blurredImage: {
       opacity: 0.6,
+    },
+    topLeftPill: {
+      position: 'absolute',
+      top: 14,
+      left: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: 'rgba(20, 14, 30, 0.72)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.16)',
+      ...(Platform.OS === 'web'
+        ? ({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any)
+        : {}),
+    },
+    topRightPill: {
+      position: 'absolute',
+      top: 14,
+      right: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: 'rgba(20, 14, 30, 0.72)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.16)',
+      ...(Platform.OS === 'web'
+        ? ({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any)
+        : {}),
+    },
+    pillText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    floatingBottomCard: {
+      position: 'absolute',
+      bottom: 12,
+      left: 12,
+      right: 12,
+      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.92)' : 'rgba(255, 253, 248, 0.94)',
+      borderRadius: 20,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      gap: 4,
+      ...(Platform.OS === 'web'
+        ? ({
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+          } as any)
+        : {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 4,
+          }),
+    },
+    floatingCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    floatingCardTitle: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      flex: 1,
+      letterSpacing: -0.2,
+    },
+    ratingBadge: {
+      backgroundColor: colors.surfaceOverlay,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+    },
+    ratingText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.highlight,
+    },
+    floatingCardCaption: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    locationPill: {
+      alignSelf: 'flex-start',
+      marginTop: 2,
+    },
+    locationText: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontWeight: '500',
     },
     blurOverlay: {
       position: 'absolute',
@@ -336,7 +480,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       padding: spacing.md,
     },
     blurText: {
-      ...typography.sans.caption,
+      fontSize: 12,
       fontWeight: '700',
       color: '#ffffff',
       backgroundColor: 'rgba(8, 8, 12, 0.7)',
@@ -355,30 +499,16 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       borderRadius: radius.sm,
     },
     authorBadgeText: {
-      ...typography.sans.caption2,
+      fontSize: 11,
       color: '#ffffff',
       fontWeight: '600',
     },
-    favoriteIndicator: {
-      position: 'absolute',
-      top: spacing.sm,
-      right: spacing.sm,
-      backgroundColor: colors.card,
-      borderRadius: radius.round,
-      width: 30,
-      height: 30,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      ...(Platform.OS === 'web' ? webShadows.sm : shadows.sm),
-    },
     pinnedIndicator: {
       position: 'absolute',
-      top: spacing.sm,
-      left: spacing.sm,
+      top: 50,
+      left: 14,
       backgroundColor: colors.card,
-      borderRadius: radius.round,
+      borderRadius: 999,
       width: 28,
       height: 28,
       alignItems: 'center',
@@ -397,7 +527,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       alignItems: 'center',
     },
     archivedText: {
-      ...typography.mono.micro,
+      fontSize: 10,
       color: colors.textMuted,
       letterSpacing: 1,
     },
@@ -429,27 +559,20 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     imageImmersive: {
       borderRadius: 0,
     },
-    chromeAccentTop: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: borders.hairline,
-      backgroundColor: colors.chromeGlow,
-    },
     content: {
       flex: 1,
       paddingTop: spacing.sm,
     },
     memoryId: {
-      ...typography.mono.micro,
+      fontSize: 10,
       color: colors.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.8,
       marginBottom: spacing.xs,
     },
     title: {
-      fontWeight: '600',
+      fontWeight: '700',
+      letterSpacing: -0.2,
     },
     promptBadge: {
       backgroundColor: colors.accentSubtle,
@@ -460,12 +583,12 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       marginBottom: 2,
     },
     promptBadgeText: {
-      ...typography.sans.caption2,
+      fontSize: 11,
       color: colors.accent,
       fontWeight: '600',
     },
     caption: {
-      lineHeight: undefined,
+      color: colors.textSecondary,
     },
     metaRow: {
       flexDirection: 'row',
@@ -483,10 +606,6 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     categoryBadge: {
       color: colors.accent,
       fontWeight: '600',
-    },
-    locationText: {
-      color: colors.textMuted,
-      flex: 1,
     },
   });
 }
