@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { borders, colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
 import { TabIcon } from '@/components/ui/Icons';
+import { MemoraTabBar } from '@/components/ui/MemoraTabBar';
 
 const MIN_TAB_BAR_HEIGHT = 56;
 const TAB_LABEL_HEIGHT = 16;
@@ -16,6 +17,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      tabBar={MemoraTabBar}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,

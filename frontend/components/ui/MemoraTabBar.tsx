@@ -1,152 +1,177 @@
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { ThemeColors } from '@/constants/theme';
+import { TabIcon, type JamIconName } from '@/components/ui/Icons';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import {
+  borders,
+  radius,
+  shadows,
+  spacing,
+  webShadows,
+  type ThemeColors,
+} from '@/constants/theme';
 
-const tabItems = [
-  { routeName: 'today', label: 'Home', icon: '⌂' },
-  { routeName: 'discover', label: 'Discover', icon: '⌕' },
-  { routeName: 'memories', label: 'Memories', icon: '▤' },
-  { routeName: 'profile', label: 'Me', icon: '○' },
-] as const;
+type NavTabName = 'home' | 'memories' | 'create' | 'circle' | 'profile';
 
-export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
+type NavTab = {
+  name: NavTabName;
+  label: string;
+  icon: JamIconName;
+};
+
+const NAV_TABS: NavTab[] = [
+  { name: 'home', label: 'Home', icon: 'home' },
+  { name: 'memories', label: 'Memories', icon: 'calendar' },
+  { name: 'create', label: 'Create', icon: 'plus' },
+  { name: 'circle', label: 'Circle', icon: 'users' },
+  { name: 'profile', label: 'Profile', icon: 'user' },
+];
+
+const ICON_SIZE = 22;
+const ICON_CIRCLE_SIZE = 40;
+
+export function MemoraTabBar(props: BottomTabBarProps) {
+  const { state, navigation, insets } = props;
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const insets = useSafeAreaInsets();
-  const sideItems = [tabItems[0], tabItems[1], tabItems[2], tabItems[3]];
+
+  const renderTab = (tab: NavTab, focused: boolean) => {
+    if (tab.name === 'create') {
+      return (
+        <Pressable
+          key={tab.name}
+          style={styles.createTab}
+          onPress={() => router.push('/camera')}
+          accessibilityRole="button"
+          accessibilityLabel={tab.label}
+          accessibilityState={{ selected: true }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <View style={styles.createIconCircle}>
+            <TabIcon
+              name={tab.icon}
+              focused
+              size={ICON_SIZE}
+              activeColor={colors.textOnPrimary}
+              inactiveColor={colors.textOnPrimary}
+            />
+          </View>
+        </Pressable>
+      );
+    }
+
+    return (
+      <Pressable
+        key={tab.name}
+        style={styles.tab}
+        onPress={() => {
+          const routeIndex = state.routes.findIndex((route) => route.name === tab.name);
+          const route = state.routes[routeIndex];
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route?.key,
+            canPreventDefault: true,
+          });
+          if (!focused && !event.defaultPrevented) navigation.navigate(tab.name);
+        }}
+        accessibilityRole="tab"
+        accessibilityLabel={tab.label}
+        accessibilityState={{ selected: focused }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <View
+          style={[styles.iconCircle, focused ? styles.iconCircleActive : styles.iconCircleInactive]}
+        >
+          <TabIcon
+            name={tab.icon}
+            focused={focused}
+            size={ICON_SIZE}
+            activeColor={colors.textOnPrimary}
+            inactiveColor={colors.muted}
+          />
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
-      {sideItems.slice(0, 2).map((item) => {
-        const routeIndex = state.routes.findIndex((route) => route.name === item.routeName);
-        const route = state.routes[routeIndex];
-        const focused = state.index === routeIndex;
-
-        return (
-          <Pressable
-            key={item.routeName}
-            style={styles.tab}
-            onPress={() => {
-              const event = navigation.emit({ type: 'tabPress', target: route?.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(item.routeName);
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel={item.label}
-            accessibilityState={{ selected: focused }}
-          >
-            <Text style={[styles.icon, focused && styles.iconActive]}>{item.icon}</Text>
-            <Text style={[styles.label, focused && styles.labelActive]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
-
-      <Pressable
-        style={styles.createTab}
-        onPress={() => router.push('/camera')}
-        accessibilityRole="button"
-        accessibilityLabel="Create a moment"
-      >
-        <View style={styles.createButton}><Text style={styles.createIcon}>+</Text></View>
-        <Text style={styles.createLabel}>Create</Text>
-      </Pressable>
-
-      {sideItems.slice(2).map((item) => {
-        const routeIndex = state.routes.findIndex((route) => route.name === item.routeName);
-        const route = state.routes[routeIndex];
-        const focused = state.index === routeIndex;
-
-        return (
-          <Pressable
-            key={item.routeName}
-            style={styles.tab}
-            onPress={() => {
-              const event = navigation.emit({ type: 'tabPress', target: route?.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(item.routeName);
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel={item.label}
-            accessibilityState={{ selected: focused }}
-          >
-            <Text style={[styles.icon, focused && styles.iconActive]}>{item.icon}</Text>
-            <Text style={[styles.label, focused && styles.labelActive]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
+    <View
+      style={[styles.container, { paddingBottom: Math.max(insets?.bottom ?? 0, spacing.xs * 6) }]}
+    >
+      <View style={styles.pill}>
+        {NAV_TABS.map((tab) => {
+          const routeIndex = state.routes.findIndex((route) => route.name === tab.name);
+          const focused = state.index === routeIndex;
+          return renderTab(tab, focused);
+        })}
+      </View>
     </View>
   );
 }
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-  bar: {
-    width: '100%',
-    minHeight: 68,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingTop: 6,
-    backgroundColor: colors.glassStrong,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  tab: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-  },
-  icon: {
-    color: colors.muted,
-    fontSize: 22,
-    lineHeight: 27,
-  },
-  iconActive: {
-    color: colors.accent,
-  },
-  label: {
-    color: colors.muted,
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  labelActive: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  createTab: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-  },
-  createButton: {
-    width: 42,
-    height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 21,
-    backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.32)',
-  },
-  createIcon: {
-    color: colors.onPrimary,
-    fontSize: 29,
-    fontWeight: '400',
-    lineHeight: 33,
-  },
-  createLabel: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-  },
+    // Floating pill container — anchored to the bottom of the screen,
+    // lifted above the safe area, centered horizontally.
+    container: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointerEvents: 'box-none',
+    },
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.round,
+      backgroundColor: colors.glass,
+      borderWidth: borders.thin,
+      borderColor: colors.accentSoft,
+      paddingVertical: spacing.xs,
+      ...(Platform.OS =      ...(Platform.OS === 'web' ? webShadows.lg : shadows.lg),
+    },
+    tab: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconCircle: {
+      width: ICON_CIRCLE_SIZE,
+      height: ICON_CIRCLE_SIZE,
+      borderRadius: radius.circle,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconCircleActive: {
+      backgroundColor: colors.accent,
+      ...shadows.glowMd,
+    },
+    iconCircleInactive: {
+      backgroundColor: colors.secondary,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSubtle,
+    },
+    createTab: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    createIconCircle: {
+      width: ICON_CIRCLE_SIZE,
+      height: ICON_CIRCLE_SIZE,
+      borderRadius: radius.circle,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accent,
+      shadowColor: colors.accentGlow,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
+      elevation: 6,
+    },
   });
 }
