@@ -1,27 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-<<<<<<< HEAD
-import { Platform, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { borders, colors, radius, spacing, shadows, webShadows } from '@/constants/theme';
-import { TabIcon } from '@/components/ui/Icons';
 import { MemoraTabBar } from '@/components/ui/MemoraTabBar';
-
-const MIN_TAB_BAR_HEIGHT = 56;
-const TAB_LABEL_HEIGHT = 16;
-=======
-import { MemoraTabBar } from '@/components/ui/MemoraTabBar';
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
 
 export default function TabsLayout() {
   return (
     <Tabs
-<<<<<<< HEAD
-      tabBar={MemoraTabBar}
-=======
       tabBar={(props) => <MemoraTabBar {...props} />}
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
       screenOptions={{
         headerShown: false,
       }}
