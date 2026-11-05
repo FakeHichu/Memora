@@ -1,53 +1,47 @@
-# MEMORA
+# Memora
 
-An Expo web/mobile frontend, Express backend, and Supabase/PostgreSQL database. Run commands below from PowerShell at the project root unless a step says otherwise.
+A full-stack camera application with separate frontend and backend components.
 
-## Quick Start
+## Project Structure
 
-Install dependencies once:
-
-```powershell
-npm install
-npm install --prefix frontend
-npm install --prefix backend
+```
+.
+├── documents/          # All markdown documentation (moved from various locations)
+├── backend/            # Backend server implementation
+├── frontend/           # Frontend client application
+├── database/           # Database-related files
+└── ...
 ```
 
-Start the full app:
+## Available Scripts
 
-```powershell
+In the project root:
+
+- `npm run dev` - Start both backend and frontend development servers using concurrently
+- `npm run frontend` - Start the frontend development server (cd frontend && npm run dev)
+- `npm run backend` - Start the backend development server (cd backend && npm run dev)
+- `npm run build:backend` - Build the backend
+- `npm run typecheck:frontend` - Type-check the frontend
+- `npm run typecheck:backend` - Type-check the backend
+
+## Technology Stack
+
+- **Frontend**: SolidJS with Babel plugin module resolver
+- **Backend**: Node.js application
+- **Dependencies**: zod, minimatch, glob, and other utility packages
+
+## Documentation
+
+All markdown documentation has been consolidated into the `documents/` folder for easy reference.
+
+## Development
+
+To start development:
+
+```bash
 npm run dev
 ```
 
-This runs the API at `http://localhost:4000` and starts the web app. Open the URL Expo prints in the terminal, usually `http://localhost:8081`. If that port is busy, Expo will select another one and print it.
+This will start both the frontend and backend servers concurrently.
 
-## Run Only The Web App
-
-```powershell
-Set-Location frontend
-npm run dev
-```
-
-## Run On A Phone
-
-From the `frontend` folder, use `npm start` and scan the QR code with Expo Go. Or run `npm run android` / `npm run ios` to open a specific platform.
-
-## Supabase Setup
-
-The app currently works as a private, local photo journal without a database. Photos are compressed and stored in app-private storage; captions and dates are saved locally and remain after restarting the app. To add accounts and shared class posting later, create local env files from the examples:
-
-```powershell
-Copy-Item frontend/.env.example frontend/.env
-Copy-Item backend/.env.example backend/.env
-```
-
-Set the Supabase URL and anon key in `frontend/.env`. Set the URL and service-role key in `backend/.env`; never put the service-role key in the frontend. Apply the SQL files in `database/migrations/` to your Supabase project before using class creation.
-
-## Useful Commands
-
-Run from the project root:
-
-- `npm run dev` — start frontend and backend together
-- `npm run frontend` — start only the web frontend
-- `npm run backend` — start only the backend
-- `npm run typecheck:frontend` — check frontend TypeScript
-- `npm run typecheck:backend` — check backend TypeScript
+For individual component development, use the npm scripts in each directory or refer to the documentation in the `documents/` folder.

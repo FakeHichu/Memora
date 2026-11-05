@@ -64,7 +64,7 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
             }
           };
 
-          // Render center create button differently
+          // Render center create button differently - fixed position, no animations
           if (isCreate) {
             return (
               <Pressable
@@ -73,10 +73,7 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isFocused }}
                 accessibilityLabel={tab.label}
-                style={({ pressed }) => [
-                  styles.createButton,
-                  pressed && styles.createButtonPressed,
-                ]}
+                style={styles.createButton}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <View style={styles.createIconCircle}>
@@ -169,16 +166,19 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     tabButton: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
       gap: 8,
       paddingHorizontal: 4,
       paddingVertical: 4,
       borderRadius: 999,
       transitionDuration: '200ms',
+      minWidth: 48, // Fixed minimum width to prevent layout shifts
     } as any,
     tabButtonActive: {
       paddingHorizontal: 12,
       paddingVertical: 4,
       backgroundColor: isDark ? colors.surface : colors.surfaceOverlay,
+      minWidth: 110, // Fixed width for active state with label
     },
     tabButtonPressed: {
       opacity: 0.7,
@@ -218,16 +218,13 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       color: colors.textPrimary,
       letterSpacing: -0.2,
       marginRight: 4,
-<<<<<<< HEAD
     },
-    // Larger create button styles
+    // Create button styles - fixed, no press animations
     createButton: {
       marginHorizontal: 4,
-      transitionDuration: '200ms',
-    } as any,
-    createButtonPressed: {
-      opacity: 0.85,
-      transform: [{ scale: 0.92 }],
+      width: 64, // Fixed width to maintain position
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     createIconCircle: {
       width: 56,
@@ -251,8 +248,6 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
             shadowRadius: 10,
             elevation: 8,
           }),
-=======
->>>>>>> 21dd7a6199b0cbd7edfc4b7a45adb2a18b8857c0
     },
   });
 }
