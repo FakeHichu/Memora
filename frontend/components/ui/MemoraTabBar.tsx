@@ -218,6 +218,7 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       color: colors.textPrimary,
       letterSpacing: -0.2,
       marginRight: 4,
+<<<<<<< HEAD
     },
     // Larger create button styles
     createButton: {
@@ -250,6 +251,8 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
             shadowRadius: 10,
             elevation: 8,
           }),
+=======
+>>>>>>> 21dd7a6199b0cbd7edfc4b7a45adb2a18b8857c0
     },
   });
 }
