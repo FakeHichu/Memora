@@ -1,116 +1,10 @@
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-<<<<<<< HEAD
-=======
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
 
-import { TabIcon, type JamIconName } from '@/components/ui/Icons';
+import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-<<<<<<< HEAD
-import {
-  borders,
-  radius,
-  shadows,
-  spacing,
-  webShadows,
-  type ThemeColors,
-} from '@/constants/theme';
-
-type NavTabName = 'home' | 'memories' | 'create' | 'circle' | 'profile';
-
-type NavTab = {
-  name: NavTabName;
-  label: string;
-  icon: JamIconName;
-};
-
-const NAV_TABS: NavTab[] = [
-  { name: 'home', label: 'Home', icon: 'home' },
-  { name: 'memories', label: 'Memories', icon: 'calendar' },
-  { name: 'create', label: 'Create', icon: 'plus' },
-  { name: 'circle', label: 'Circle', icon: 'users' },
-  { name: 'profile', label: 'Profile', icon: 'user' },
-];
-
-const ICON_SIZE = 22;
-const ICON_CIRCLE_SIZE = 40;
-
-export function MemoraTabBar(props: BottomTabBarProps) {
-  const { state, navigation, insets } = props;
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
-
-  const renderTab = (tab: NavTab, focused: boolean) => {
-    if (tab.name === 'create') {
-      return (
-        <Pressable
-          key={tab.name}
-          style={styles.createTab}
-          onPress={() => router.push('/camera')}
-          accessibilityRole="button"
-          accessibilityLabel={tab.label}
-          accessibilityState={{ selected: true }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <View style={styles.createIconCircle}>
-            <TabIcon
-              name={tab.icon}
-              focused
-              size={ICON_SIZE}
-              activeColor={colors.textOnPrimary}
-              inactiveColor={colors.textOnPrimary}
-            />
-          </View>
-        </Pressable>
-      );
-    }
-
-    return (
-      <Pressable
-        key={tab.name}
-        style={styles.tab}
-        onPress={() => {
-          const routeIndex = state.routes.findIndex((route) => route.name === tab.name);
-          const route = state.routes[routeIndex];
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route?.key,
-            canPreventDefault: true,
-          });
-          if (!focused && !event.defaultPrevented) navigation.navigate(tab.name);
-        }}
-        accessibilityRole="tab"
-        accessibilityLabel={tab.label}
-        accessibilityState={{ selected: focused }}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <View
-          style={[styles.iconCircle, focused ? styles.iconCircleActive : styles.iconCircleInactive]}
-        >
-          <TabIcon
-            name={tab.icon}
-            focused={focused}
-            size={ICON_SIZE}
-            activeColor={colors.textOnPrimary}
-            inactiveColor={colors.muted}
-          />
-        </View>
-      </Pressable>
-    );
-  };
-
-  return (
-    <View
-      style={[styles.container, { paddingBottom: Math.max(insets?.bottom ?? 0, spacing.xs * 6) }]}
-    >
-      <View style={styles.pill}>
-        {NAV_TABS.map((tab) => {
-          const routeIndex = state.routes.findIndex((route) => route.name === tab.name);
-          const focused = state.index === routeIndex;
-          return renderTab(tab, focused);
-=======
 import { Icon, type JamIconName } from './Icons';
 
 type TabConfig = {
@@ -137,6 +31,8 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
     ? Math.max(insets.bottom - 8, 16) 
     : Math.max(insets.bottom, 20);
 
+  const isCreateTab = (routeName: string) => routeName === 'create';
+
   return (
     <View
       pointerEvents="box-none"
@@ -148,12 +44,13 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
       ]}
     >
       <View style={styles.navContainer} accessibilityRole="tablist">
-        {MAIN_TABS.map((tab) => {
+        {MAIN_TABS.map((tab, index) => {
           const routeIndex = state.routes.findIndex((r) => r.name === tab.routeName);
           if (routeIndex === -1) return null;
 
           const route = state.routes[routeIndex];
           const isFocused = state.index === routeIndex;
+          const isCreate = isCreateTab(tab.routeName);
 
           const onPress = () => {
             const event = navigation.emit({
@@ -166,6 +63,32 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
               navigation.navigate(route.name);
             }
           };
+
+          // Render center create button differently
+          if (isCreate) {
+            return (
+              <Pressable
+                key={tab.routeName}
+                onPress={onPress}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isFocused }}
+                accessibilityLabel={tab.label}
+                style={({ pressed }) => [
+                  styles.createButton,
+                  pressed && styles.createButtonPressed,
+                ]}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <View style={styles.createIconCircle}>
+                  <Icon
+                    name={tab.iconName}
+                    size={28}
+                    color={colors.textInverse}
+                  />
+                </View>
+              </Pressable>
+            );
+          }
 
           return (
             <Pressable
@@ -196,7 +119,6 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
               )}
             </Pressable>
           );
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
         })}
       </View>
     </View>
@@ -207,71 +129,12 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
 
   return StyleSheet.create({
-<<<<<<< HEAD
-    // Floating pill container — anchored to the bottom of the screen,
-    // lifted above the safe area, centered horizontally.
-    container: {
-      position: 'absolute',
-      bottom: 0,
-=======
     wrapper: {
       position: 'absolute',
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
       left: 0,
       right: 0,
       alignItems: 'center',
       justifyContent: 'center',
-<<<<<<< HEAD
-      pointerEvents: 'box-none',
-    },
-    pill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.round,
-      backgroundColor: colors.glass,
-      borderWidth: borders.thin,
-      borderColor: colors.accentSoft,
-      paddingVertical: spacing.xs,
-      ...(Platform.OS =      ...(Platform.OS === 'web' ? webShadows.lg : shadows.lg),
-    },
-    tab: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    iconCircle: {
-      width: ICON_CIRCLE_SIZE,
-      height: ICON_CIRCLE_SIZE,
-      borderRadius: radius.circle,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    iconCircleActive: {
-      backgroundColor: colors.accent,
-      ...shadows.glowMd,
-    },
-    iconCircleInactive: {
-      backgroundColor: colors.secondary,
-      borderWidth: borders.thin,
-      borderColor: colors.borderSubtle,
-    },
-    createTab: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    createIconCircle: {
-      width: ICON_CIRCLE_SIZE,
-      height: ICON_CIRCLE_SIZE,
-      borderRadius: radius.circle,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.accent,
-      shadowColor: colors.accentGlow,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.35,
-      shadowRadius: 12,
-      elevation: 6,
-=======
       zIndex: 999,
       pointerEvents: 'box-none',
       paddingHorizontal: 20,
@@ -355,7 +218,38 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       color: colors.textPrimary,
       letterSpacing: -0.2,
       marginRight: 4,
->>>>>>> 43255a2418f1652568805f39f8139aaa2f03c8c4
+    },
+    // Larger create button styles
+    createButton: {
+      marginHorizontal: 4,
+      transitionDuration: '200ms',
+    } as any,
+    createButtonPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.92 }],
+    },
+    createIconCircle: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accent,
+      borderWidth: 2,
+      borderColor: isDark ? colors.accentLight : colors.accentDeep,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 4px 20px rgba(128, 82, 200, 0.5), 0 2px 8px rgba(128, 82, 200, 0.3)'
+              : '0 4px 20px rgba(128, 101, 143, 0.4), 0 2px 8px rgba(128, 101, 143, 0.25)',
+          } as any)
+        : {
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.4,
+            shadowRadius: 10,
+            elevation: 8,
+          }),
     },
   });
 }

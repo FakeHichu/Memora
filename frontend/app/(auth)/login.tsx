@@ -71,13 +71,19 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
+      console.log('Attempting login with email:', email.trim());
       const { data, error } = await signInWithEmail(email.trim(), password);
 
+      console.log('Login response:', { hasData: !!data, hasError: !!error, error: error?.message });
+
       if (error) {
+        console.error('Login error:', error);
         if (error.message.includes('Invalid login credentials')) {
           setErrorMessage('Invalid email or password. Please try again.');
         } else if (error.message.includes('Email not confirmed')) {
           setErrorMessage('Please verify your email before signing in.');
+        } else if (error.message.includes('fetch')) {
+          setErrorMessage('Network error. Please check your internet connection and try again.');
         } else {
           setErrorMessage(error.message);
         }
@@ -86,13 +92,20 @@ export default function LoginScreen() {
       }
 
       if (data?.session) {
+        console.log('Login successful, navigating to welcome');
         router.replace('/(onboarding)/welcome');
       } else {
         setErrorMessage('Unable to sign in. Please try again.');
         setIsSubmitting(false);
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      console.error('Login exception:', err);
+      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      if (errorMsg.includes('fetch') || errorMsg.includes('network')) {
+        setErrorMessage('Network error. Please check your internet connection and try again.');
+      } else {
+        setErrorMessage(errorMsg);
+      }
       setIsSubmitting(false);
     }
   };

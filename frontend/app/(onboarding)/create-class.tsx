@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { setStringAsync } from 'expo-clipboard';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
