@@ -1,5 +1,4 @@
 import type { Response, NextFunction } from "express";
-
 import { PostService } from "../services/post.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 import {
@@ -7,7 +6,6 @@ import {
   updateCaptionSchema,
 } from "../validators/post.validator.js";
 import { reactionSchema } from "../validators/reaction.validator.js";
-
 export class PostController {
   static async createPost(
     req: AuthenticatedRequest,
@@ -23,7 +21,6 @@ export class PostController {
           errors: parsed.error.flatten(),
         });
       }
-
       const post = await PostService.createDailyPost(
         parsed.data.classId,
         req.userId,
@@ -31,13 +28,11 @@ export class PostController {
         parsed.data.caption,
         parsed.data.promptId,
       );
-
       return res.status(201).json({ ok: true, post });
     } catch (err) {
       next(err);
     }
   }
-
   static async getTodayFeed(
     req: AuthenticatedRequest,
     res: Response,
@@ -51,7 +46,6 @@ export class PostController {
       next(err);
     }
   }
-
   static async updateCaption(
     req: AuthenticatedRequest,
     res: Response,
@@ -67,7 +61,6 @@ export class PostController {
           errors: parsed.error.flatten(),
         });
       }
-
       const updated = await PostService.updateCaption(
         postId,
         req.userId,
@@ -78,7 +71,6 @@ export class PostController {
       next(err);
     }
   }
-
   static async deletePost(
     req: AuthenticatedRequest,
     res: Response,
@@ -92,7 +84,6 @@ export class PostController {
       next(err);
     }
   }
-
   static async toggleReaction(
     req: AuthenticatedRequest,
     res: Response,
@@ -108,7 +99,6 @@ export class PostController {
           errors: parsed.error.flatten(),
         });
       }
-
       const result = await PostService.toggleReaction(
         postId,
         req.userId,

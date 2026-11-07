@@ -1,6 +1,5 @@
 import { getSupabaseClient } from "../lib/supabase.js";
 import type { DailyPromptEntity } from "../types/index.js";
-
 export class PromptRepository {
   static async getPromptForDate(
     dateStr: string,
@@ -11,11 +10,9 @@ export class PromptRepository {
       .select("*")
       .eq("prompt_date", dateStr)
       .maybeSingle();
-
     if (error) throw error;
     return data as DailyPromptEntity | null;
   }
-
   static async createPrompt(
     promptText: string,
     promptDate: string,
@@ -26,7 +23,6 @@ export class PromptRepository {
       .insert({ prompt_text: promptText, prompt_date: promptDate })
       .select()
       .single();
-
     if (error) throw error;
     return data as DailyPromptEntity;
   }

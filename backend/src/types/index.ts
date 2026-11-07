@@ -1,9 +1,7 @@
 import type { Request } from "express";
-
 export interface AuthenticatedRequest extends Request {
   userId: string;
 }
-
 export interface UserProfile {
   id: string;
   username: string;
@@ -12,7 +10,6 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
 }
-
 export interface ClassEntity {
   id: string;
   name: string;
@@ -24,7 +21,6 @@ export interface ClassEntity {
   updated_at: string;
   status: "active" | "archived";
 }
-
 export interface ClassMemberEntity {
   id: string;
   class_id: string;
@@ -32,7 +28,6 @@ export interface ClassMemberEntity {
   role: "owner" | "admin" | "member";
   joined_at: string;
 }
-
 export interface DailyPostEntity {
   id: string;
   class_id: string;
@@ -45,14 +40,12 @@ export interface DailyPostEntity {
   updated_at: string;
   deleted_at?: string | null;
 }
-
 export interface DailyPromptEntity {
   id: string;
   prompt_text: string;
   prompt_date: string;
   created_at: string;
 }
-
 export interface ReactionEntity {
   id: string;
   post_id: string;
@@ -60,7 +53,6 @@ export interface ReactionEntity {
   reaction_type: "heart" | "laugh" | "cry" | "fire" | "dead" | "respect";
   created_at: string;
 }
-
 export interface ReportEntity {
   id: string;
   post_id: string;

@@ -1,7 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-
 import { PromptService } from "../services/prompt.service.js";
-
 export class PromptController {
   static async getTodayPrompt(
     _req: Request,

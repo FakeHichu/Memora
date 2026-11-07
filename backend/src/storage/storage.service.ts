@@ -1,8 +1,6 @@
 import { getSupabaseClient } from "../lib/supabase.js";
-
 export class StorageService {
   static readonly BUCKET_NAME = "class-photos";
-
   static async createSignedUploadUrl(
     filePath: string,
   ): Promise<{ signedUrl: string; token: string; path: string }> {
@@ -10,7 +8,6 @@ export class StorageService {
     const { data, error } = await client.storage
       .from(this.BUCKET_NAME)
       .createSignedUploadUrl(filePath);
-
     if (error) throw error;
     return {
       signedUrl: data.signedUrl,
@@ -18,7 +15,6 @@ export class StorageService {
       path: data.path,
     };
   }
-
   static async createSignedDownloadUrl(
     filePath: string,
     expiresInSeconds: number = 3600,
@@ -27,7 +23,6 @@ export class StorageService {
     const { data, error } = await client.storage
       .from(this.BUCKET_NAME)
       .createSignedUrl(filePath, expiresInSeconds);
-
     if (error) throw error;
     return data.signedUrl;
   }

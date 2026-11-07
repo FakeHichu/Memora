@@ -1,12 +1,10 @@
 import type { Response, NextFunction } from "express";
-
 import { ClassService } from "../services/class.service.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 import {
   createClassSchema,
   joinClassSchema,
 } from "../validators/class.validator.js";
-
 export class ClassController {
   static async createClass(
     req: AuthenticatedRequest,
@@ -22,20 +20,17 @@ export class ClassController {
           errors: parsed.error.flatten(),
         });
       }
-
       const created = await ClassService.createClass(
         parsed.data.name,
         parsed.data.schoolName ?? null,
         parsed.data.academicYear,
         req.userId,
       );
-
       return res.status(201).json({ ok: true, class: created });
     } catch (err) {
       next(err);
     }
   }
-
   static async joinClass(
     req: AuthenticatedRequest,
     res: Response,
@@ -50,12 +45,10 @@ export class ClassController {
           errors: parsed.error.flatten(),
         });
       }
-
       const result = await ClassService.joinClassByCode(
         parsed.data.joinCode,
         req.userId,
       );
-
       if (result.alreadyJoined) {
         return res.json({
           ok: true,
@@ -64,7 +57,6 @@ export class ClassController {
           alreadyJoined: true,
         });
       }
-
       return res.json({
         ok: true,
         class: result.classEntity,
@@ -75,7 +67,6 @@ export class ClassController {
       next(err);
     }
   }
-
   static async getUserClasses(
     req: AuthenticatedRequest,
     res: Response,
@@ -88,7 +79,6 @@ export class ClassController {
       next(err);
     }
   }
-
   static async getClassDetails(
     req: AuthenticatedRequest,
     res: Response,
@@ -105,7 +95,6 @@ export class ClassController {
       next(err);
     }
   }
-
   static async getClassMembers(
     req: AuthenticatedRequest,
     res: Response,

@@ -2,7 +2,6 @@ import { ClassRepository } from "../repositories/class.repository.js";
 import { PostRepository } from "../repositories/post.repository.js";
 import { StorageService } from "../storage/storage.service.js";
 import type { DailyPostEntity, ReactionEntity } from "../types/index.js";
-
 export class PostService {
   static async createDailyPost(
     classId: string,
@@ -19,10 +18,7 @@ export class PostService {
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-
     const todayDate = new Date().toISOString().slice(0, 10);
-
-    // Enforce ONE PHOTO PER DAY RULE
     const existing = await PostRepository.findUserPostForDate(
       classId,
       userId,
@@ -35,7 +31,6 @@ export class PostService {
       (err as unknown as { status: number }).status = 409;
       throw err;
     }
-
     return PostRepository.createDailyPost(
       classId,
       userId,
@@ -45,7 +40,6 @@ export class PostService {
       caption,
     );
   }
-
   static async getTodayFeed(
     classId: string,
     userId: string,
@@ -66,7 +60,6 @@ export class PostService {
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-
     const todayDate = new Date().toISOString().slice(0, 10);
     const userTodayPost = await PostRepository.findUserPostForDate(
       classId,
@@ -74,14 +67,10 @@ export class PostService {
       todayDate,
     );
     const userPostedToday = Boolean(userTodayPost);
-
     const rawPosts = await PostRepository.getClassPostsForDate(
       classId,
       todayDate,
     );
-
-    // Format posts with signed URLs and reaction aggregation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatted = await Promise.all(
       rawPosts.map(async (post: any) => {
         let photoUrl: string | undefined;
@@ -93,11 +82,9 @@ export class PostService {
         } catch {
           photoUrl = post.photo_path;
         }
-
         const reactions = (post.reactions || []) as ReactionEntity[];
         const reactionsMap: Record<string, number> = {};
         let userReaction: string | null = null;
-
         for (const r of reactions) {
           reactionsMap[r.reaction_type] =
             (reactionsMap[r.reaction_type] || 0) + 1;
@@ -105,11 +92,9 @@ export class PostService {
             userReaction = r.reaction_type;
           }
         }
-
         const authorProfile = post.profiles;
         const authorName =
           authorProfile?.display_name || authorProfile?.username || "Classmate";
-
         return {
           ...post,
           photoUrl,
@@ -119,13 +104,11 @@ export class PostService {
         };
       }),
     );
-
     return {
       userPostedToday,
       posts: formatted,
     };
   }
-
   static async updateCaption(
     postId: string,
     userId: string,
@@ -137,16 +120,13 @@ export class PostService {
       (err as unknown as { status: number }).status = 404;
       throw err;
     }
-
     if (post.user_id !== userId) {
       const err = new Error("Only the author can edit this post.");
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-
     return PostRepository.updateCaption(postId, caption);
   }
-
   static async deletePost(postId: string, userId: string): Promise<void> {
     const post = await PostRepository.findById(postId);
     if (!post) {
@@ -154,7 +134,6 @@ export class PostService {
       (err as unknown as { status: number }).status = 404;
       throw err;
     }
-
     if (post.user_id !== userId) {
       const isMember = await ClassRepository.isMember(post.class_id, userId);
       if (!isMember) {
@@ -163,10 +142,8 @@ export class PostService {
         throw err;
       }
     }
-
     await PostRepository.softDelete(postId);
   }
-
   static async toggleReaction(
     postId: string,
     userId: string,
@@ -178,14 +155,12 @@ export class PostService {
       (err as unknown as { status: number }).status = 404;
       throw err;
     }
-
     const isMember = await ClassRepository.isMember(post.class_id, userId);
     if (!isMember) {
       const err = new Error("You must be a member of the class to react.");
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-
     return PostRepository.toggleReaction(postId, userId, reactionType);
   }
 }
