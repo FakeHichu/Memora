@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { radius, spacing, typography } from '@/constants/theme';
@@ -12,7 +11,6 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
-
 export default function CreateClassScreen() {
   const { colors: themeColors } = useAppTheme();
   const styles = createStyles(themeColors);
@@ -23,21 +21,17 @@ export default function CreateClassScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const handleCreate = async () => {
     if (!supabase) {
       setErrorMessage('Configure Supabase in frontend/.env before creating a class.');
       return;
     }
-
     if (!name.trim()) {
       setErrorMessage('Class name is required.');
       return;
     }
-
     setIsSubmitting(true);
     setErrorMessage(null);
-
     try {
       const { data, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !data.session) {
@@ -45,8 +39,7 @@ export default function CreateClassScreen() {
         setIsSubmitting(false);
         return;
       }
-
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http:
       const response = await fetch(`${backendUrl}/api/classes`, {
         method: 'POST',
         headers: {
@@ -59,14 +52,10 @@ export default function CreateClassScreen() {
           academicYear: Number(year),
         }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.message ?? 'Could not create class.');
       }
-
-      // Success! Store join code and show success UI
       setJoinCode(result.class.join_code);
       setShowSuccess(true);
     } catch (error) {
@@ -75,11 +64,9 @@ export default function CreateClassScreen() {
       setIsSubmitting(false);
     }
   };
-
   const handleCopyCode = () => {
     if (joinCode) {
       if (Platform.OS === 'web') {
-        // Web: Use navigator clipboard API
         try {
           navigator.clipboard.writeText(joinCode);
           Alert.alert('Copied!', 'Join code copied to clipboard.');
@@ -87,18 +74,15 @@ export default function CreateClassScreen() {
           Alert.alert('Error', 'Could not copy to clipboard.');
         }
       } else {
-        // Native: Use expo-clipboard
         setStringAsync(joinCode).then(() => {
           Alert.alert('Copied!', 'Join code copied to clipboard.');
         });
       }
     }
   };
-
   const handleGoHome = () => {
     router.replace('/(tabs)/home');
   };
-
   if (showSuccess && joinCode) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -112,7 +96,6 @@ export default function CreateClassScreen() {
             <Text style={styles.successMessage}>
               Share this join code with your classmates so they can join.
             </Text>
-
             <View style={styles.joinCodeCard}>
               <Text style={styles.joinCodeLabel}>Join Code</Text>
               <Text style={styles.joinCodeValue}>{joinCode}</Text>
@@ -121,7 +104,6 @@ export default function CreateClassScreen() {
                 <Text style={styles.copyButtonText}>Copy Code</Text>
               </Pressable>
             </View>
-
             <Button
               title="Go to Home"
               variant="accent"
@@ -129,7 +111,6 @@ export default function CreateClassScreen() {
               fullWidth
               style={styles.homeButton}
             />
-
             <Pressable onPress={() => router.push('/(onboarding)/join-class')} style={styles.joinLink}>
               <Text style={styles.joinLinkText}>Need to join a class instead?</Text>
             </Pressable>
@@ -138,7 +119,6 @@ export default function CreateClassScreen() {
       </SafeAreaView>
     );
   }
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -148,7 +128,6 @@ export default function CreateClassScreen() {
         <Text style={styles.description}>
           Create a secure space for your class to share memories together.
         </Text>
-
         <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class Name *</Text>
           <TextInput
@@ -162,7 +141,6 @@ export default function CreateClassScreen() {
             placeholderTextColor={themeColors.textMuted}
             editable={!isSubmitting}
           />
-
           <Text style={styles.fieldLabel}>School / Institution</Text>
           <TextInput
             value={school}
@@ -172,7 +150,6 @@ export default function CreateClassScreen() {
             placeholderTextColor={themeColors.textMuted}
             editable={!isSubmitting}
           />
-
           <Text style={styles.fieldLabel}>Academic Year</Text>
           <TextInput
             value={year}
@@ -184,13 +161,11 @@ export default function CreateClassScreen() {
             editable={!isSubmitting}
             maxLength={4}
           />
-
           {errorMessage && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorMessage}>{errorMessage}</Text>
             </View>
           )}
-
           <Button
             title={isSubmitting ? 'Creating...' : 'Create Class'}
             onPress={handleCreate}
@@ -199,7 +174,6 @@ export default function CreateClassScreen() {
             disabled={isSubmitting || !name.trim()}
           />
         </Card>
-
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>Want to join instead?</Text>
           <Pressable
@@ -213,7 +187,6 @@ export default function CreateClassScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: {

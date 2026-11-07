@@ -1,5 +1,3 @@
-// Memora Design System - Dual Theme (Midnight Dark & Warm Minimalist Light)
-
 export const catppuccin = {
   rosewater: '#f5e0dc',
   flamingo: '#f2cdcd',
@@ -28,55 +26,45 @@ export const catppuccin = {
   mantle: '#181825',
   crust: '#11111b',
 };
-
-// Light theme palette (Warm Minimalist Light) - VERIFIED EXACT SPEC
 export const lightColors = {
-  // Backgrounds - VERIFIED EXACT SPEC
-  background: '#F7F2E9', // Warm linen background ✓
+  background: '#F7F2E9',
   backgroundSecondary: '#EFE7DA',
   backgroundTertiary: '#E4DAC8',
-  backgroundElevated: '#FFFDF8', // Card surfaces ✓
-  card: '#FFFDF8', // Card surfaces ✓
-
-  // Surfaces - VERIFIED EXACT SPEC
-  surface: '#FFFDF8', // Card surfaces ✓
+  backgroundElevated: '#FFFDF8',
+  card: '#FFFDF8',
+  surface: '#FFFDF8',
   surfaceElevated: '#FFFDF8',
-  surfaceOverlay: '#E9DFF3', // Secondary surfaces ✓
+  surfaceOverlay: '#E9DFF3',
   surfaceWarm: '#F7F2E9',
-  surfaceSecondary: '#E9DFF3', // Secondary surfaces ✓
+  surfaceSecondary: '#E9DFF3',
   surfaceFloating: 'rgba(255, 253, 248, 0.95)',
   surfaceModal: 'rgba(255, 253, 248, 0.98)',
   surfaceNavigation: 'rgba(48, 36, 61, 0.92)',
   glass: 'rgba(255, 253, 248, 0.85)',
   glassStrong: 'rgba(255, 253, 248, 0.96)',
   secondary: '#E9DFF3',
-
-  // Accent / Chrome - VERIFIED EXACT SPEC
-  chromeDark: '#75677E', // Secondary text ✓
+  chromeDark: '#75677E',
   chromeDim: '#9D8EA8',
-  chrome: '#80658F', // Primary accent ✓
+  chrome: '#80658F',
   chromeHighlight: '#684E77',
   chromeGlow: 'rgba(128, 101, 143, 0.18)',
   primaryDark: '#5E446D',
   onPrimary: '#FFFFFF',
   neon: '#80658F',
-
-  // Semantic color names - VERIFIED EXACT SPEC
-  primary: '#80658F', // Primary accent ✓
+  primary: '#80658F',
   primaryLight: '#9E84AD',
   primarySoft: '#E9DFF3',
   primaryUltraSoft: '#F6F0FA',
-  accent: '#80658F', // Primary accent ✓
+  accent: '#80658F',
   accentLight: '#9E84AD',
   accentLavender: '#C3A6F2',
   accentSoft: 'rgba(128, 101, 143, 0.12)',
-  highlight: '#E6B957', // Highlight ✓
-  accentOptional1: '#E9C9C5', // Optional accent 1
-  accentOptional2: '#C8D3BF', // Optional accent 2
-
-  text: '#30243D', // Primary text ✓
-  textPrimary: '#30243D', // Primary text ✓
-  textSecondary: '#75677E', // Secondary text ✓
+  highlight: '#E6B957',
+  accentOptional1: '#E9C9C5',
+  accentOptional2: '#C8D3BF',
+  text: '#30243D',
+  textPrimary: '#30243D',
+  textSecondary: '#75677E',
   textTertiary: '#9E92A6',
   textMuted: '#9E92A6',
   muted: '#75677E',
@@ -95,8 +83,6 @@ export const lightColors = {
   overlay: 'rgba(48, 36, 61, 0.6)',
   overlayLight: 'rgba(48, 36, 61, 0.3)',
   overlayStrong: 'rgba(48, 36, 61, 0.85)',
-
-  // Status
   success: '#5A9468',
   successSoft: '#EBF4ED',
   warning: '#E6B957',
@@ -104,8 +90,6 @@ export const lightColors = {
   error: '#C85252',
   errorSoft: '#FBEBEB',
   errorBackground: '#FBEBEB',
-
-  // Additional
   accentDeep: '#5E446D',
   accentSoftGlow: '#9E84AD',
   accentGlow: 'rgba(128, 101, 143, 0.22)',
@@ -116,25 +100,16 @@ export const lightColors = {
   accentSubtle: 'rgba(128, 101, 143, 0.12)',
   patternTint: 'rgba(128, 101, 143, 0.04)',
   patternTintCool: 'rgba(128, 101, 143, 0.03)',
-
-  // Catppuccin palette visual elements
   ...catppuccin,
 };
-
-// Default export aliases to lightColors for backwards compatibility
 export const colors = lightColors;
-
-// Dark theme palette (Midnight & Deep Purple with Catppuccin visual elements)
 export const darkColors = {
-  // Backgrounds - VERIFIED EXACT SPEC
-  background: '#0B0813', // Midnight background ✓
+  background: '#0B0813',
   backgroundSecondary: '#151022',
   backgroundTertiary: '#1C152D',
-  backgroundElevated: '#211633', // Deep purple ✓
-  card: '#211633', // Deep purple ✓
-
-  // Surfaces
-  surface: '#211633', // Deep purple ✓
+  backgroundElevated: '#211633',
+  card: '#211633',
+  surface: '#211633',
   surfaceElevated: '#2C1D44',
   surfaceOverlay: '#382556',
   surfaceWarm: '#211633',
@@ -145,33 +120,28 @@ export const darkColors = {
   glass: 'rgba(33, 22, 51, 0.82)',
   glassStrong: 'rgba(33, 22, 51, 0.95)',
   secondary: '#2C1D44',
-
-  // Accent / Chrome - VERIFIED EXACT SPEC
   chromeDark: '#4A336E',
   chromeDim: '#704B9F',
-  chrome: '#8052C8', // Purple accent ✓
-  chromeHighlight: '#C3A6F2', // Lavender ✓
+  chrome: '#8052C8',
+  chromeHighlight: '#C3A6F2',
   chromeGlow: 'rgba(128, 82, 200, 0.25)',
   primaryDark: '#5E389B',
   onPrimary: '#0B0813',
   neon: '#C3A6F2',
-
-  // Semantic color names - VERIFIED EXACT SPEC
-  primary: '#8052C8', // Purple accent ✓
+  primary: '#8052C8',
   primaryLight: '#9E72DF',
-  primarySoft: '#C3A6F2', // Lavender ✓
+  primarySoft: '#C3A6F2',
   primaryUltraSoft: '#E6D9FC',
-  accent: '#8052C8', // Purple accent ✓
-  accentLight: '#C3A6F2', // Lavender ✓
-  accentLavender: '#C3A6F2', // Lavender ✓
+  accent: '#8052C8',
+  accentLight: '#C3A6F2',
+  accentLavender: '#C3A6F2',
   accentSoft: 'rgba(128, 82, 200, 0.16)',
-  highlight: '#FFC857', // Warm yellow ✓
+  highlight: '#FFC857',
   accentOptional1: '#E9C9C5',
   accentOptional2: '#C8D3BF',
-
-  text: '#F6F0FF', // Primary text ✓
-  textPrimary: '#F6F0FF', // Primary text ✓
-  textSecondary: '#A99BB9', // Secondary text ✓
+  text: '#F6F0FF',
+  textPrimary: '#F6F0FF',
+  textSecondary: '#A99BB9',
   textTertiary: '#867697',
   textMuted: '#736483',
   muted: '#A99BB9',
@@ -190,8 +160,6 @@ export const darkColors = {
   overlay: 'rgba(11, 8, 19, 0.82)',
   overlayLight: 'rgba(11, 8, 19, 0.45)',
   overlayStrong: 'rgba(11, 8, 19, 0.96)',
-
-  // Status
   success: '#a6e3a1',
   successSoft: '#1e3828',
   warning: '#FFC857',
@@ -199,8 +167,6 @@ export const darkColors = {
   error: '#f38ba8',
   errorSoft: '#441824',
   errorBackground: '#441824',
-
-  // Additional
   accentDeep: '#532D8A',
   accentSoftGlow: '#C3A6F2',
   accentGlow: 'rgba(128, 82, 200, 0.35)',
@@ -211,19 +177,14 @@ export const darkColors = {
   accentSubtle: 'rgba(128, 82, 200, 0.18)',
   patternTint: 'rgba(195, 166, 242, 0.04)',
   patternTintCool: 'rgba(128, 82, 200, 0.03)',
-
-  // Catppuccin palette visual elements
   ...catppuccin,
 };
-
 export type ThemeColors = typeof darkColors;
 export type ThemeMode = 'dark' | 'light';
-
 export const themePalettes: Record<ThemeMode, ThemeColors> = {
   dark: darkColors,
   light: lightColors,
 };
-
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -235,7 +196,6 @@ export const spacing = {
   huge: 48,
   massive: 64,
 };
-
 export const radius = {
   xs: 6,
   sm: 10,
@@ -246,14 +206,12 @@ export const radius = {
   round: 999,
   circle: 9999,
 };
-
 export const borders = {
   hairline: 0.5,
   thin: 1,
   medium: 1.5,
   thick: 2,
 };
-
 export const shadows = {
   none: {
     shadowColor: 'transparent',
@@ -297,7 +255,6 @@ export const shadows = {
     shadowRadius: 24,
     elevation: 8,
   },
-  // Chrome-specific shadows
   chrome: {
     shadowColor: colors.chromeGlow,
     shadowOffset: { width: 0, height: 2 },
@@ -334,8 +291,6 @@ export const shadows = {
     elevation: 0,
   },
 };
-
-// Web-compatible shadow styles (light theme)
 export const webShadows = {
   none: { boxShadow: 'none' },
   xs: { boxShadow: '0 1px 3px rgba(23, 25, 29, 0.08)' },
@@ -352,7 +307,6 @@ export const webShadows = {
     boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(23, 25, 29, 0.08)',
   },
 };
-
 export const blur = {
   none: 0,
   light: 10,
@@ -360,7 +314,6 @@ export const blur = {
   heavy: 40,
   chrome: 30,
 };
-
 export const opacity = {
   disabled: 0.4,
   pressed: 0.85,
@@ -371,10 +324,6 @@ export const opacity = {
   chromeReflection: 0.1,
   chromeHighlight: 0.15,
 };
-
-// Component style presets — single source of truth for reusable components.
-// Screens and composed components should consume these (or the tokens above)
-// instead of hardcoding style values. To restyle the whole app, change tokens here.
 export const componentStyles = {
   card: {
     resting: {
@@ -456,10 +405,7 @@ export const componentStyles = {
     },
   },
 };
-
-// Typography - iOS-style sans + editorial serif + technical mono
 export const typography = {
-  // Sans-serif (System) - for UI, navigation, controls, buttons, metadata, labels
   sans: {
     display: {
       fontFamily: 'System',
@@ -548,8 +494,6 @@ export const typography = {
       textTransform: 'uppercase' as const,
     },
   },
-
-  // Serif (Georgia) - for emotional content: major headings, memory titles, dates
   serif: {
     display: {
       fontFamily: 'Georgia',
@@ -604,8 +548,6 @@ export const typography = {
       lineHeight: 18,
     },
   },
-
-  // Serif Italic - for quotes, captions, emotional text
   serifItalic: {
     title: {
       fontFamily: 'Georgia',
@@ -637,8 +579,6 @@ export const typography = {
       fontStyle: 'italic' as const,
     },
   },
-
-  // Monospace - for technical: memory IDs, timestamps, camera metadata
   mono: {
     title: {
       fontFamily: 'Menlo',
@@ -670,8 +610,6 @@ export const typography = {
       textTransform: 'uppercase' as const,
     },
   },
-
-  // Legacy flat structure (for backward compatibility)
   display: {
     fontFamily: 'System',
     fontSize: 36,
@@ -763,7 +701,6 @@ export const typography = {
     letterSpacing: 0.3,
   },
 };
-
 export const layout = {
   screenPadding: spacing.lg,
   screenPaddingHorizontal: spacing.lg,
@@ -773,14 +710,12 @@ export const layout = {
   headerHeight: 56,
   safeAreaTop: 44,
   safeAreaBottom: 34,
-  // Responsive photo grid columns per breakpoint (favorites / related photos)
   photoGridColumns: {
     phone: 2,
     tablet: 3,
     desktop: 3,
   },
 };
-
 export const animation = {
   fast: 120,
   normal: 220,
@@ -794,14 +729,11 @@ export const animation = {
     stiffness: 140,
   },
 };
-
 export const breakpoints = {
   phone: 0,
   tablet: 768,
   desktop: 1024,
 };
-
-// Background pattern configuration
 export const backgroundPattern = {
   symbols: ['star', 'sparkle', 'cross', 'heart', 'diamond', 'moon'],
   defaultOpacity: 0.03,
@@ -809,7 +741,6 @@ export const backgroundPattern = {
   defaultScale: 1,
   defaultRotation: 0,
 };
-
 export const effects = {
   chromeBorder: {
     borderWidth: borders.hairline,
@@ -851,8 +782,6 @@ export const effects = {
     elevation: 0,
   },
 };
-
-// Component variant configurations
 export const variants = {
   memoryCard: {
     editorial: { aspectRatio: 4 / 5, imageRadius: radius.xl, padding: spacing.lg, gap: spacing.md },

@@ -2,34 +2,26 @@ import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { useClass } from '@/hooks/useClass';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
-
 export default function ClassScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
   const styles = createStyles(colors);
   const { classes, activeClass, isLoading, error, refreshClasses, selectClass } = useClass();
-
   useEffect(() => {
     refreshClasses();
   }, [refreshClasses]);
-
   const handleCreateClass = async () => {
-    // Navigate to create class screen
     router.push('/(onboarding)/create-class');
   };
-
   const handleJoinClass = async () => {
-    // Navigate to join class screen
     router.push('/(onboarding)/join-class');
   };
-
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -44,7 +36,6 @@ export default function ClassScreen() {
       </SafeAreaView>
     );
   }
-
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -55,7 +46,6 @@ export default function ClassScreen() {
       </SafeAreaView>
     );
   }
-
   if (classes.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -81,13 +71,11 @@ export default function ClassScreen() {
       </SafeAreaView>
     );
   }
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>My Classes</Text>
-
         {/* Create Class Button */}
         <View style={styles.actionRow}>
           <Pressable
@@ -117,7 +105,6 @@ export default function ClassScreen() {
             </View>
           </Pressable>
         </View>
-
         {/* Classes List */}
         <View style={styles.classesList}>
           {classes.map((classRecord) => (
@@ -144,7 +131,6 @@ export default function ClassScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: {

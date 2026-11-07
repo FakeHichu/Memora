@@ -2,7 +2,6 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { Button } from './Button';
-
 type ConfirmDialogProps = {
   visible: boolean;
   title: string;
@@ -13,7 +12,6 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
   onCancel: () => void;
 };
-
 export function ConfirmDialog({
   visible,
   title,
@@ -36,7 +34,6 @@ export function ConfirmDialog({
         <View style={styles.dialog}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-
           <View style={styles.actions}>
             <Button
               title={cancelLabel}
@@ -56,7 +53,6 @@ export function ConfirmDialog({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

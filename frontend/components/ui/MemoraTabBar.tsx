@@ -2,17 +2,14 @@ import type { BottomTabBarProps } from 'expo-router/build/react-navigation/botto
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon, type JamIconName } from './Icons';
-
 type TabConfig = {
   routeName: string;
   label: string;
   iconName: JamIconName;
 };
-
 const MAIN_TABS: TabConfig[] = [
   { routeName: 'home', label: 'Home', iconName: 'home' },
   { routeName: 'memories', label: 'Memories', iconName: 'picture' },
@@ -20,19 +17,14 @@ const MAIN_TABS: TabConfig[] = [
   { routeName: 'circle', label: 'Circle', iconName: 'users' },
   { routeName: 'profile', label: 'Profile', iconName: 'user' },
 ];
-
 export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors, mode } = useAppTheme();
   const insets = useSafeAreaInsets();
   const styles = createStyles(colors, mode);
-
-  // Calculate perfect bottom position with safe area
-  const bottomPosition = Platform.OS === 'ios' 
-    ? Math.max(insets.bottom - 8, 16) 
+  const bottomPosition = Platform.OS === 'ios'
+    ? Math.max(insets.bottom - 8, 16)
     : Math.max(insets.bottom, 20);
-
   const isCreateTab = (routeName: string) => routeName === 'create';
-
   return (
     <View
       pointerEvents="box-none"
@@ -47,24 +39,19 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
         {MAIN_TABS.map((tab, index) => {
           const routeIndex = state.routes.findIndex((r) => r.name === tab.routeName);
           if (routeIndex === -1) return null;
-
           const route = state.routes[routeIndex];
           const isFocused = state.index === routeIndex;
           const isCreate = isCreateTab(tab.routeName);
-
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
-
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
             }
           };
-
-          // Render center create button differently - fixed position, no animations
           if (isCreate) {
             return (
               <Pressable
@@ -86,7 +73,6 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
               </Pressable>
             );
           }
-
           return (
             <Pressable
               key={tab.routeName}
@@ -121,10 +107,8 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
     </View>
   );
 }
-
 function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     wrapper: {
       position: 'absolute',
@@ -172,13 +156,13 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       paddingVertical: 4,
       borderRadius: 999,
       transitionDuration: '200ms',
-      minWidth: 48, // Fixed minimum width to prevent layout shifts
+      minWidth: 48,
     } as any,
     tabButtonActive: {
       paddingHorizontal: 12,
       paddingVertical: 4,
       backgroundColor: isDark ? colors.surface : colors.surfaceOverlay,
-      minWidth: 110, // Fixed width for active state with label
+      minWidth: 110,
     },
     tabButtonPressed: {
       opacity: 0.7,
@@ -219,10 +203,9 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       letterSpacing: -0.2,
       marginRight: 4,
     },
-    // Create button styles - fixed, no press animations
     createButton: {
       marginHorizontal: 4,
-      width: 64, // Fixed width to maintain position
+      width: 64,
       alignItems: 'center',
       justifyContent: 'center',
     },

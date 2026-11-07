@@ -1,7 +1,5 @@
 import React from 'react';
 import { ViewStyle, TextStyle } from 'react-native';
-
-// Import all icon SVGs
 import HomeIcon from '@/assets/icons/home.svg';
 import CalendarIcon from '@/assets/icons/calendar.svg';
 import UsersIcon from '@/assets/icons/users.svg';
@@ -31,7 +29,6 @@ import StarIcon from '@/assets/icons/star.svg';
 import BookmarkIcon from '@/assets/icons/bookmark.svg';
 import TagIcon from '@/assets/icons/tag.svg';
 import MapMarkerIcon from '@/assets/icons/map-marker.svg';
-
 export type JamIconName =
   | 'home'
   | 'calendar'
@@ -62,7 +59,6 @@ export type JamIconName =
   | 'bookmark'
   | 'tag'
   | 'map-marker';
-
 type IconComponentProps = {
   color?: string;
   size?: number;
@@ -72,7 +68,6 @@ type IconComponentProps = {
   style?: ViewStyle | TextStyle;
   opacity?: number;
 };
-
 const iconMap: Record<JamIconName, React.ComponentType<IconComponentProps>> = {
   home: HomeIcon as React.ComponentType<IconComponentProps>,
   calendar: CalendarIcon as React.ComponentType<IconComponentProps>,
@@ -104,7 +99,6 @@ const iconMap: Record<JamIconName, React.ComponentType<IconComponentProps>> = {
   tag: TagIcon as React.ComponentType<IconComponentProps>,
   'map-marker': MapMarkerIcon as React.ComponentType<IconComponentProps>,
 };
-
 export type IconProps = {
   name: JamIconName;
   size?: number;
@@ -113,14 +107,12 @@ export type IconProps = {
   fill?: string;
   opacity?: number;
 };
-
 export function Icon({ name, size = 24, color, style, fill, opacity }: IconProps) {
   const IconComponent = iconMap[name];
   if (!IconComponent) {
     console.warn(`Icon "${name}" not found`);
     return null;
   }
-
   return (
     <IconComponent
       width={size}
@@ -131,8 +123,6 @@ export function Icon({ name, size = 24, color, style, fill, opacity }: IconProps
     />
   );
 }
-
-// Convenience component for tab bar icons with focused state
 export type TabIconProps = {
   name: JamIconName;
   focused?: boolean;
@@ -141,7 +131,6 @@ export type TabIconProps = {
   inactiveColor?: string;
   style?: ViewStyle;
 };
-
 export function TabIcon({ name, focused = false, size = 22, activeColor, inactiveColor, style }: TabIconProps) {
   return (
     <Icon

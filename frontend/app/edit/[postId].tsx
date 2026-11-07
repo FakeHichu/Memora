@@ -4,16 +4,13 @@ import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { radius, spacing, typography, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { getLocalPhotoPost, updateLocalPhotoPost, type LocalPhotoPost, type MemoryCategory } from '@/lib/photo-draft';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-
 const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
-
 export default function EditMemoryScreen() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const { colors } = useAppTheme();
@@ -27,7 +24,6 @@ export default function EditMemoryScreen() {
   const [newTag, setNewTag] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const loadPost = useCallback(() => {
     let isActive = true;
     getLocalPhotoPost(postId as string).then((savedPost) => {
@@ -45,20 +41,16 @@ export default function EditMemoryScreen() {
       isActive = false;
     };
   }, [postId]);
-
   useFocusEffect(loadPost);
-
   const handleAddTag = () => {
     const normalized = newTag.toLowerCase().trim();
     if (!normalized || tags.includes(normalized) || tags.length >= 10) return;
     setTags((prev) => [...prev, normalized]);
     setNewTag('');
   };
-
   const handleRemoveTag = (tag: string) => {
     setTags((prev) => prev.filter((t) => t !== tag));
   };
-
   const handleSave = async () => {
     if (!post) return;
     setIsSaving(true);
@@ -77,7 +69,6 @@ export default function EditMemoryScreen() {
       setIsSaving(false);
     }
   };
-
   if (!post) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -88,7 +79,6 @@ export default function EditMemoryScreen() {
       </SafeAreaView>
     );
   }
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -109,11 +99,9 @@ export default function EditMemoryScreen() {
             <Text style={styles.screenTitle}>Edit Memory</Text>
             <View style={styles.backButton} />
           </View>
-
           {post.uri ? (
             <Image source={{ uri: post.uri }} style={styles.photo} resizeMode="cover" />
           ) : null}
-
           <Card style={styles.detailsCard} padding="lg">
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Title</Text>
@@ -129,7 +117,6 @@ export default function EditMemoryScreen() {
                 accessibilityLabel="Memory title"
               />
             </View>
-
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Caption</Text>
               <TextInput
@@ -144,7 +131,6 @@ export default function EditMemoryScreen() {
                 accessibilityLabel="Memory caption"
               />
             </View>
-
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Category</Text>
               <View style={styles.categoryPills}>
@@ -169,7 +155,6 @@ export default function EditMemoryScreen() {
                 ))}
               </View>
             </View>
-
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Location (optional)</Text>
               <TextInput
@@ -184,7 +169,6 @@ export default function EditMemoryScreen() {
                 accessibilityLabel="Memory location"
               />
             </View>
-
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Tags (optional)</Text>
               {tags.length > 0 && (
@@ -228,9 +212,7 @@ export default function EditMemoryScreen() {
               <Text style={styles.tagHint}>{tags.length}/10 tags</Text>
             </View>
           </Card>
-
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
-
           <View style={styles.actionButtons}>
             <Button
               title={isSaving ? 'Saving…' : 'Save Changes'}
@@ -246,7 +228,6 @@ export default function EditMemoryScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     safeArea: {

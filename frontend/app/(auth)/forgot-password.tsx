@@ -11,23 +11,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { resetPasswordForEmail } from '@/lib/supabase/auth';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export default function ForgotPasswordScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
-
   const validateEmail = (val: string): boolean => {
     const trimmed = val.trim();
     if (!trimmed) {
@@ -42,24 +38,18 @@ export default function ForgotPasswordScreen() {
     setEmailError(null);
     return true;
   };
-
   const sendResetLink = async () => {
     setMessage(null);
     setSuccessMessage(null);
-
     if (!validateEmail(email)) return;
-
     setIsSending(true);
-
     try {
       const { error } = await resetPasswordForEmail(email.trim());
-
       if (error) {
         setMessage(error.message);
         setIsSending(false);
         return;
       }
-
       setSuccessMessage('Password reset instructions have been sent to your email.');
       setEmail('');
     } catch (err) {
@@ -68,7 +58,6 @@ export default function ForgotPasswordScreen() {
       setIsSending(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -82,7 +71,6 @@ export default function ForgotPasswordScreen() {
           >
             <Icon name="arrow-left" size={18} color={colors.textPrimary} />
           </Pressable>
-
           {/* Brand Row */}
           <View style={styles.brandRow}>
             <View style={styles.brandMark}>
@@ -93,7 +81,6 @@ export default function ForgotPasswordScreen() {
               <Text style={styles.brandTagline}>Memory Capsule</Text>
             </View>
           </View>
-
           {/* Heading */}
           <View style={styles.headerBlock}>
             <Text style={styles.title}>Forgot password?</Text>
@@ -101,7 +88,6 @@ export default function ForgotPasswordScreen() {
               Enter your email and we'll send you a link to reset your password.
             </Text>
           </View>
-
           {/* Card */}
           <View style={styles.card}>
             <View style={styles.fieldContainer}>
@@ -129,19 +115,16 @@ export default function ForgotPasswordScreen() {
               </View>
               {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
             </View>
-
             {message ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorMessage}>{message}</Text>
               </View>
             ) : null}
-
             {successMessage ? (
               <View style={styles.successContainer}>
                 <Text style={styles.successMessage}>{successMessage}</Text>
               </View>
             ) : null}
-
             <Pressable
               onPress={sendResetLink}
               disabled={isSending || !email.trim()}
@@ -158,7 +141,6 @@ export default function ForgotPasswordScreen() {
               )}
             </Pressable>
           </View>
-
           {/* Back to login */}
           <Link href="/(auth)/login" asChild>
             <Pressable style={styles.backLink}>
@@ -170,10 +152,8 @@ export default function ForgotPasswordScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     safeArea: {
       flex: 1,

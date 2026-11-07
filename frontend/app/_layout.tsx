@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useAppTheme } from '@/providers/ThemeProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CommandPaletteProvider } from '@/components/ui/CommandPalette';
-
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
@@ -20,10 +19,8 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
 function RootNavigator() {
   const { mode, colors: themeColors } = useAppTheme();
-
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />

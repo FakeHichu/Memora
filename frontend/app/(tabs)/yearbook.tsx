@@ -2,20 +2,16 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type Edition = 'Mine' | 'Class';
-
 export default function YearbookScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [edition, setEdition] = useState<Edition>('Mine');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -35,12 +31,10 @@ export default function YearbookScreen() {
       };
     }, []),
   );
-
   const years = Array.from(new Set([new Date().getFullYear(), ...posts.map((post) => new Date(post.createdAt).getFullYear())])).sort((left, right) => right - left);
   const yearPosts = posts.filter((post) => new Date(post.createdAt).getFullYear() === selectedYear);
   const monthKeys = Array.from(new Set(yearPosts.map((post) => new Date(post.createdAt).getMonth()))).sort((left, right) => right - left);
   const coverPhoto = yearPosts[0]?.uri;
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -51,7 +45,6 @@ export default function YearbookScreen() {
           </View>
           <Text style={styles.headerGlyph}>✳</Text>
         </View>
-
         <View style={styles.editionTabs}>
           {(['Mine', 'Class'] as const).map((item) => (
             <Pressable key={item} onPress={() => setEdition(item)} style={[styles.editionTab, edition === item && styles.editionTabActive]} accessibilityRole="button" accessibilityState={{ selected: edition === item }} accessibilityLabel={`${item} yearbook`}>
@@ -59,7 +52,6 @@ export default function YearbookScreen() {
             </Pressable>
           ))}
         </View>
-
         {edition === 'Mine' ? (
           <>
             <View style={styles.cover}>
@@ -75,7 +67,6 @@ export default function YearbookScreen() {
                 <Text style={styles.coverCaption}>{yearPosts.length ? 'The moments you chose to keep.' : 'Waiting for your first moment.'}</Text>
               </View>
             </View>
-
             <View style={styles.statsRow}>
               <YearbookStat value={`${yearPosts.length}`} label="MEMORIES" />
               <View style={styles.statDivider} />
@@ -83,7 +74,6 @@ export default function YearbookScreen() {
               <View style={styles.statDivider} />
               <YearbookStat value="PRIVATE" label="SAVED ON DEVICE" />
             </View>
-
             {years.length > 1 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yearRail}>
                 {years.map((year) => (
@@ -93,7 +83,6 @@ export default function YearbookScreen() {
                 ))}
               </ScrollView>
             ) : null}
-
             {monthKeys.length ? monthKeys.map((month) => {
               const monthPosts = yearPosts.filter((post) => new Date(post.createdAt).getMonth() === month);
               const monthTitle = new Date(selectedYear, month).toLocaleDateString(undefined, { month: 'long' });
@@ -137,7 +126,6 @@ export default function YearbookScreen() {
             </Pressable>
           </View>
         )}
-
         <View style={styles.footerNote}>
           <Text style={styles.footerGlyph}>⌑</Text>
           <Text style={styles.footerText}>Your yearbook grows from memories you choose to keep.</Text>
@@ -146,11 +134,9 @@ export default function YearbookScreen() {
     </SafeAreaView>
   );
 }
-
 function YearbookStat({ value, label }: { value: string; label: string }) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   return (
     <View style={styles.stat}>
       <Text style={styles.statValue}>{value}</Text>
@@ -158,7 +144,6 @@ function YearbookStat({ value, label }: { value: string; label: string }) {
     </View>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },

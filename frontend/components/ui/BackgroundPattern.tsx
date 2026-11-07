@@ -2,8 +2,6 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle, Text, Platform } from 'react-native';
 import { backgroundPattern } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
-// Symbol mapping from string codes to actual characters
 const SYMBOL_MAP: Record<string, string> = {
   star: '★',
   sparkle: '✦',
@@ -15,7 +13,6 @@ const SYMBOL_MAP: Record<string, string> = {
   circle: '○',
   dot: '•',
 };
-
 type BackgroundPatternProps = {
   style?: ViewStyle;
   enabled?: boolean;
@@ -24,7 +21,6 @@ type BackgroundPatternProps = {
   scale?: number;
   accentIntensity?: number;
 };
-
 export function BackgroundPattern({
   style,
   enabled = true,
@@ -34,10 +30,7 @@ export function BackgroundPattern({
   accentIntensity = 0,
 }: BackgroundPatternProps) {
   const { colors } = useAppTheme();
-
   const styles = createStyles(colors);
-
-  // Generate a deterministic but varied pattern
   const patternElements = React.useMemo(() => {
     if (!enabled) return [];
     const symbols = backgroundPattern.symbols.map((s) => SYMBOL_MAP[s] || s);
@@ -51,43 +44,30 @@ export function BackgroundPattern({
       opacity: number;
       color: string;
     }[] = [];
-
-    const gridSize = 80 / density; // Base grid spacing - more sparse
+    const gridSize = 80 / density;
     const cols = Math.ceil(440 / gridSize);
     const rows = Math.ceil(900 / gridSize);
-
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
-        // Deterministic pseudo-random based on position
         const seed = row * 1000 + col;
         const rand = (n: number) => {
           const x = Math.sin(n) * 10000;
           return x - Math.floor(x);
         };
-
-        // Skip some positions for organic feel - more restraint
         if (rand(seed * 1.7) > density) continue;
-
-        // Position with jitter
         const x = col * gridSize + (rand(seed * 2.3) - 0.5) * gridSize * 0.5;
         const y = row * gridSize + (rand(seed * 3.1) - 0.5) * gridSize * 0.5;
-
-        // Skip center area (content zone) - roughly middle 65%
         const centerX = 220;
         const centerY = 450;
         const distFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
         if (distFromCenter < 200) continue;
-
         const symbolIndex = Math.floor(rand(seed * 4.7) * symbols.length);
-        const rotation = (rand(seed * 5.3) - 0.5) * 20 * scale; // Less rotation
+        const rotation = (rand(seed * 5.3) - 0.5) * 20 * scale;
         const baseSize = 10 + rand(seed * 6.1) * 12;
         const size = baseSize * scale;
         const baseOpacity = opacity * (0.4 + rand(seed * 7.1) * 0.4);
-
-        // Occasionally use accent color (very rare)
         const useAccent = accentIntensity > 0 && rand(seed * 8.3) < accentIntensity * 0.08;
         const color = useAccent ? colors.accentSoft : colors.chrome;
-
         elements.push({
           id: `${row}-${col}`,
           symbol: symbols[symbolIndex],
@@ -100,12 +80,9 @@ export function BackgroundPattern({
         });
       }
     }
-
     return elements;
   }, [enabled, density, opacity, scale, accentIntensity, colors]);
-
   if (!enabled || patternElements.length === 0) return null;
-
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.containerWeb, style]} pointerEvents="none">
@@ -130,7 +107,6 @@ export function BackgroundPattern({
       </View>
     );
   }
-
   return (
     <View style={[styles.container, style]} pointerEvents="none">
       {patternElements.map((el) => (
@@ -154,7 +130,6 @@ export function BackgroundPattern({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {

@@ -20,11 +20,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export type PaletteCommand = {
   id: string;
   label: string;
@@ -34,27 +29,16 @@ export type PaletteCommand = {
   icon?: string;
   onExecute: () => void;
 };
-
 type CommandPaletteContextValue = {
   open: () => void;
   close: () => void;
   isOpen: boolean;
 };
-
-// ============================================================================
-// CONTEXT
-// ============================================================================
-
 const CommandPaletteContext = createContext<CommandPaletteContextValue>({
   open: () => {},
   close: () => {},
   isOpen: false,
 });
-
-// ============================================================================
-// DEFAULT COMMANDS
-// ============================================================================
-
 function getDefaultCommands(): PaletteCommand[] {
   return [
     {
@@ -134,32 +118,21 @@ function getDefaultCommands(): PaletteCommand[] {
     },
   ];
 }
-
-// ============================================================================
-// PROVIDER
-// ============================================================================
-
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
-
-  // Web keyboard shortcut: Cmd/Ctrl + K
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
         setIsOpen((prev) => !prev);
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
   return (
     <CommandPaletteContext.Provider value={{ open, close, isOpen }}>
       {children}
@@ -167,24 +140,13 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     </CommandPaletteContext.Provider>
   );
 }
-
-// ============================================================================
-// HOOK
-// ============================================================================
-
 export function useCommandPalette() {
   return useContext(CommandPaletteContext);
 }
-
-// ============================================================================
-// MODAL
-// ============================================================================
-
 function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<TextInput>(null);
   const commands = getDefaultCommands();
-
   const filteredCommands =
     query.trim() === ''
       ? commands
@@ -194,7 +156,6 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             c.description?.toLowerCase().includes(query.toLowerCase()) ||
             c.category?.toLowerCase().includes(query.toLowerCase()),
         );
-
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
@@ -207,24 +168,19 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     }
     return undefined;
   }, [isOpen]);
-
   const handleExecute = (command: PaletteCommand) => {
     onClose();
     command.onExecute();
   };
-
-  // Group by category
   const groups: Record<string, PaletteCommand[]> = {};
   for (const cmd of filteredCommands) {
     const cat = cmd.category || 'Actions';
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(cmd);
   }
-
   type ListItem =
     | { type: 'header'; key: string; title: string }
     | { type: 'command'; key: string; command: PaletteCommand };
-
   const listItems: ListItem[] = [];
   for (const [category, cmds] of Object.entries(groups)) {
     listItems.push({ type: 'header', key: `header-${category}`, title: category });
@@ -232,7 +188,6 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       listItems.push({ type: 'command', key: cmd.id, command: cmd });
     }
   }
-
   return (
     <Modal
       visible={isOpen}
@@ -274,9 +229,7 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 <Text style={styles.escLabel}>ESC</Text>
               </Pressable>
             </View>
-
             <View style={styles.divider} />
-
             {/* Results */}
             <FlatList
               data={listItems}
@@ -291,7 +244,6 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     </View>
                   );
                 }
-
                 const { command } = item;
                 return (
                   <Pressable
@@ -323,7 +275,6 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 </View>
               }
             />
-
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 {Platform.OS === 'web' ? '⌘K to open · Enter to select' : 'Tap to run a command'}
@@ -335,11 +286,6 @@ function CommandPaletteModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     </Modal>
   );
 }
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

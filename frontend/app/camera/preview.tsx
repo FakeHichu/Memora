@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/Button';
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import {
@@ -22,28 +21,23 @@ import {
   publishLocalPhoto,
 } from '@/lib/photo-draft';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
   const [prompt] = useState(() => getPromptDraft());
   const [caption, setCaption] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
   const retake = () => {
     clearPhotoDraft();
     router.replace('/camera');
   };
-
   const postPhoto = async () => {
     if (!photoUri) {
       setErrorMessage('Take a photo before posting.');
       return;
     }
-
     setErrorMessage(null);
     setIsSaving(true);
-
     try {
       await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
       clearPhotoDraft();
@@ -53,7 +47,6 @@ export default function CameraPreviewScreen() {
       setIsSaving(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -73,7 +66,6 @@ export default function CameraPreviewScreen() {
             <Text style={styles.kicker}>PHOTO PREVIEW</Text>
             <View style={styles.headerSpacer} />
           </View>
-
           {photoUri ? (
             <Image
               source={{ uri: photoUri }}
@@ -86,14 +78,12 @@ export default function CameraPreviewScreen() {
               <Text style={styles.emptyText}>No photo captured</Text>
             </View>
           )}
-
           <View style={styles.promptRow}>
             <View style={styles.promptDot} />
             <Text style={styles.prompt}>
               {prompt || 'Show us something interesting you saw today.'}
             </Text>
           </View>
-
           <TextInput
             value={caption}
             onChangeText={setCaption}
@@ -104,9 +94,7 @@ export default function CameraPreviewScreen() {
             style={styles.captionInput}
             accessibilityLabel="Photo caption"
           />
-
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
-
           <View style={styles.actions}>
             <Button
               title="Retake"
@@ -130,7 +118,6 @@ export default function CameraPreviewScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

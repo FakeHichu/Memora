@@ -4,7 +4,6 @@ export type PreviewStory = {
   photoUri: string;
   tint: string;
 };
-
 export type PreviewPost = {
   id: string;
   name: string;
@@ -17,10 +16,8 @@ export type PreviewPost = {
   likes: number;
   comments: number;
 };
-
 const image = (photoId: string, width: number) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&q=82`;
-
 export const previewStories: PreviewStory[] = [
   {
     id: 'story-01',
@@ -47,7 +44,6 @@ export const previewStories: PreviewStory[] = [
     tint: '#222C3B',
   },
 ];
-
 export const previewPosts: PreviewPost[] = [
   {
     id: 'preview-01',
@@ -74,7 +70,6 @@ export const previewPosts: PreviewPost[] = [
     comments: 4,
   },
 ];
-
 export const previewTopics = [
   { id: 'topic-01', title: 'First week', count: '18 moments', tint: '#28223B' },
   { id: 'topic-02', title: 'Campus after rain', count: '12 moments', tint: '#1C3037' },

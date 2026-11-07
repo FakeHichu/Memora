@@ -1,20 +1,16 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, ViewStyle, ScrollView } from 'react-native';
-
 import { spacing } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type FilterChipProps = {
   label: string;
   selected: boolean;
   onPress: () => void;
   style?: ViewStyle;
 };
-
 export function FilterChip({ label, selected, onPress, style }: FilterChipProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   return (
     <Pressable
       onPress={onPress}
@@ -33,7 +29,6 @@ export function FilterChip({ label, selected, onPress, style }: FilterChipProps)
     </Pressable>
   );
 }
-
 type FilterChipsProps = {
   filters: string[];
   selectedFilter: string;
@@ -41,7 +36,6 @@ type FilterChipsProps = {
   style?: ViewStyle;
   scrollable?: boolean;
 };
-
 export function FilterChips({
   filters,
   selectedFilter,
@@ -51,7 +45,6 @@ export function FilterChips({
 }: FilterChipsProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   const content = (
     <View style={styles.container}>
       {filters.map((filter) => (
@@ -64,7 +57,6 @@ export function FilterChips({
       ))}
     </View>
   );
-
   if (scrollable) {
     return (
       <ScrollView
@@ -77,19 +69,14 @@ export function FilterChips({
       </ScrollView>
     );
   }
-
   return <View style={[styles.container, style]}>{content}</View>;
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
-  // Active pill is dark pill in light mode, or accent purple in dark mode
   const activeBg = isDark ? '#8052C8' : '#261D32';
   const activeText = '#FFFFFF';
   const inactiveBg = colors.card;
   const inactiveText = colors.textSecondary;
-
   return StyleSheet.create({
     container: {
       flexDirection: 'row',

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
-
 import {
   colors,
   radius,
@@ -10,7 +9,6 @@ import {
   webShadows,
   shadows,
 } from '@/constants/theme';
-
 type CircleCardProps = {
   name: string;
   school?: string;
@@ -21,7 +19,6 @@ type CircleCardProps = {
   onPress?: () => void;
   style?: ViewStyle;
 };
-
 export function CircleCard({
   name,
   school,
@@ -38,7 +35,6 @@ export function CircleCard({
     .join('')
     .toUpperCase()
     .slice(0, 2);
-
   return (
     <Pressable
       onPress={onPress}
@@ -57,13 +53,11 @@ export function CircleCard({
           <View style={styles.classBadge} />
         </View>
       </View>
-
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>
         {school && <Text style={styles.school}>{school}</Text>}
         {year && <Text style={styles.year}>{year}</Text>}
       </View>
-
       {(memberCount !== undefined || photoCount !== undefined) && (
         <View style={styles.stats}>
           {memberCount !== undefined && (
@@ -83,7 +77,6 @@ export function CircleCard({
     </Pressable>
   );
 }
-
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',

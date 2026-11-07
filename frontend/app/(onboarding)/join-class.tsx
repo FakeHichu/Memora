@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { radius, spacing, typography } from '@/constants/theme';
@@ -11,7 +10,6 @@ import { supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
-
 export default function JoinClassScreen() {
   const { colors: themeColors } = useAppTheme();
   const styles = createStyles(themeColors);
@@ -23,22 +21,18 @@ export default function JoinClassScreen() {
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [academicYear, setAcademicYear] = useState<number | null>(null);
   const [memberRole, setMemberRole] = useState<string>('member');
-
   const handleJoin = async () => {
     if (!supabase) {
       setErrorMessage('Configure Supabase in frontend/.env before joining a class.');
       return;
     }
-
     if (!code.trim()) {
       setErrorMessage('Please enter a join code.');
       return;
     }
-
     setIsSubmitting(true);
     setErrorMessage(null);
     setSuccessMessage(null);
-
     try {
       const { data, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !data.session) {
@@ -46,10 +40,8 @@ export default function JoinClassScreen() {
         setIsSubmitting(false);
         return;
       }
-
       const cleanCode = code.trim().toUpperCase();
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http:
       const response = await fetch(`${backendUrl}/api/classes/join`, {
         method: 'POST',
         headers: {
@@ -58,26 +50,19 @@ export default function JoinClassScreen() {
         },
         body: JSON.stringify({ joinCode: cleanCode }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.message ?? 'Could not join class.');
       }
-
-      // Success! Show class details
       setClassName(result.class.name);
       setSchoolName(result.class.school_name);
       setAcademicYear(result.class.academic_year);
       setMemberRole(result.member?.role || 'member');
-
       if (result.alreadyJoined) {
         setSuccessMessage('You are already a member of this class.');
       } else {
         setSuccessMessage('Successfully joined the class!');
       }
-
-      // Wait a moment to show success, then navigate
       setTimeout(() => {
         router.replace('/(tabs)/home');
       }, 1500);
@@ -87,7 +72,6 @@ export default function JoinClassScreen() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -97,7 +81,6 @@ export default function JoinClassScreen() {
         <Text style={styles.description}>
           Ask your class owner for the 8-character invitation code.
         </Text>
-
         <Card style={styles.card} variant="editorial">
           <Text style={styles.fieldLabel}>Class Join Code</Text>
           <TextInput
@@ -116,19 +99,16 @@ export default function JoinClassScreen() {
             editable={!isSubmitting}
             maxLength={8}
           />
-
           {errorMessage && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorMessage}>{errorMessage}</Text>
             </View>
           )}
-
           {successMessage && (
             <View style={styles.successContainer}>
               <Text style={styles.successMessage}>{successMessage}</Text>
             </View>
           )}
-
           <Button
             title={isSubmitting ? 'Joining...' : 'Join Class'}
             onPress={handleJoin}
@@ -137,7 +117,6 @@ export default function JoinClassScreen() {
             disabled={isSubmitting || !code.trim()}
           />
         </Card>
-
         {className && (
           <View style={styles.classDetails}>
             <Text style={styles.classDetailLabel}>Class Information</Text>
@@ -149,7 +128,6 @@ export default function JoinClassScreen() {
             <Text style={styles.classDetailRole}>Your role: {memberRole}</Text>
           </View>
         )}
-
         <View style={styles.helperWrap}>
           <Text style={styles.helperTitle}>Private by design</Text>
           <Text style={styles.helperText}>
@@ -160,7 +138,6 @@ export default function JoinClassScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: {

@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
 import {
   getCollections,
@@ -27,39 +26,31 @@ import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
-
 const COLLECTION_COLORS = [
-  '#7A9FD8', // icy blue
-  '#B8A8D8', // lavender
-  '#5A8A6E', // sage green
-  '#B8A05A', // warm gold
-  '#C05A5A', // muted red
-  '#8A9AB8', // steel blue
+  '#7A9FD8',
+  '#B8A8D8',
+  '#5A8A6E',
+  '#B8A05A',
+  '#C05A5A',
+  '#8A9AB8',
 ];
-
 export default function CollectionsScreen() {
   const { showToast } = useToast();
   const [collections, setCollections] = useState<LocalCollection[]>([]);
   const [collectionCounts, setCollectionCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
-
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCollection, setEditingCollection] = useState<LocalCollection | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLLECTION_COLORS[0]);
-
   const loadCollections = useCallback(() => {
     let isActive = true;
     setIsLoading(true);
-
     getCollections().then(async (cols) => {
       if (!isActive) return;
       setCollections(cols);
-
-      // Load counts
       const counts: Record<string, number> = {};
       await Promise.all(
         cols.map(async (col) => {
@@ -72,14 +63,11 @@ export default function CollectionsScreen() {
         setIsLoading(false);
       }
     });
-
     return () => {
       isActive = false;
     };
   }, []);
-
   useFocusEffect(loadCollections);
-
   const openCreate = () => {
     setEditingCollection(null);
     setName('');
@@ -87,7 +75,6 @@ export default function CollectionsScreen() {
     setSelectedColor(COLLECTION_COLORS[0]);
     setShowCreateModal(true);
   };
-
   const openEdit = (col: LocalCollection) => {
     setEditingCollection(col);
     setName(col.name);
@@ -95,10 +82,8 @@ export default function CollectionsScreen() {
     setSelectedColor(col.color || COLLECTION_COLORS[0]);
     setShowCreateModal(true);
   };
-
   const handleSave = async () => {
     if (!name.trim()) return;
-
     if (editingCollection) {
       await updateCollection(editingCollection.id, {
         name: name.trim(),
@@ -110,11 +95,9 @@ export default function CollectionsScreen() {
       await createCollection(name.trim(), description.trim() || undefined, selectedColor);
       showToast({ message: '📁 Collection created', variant: 'success', duration: 1500 });
     }
-
     setShowCreateModal(false);
     loadCollections();
   };
-
   const handleDelete = async () => {
     if (!deletingId) return;
     await deleteCollection(deletingId);
@@ -122,7 +105,6 @@ export default function CollectionsScreen() {
     setDeletingId(null);
     loadCollections();
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -149,7 +131,6 @@ export default function CollectionsScreen() {
             <Text style={styles.createBtnText}>+ New</Text>
           </Pressable>
         </View>
-
         {isLoading ? (
           <View style={styles.grid}>
             {[0, 1, 2].map((i) => (
@@ -218,7 +199,6 @@ export default function CollectionsScreen() {
                 </View>
               </Pressable>
             ))}
-
             {/* Create new card */}
             <Pressable
               style={styles.gridItem}
@@ -233,10 +213,8 @@ export default function CollectionsScreen() {
             </Pressable>
           </View>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
-
       {/* Create/Edit Modal */}
       <Modal
         visible={showCreateModal}
@@ -257,7 +235,6 @@ export default function CollectionsScreen() {
             <Text style={styles.modalTitle}>
               {editingCollection ? 'Edit Collection' : 'New Collection'}
             </Text>
-
             <Text style={styles.modalFieldLabel}>Name</Text>
             <TextInput
               value={name}
@@ -269,7 +246,6 @@ export default function CollectionsScreen() {
               maxLength={50}
               accessibilityLabel="Collection name"
             />
-
             <Text style={styles.modalFieldLabel}>Description (optional)</Text>
             <TextInput
               value={description}
@@ -281,7 +257,6 @@ export default function CollectionsScreen() {
               maxLength={200}
               accessibilityLabel="Collection description"
             />
-
             <Text style={styles.modalFieldLabel}>Color</Text>
             <View style={styles.colorRow}>
               {COLLECTION_COLORS.map((color) => (
@@ -299,7 +274,6 @@ export default function CollectionsScreen() {
                 />
               ))}
             </View>
-
             <View style={styles.modalActions}>
               <Button
                 title="Cancel"
@@ -316,7 +290,6 @@ export default function CollectionsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-
       <ConfirmDialog
         visible={deletingId !== null}
         title="Delete Collection?"
@@ -329,7 +302,6 @@ export default function CollectionsScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

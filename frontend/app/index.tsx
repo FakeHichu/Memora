@@ -2,26 +2,20 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
-
 export default function SplashScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const [readyToNavigate, setReadyToNavigate] = useState(false);
   const [destinationRoute, setDestinationRoute] = useState<string>('/(auth)/login');
-
-  // Initialized with useState per React 19 rules
   const [fadeAnim] = useState(() => new Animated.Value(0));
   const [scaleAnim] = useState(() => new Animated.Value(0.85));
   const [pulseAnim] = useState(() => new Animated.Value(1));
   const [progressAnim] = useState(() => new Animated.Value(0));
-
   useEffect(() => {
-    // 1. Entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -35,8 +29,6 @@ export default function SplashScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-
-    // 2. Continuous subtle pulse loop like WhatsApp
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -54,51 +46,37 @@ export default function SplashScreen() {
       ]),
     );
     pulseLoop.start();
-
-    // 3. Progress bar filling smoothly over 2.4 seconds
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: 2300,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
       useNativeDriver: false,
     }).start();
-
-    // 4. Check authentication state during splash
     async function checkAuthAndNavigate() {
       let targetRoute = '/(auth)/login';
-
       if (hasSupabaseConfig && supabase) {
         try {
           const { data, error } = await supabase.auth.getSession();
           if (!error && data.session) {
-            // User is authenticated, go to home
             targetRoute = '/(tabs)/home';
           }
         } catch (err) {
-          // If auth check fails, default to login
           console.warn('Auth check failed:', err);
         }
       } else {
-        // No Supabase config, go straight to home (local mode)
         targetRoute = '/(tabs)/home';
       }
-
       setDestinationRoute(targetRoute);
     }
-
     checkAuthAndNavigate();
-
-    // 5. Timer for 2.5 seconds (matching the 2 to 3 seconds requirement)
     const timer = setTimeout(() => {
       setReadyToNavigate(true);
     }, 2500);
-
     return () => {
       pulseLoop.stop();
       clearTimeout(timer);
     };
   }, [fadeAnim, scaleAnim, pulseAnim, progressAnim]);
-
   useEffect(() => {
     if (readyToNavigate) {
       Animated.timing(fadeAnim, {
@@ -106,23 +84,19 @@ export default function SplashScreen() {
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        // Navigate to determined route (authenticated home or login)
         router.replace(destinationRoute as any);
       });
     }
   }, [readyToNavigate, fadeAnim, destinationRoute]);
-
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
-
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {/* Ambient background glow */}
         <View style={styles.ambientGlow} />
-
         {/* Center branding */}
         <View style={styles.centerContainer}>
           <Animated.View
@@ -137,16 +111,13 @@ export default function SplashScreen() {
               <Icon name="camera" size={38} color="#FFFFFF" />
             </View>
           </Animated.View>
-
           <Text style={styles.appName}>Memora</Text>
           <Text style={styles.appTagline}>Capture & relive every moment</Text>
-
           {/* WhatsApp-style mini progress indicator */}
           <View style={styles.progressBarTrack}>
             <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
           </View>
         </View>
-
         {/* WhatsApp-style bottom footer */}
         <View style={styles.footer}>
           <Text style={styles.footerPrefix}>FROM</Text>
@@ -156,7 +127,6 @@ export default function SplashScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: {

@@ -11,17 +11,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { signUpWithEmail } from '@/lib/supabase/auth';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export default function RegisterScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,7 +32,6 @@ export default function RegisterScreen() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
-
   const validateName = (val: string): boolean => {
     const trimmed = val.trim();
     if (!trimmed) {
@@ -49,7 +45,6 @@ export default function RegisterScreen() {
     setNameError(null);
     return true;
   };
-
   const validateEmail = (val: string): boolean => {
     const trimmed = val.trim();
     if (!trimmed) {
@@ -64,7 +59,6 @@ export default function RegisterScreen() {
     setEmailError(null);
     return true;
   };
-
   const validatePassword = (val: string): boolean => {
     if (!val) {
       setPasswordError('Password is required');
@@ -89,7 +83,6 @@ export default function RegisterScreen() {
     setPasswordError(null);
     return true;
   };
-
   const validateConfirmPassword = (val: string): boolean => {
     if (!val) {
       setConfirmPasswordError('Please confirm your password');
@@ -102,25 +95,19 @@ export default function RegisterScreen() {
     setConfirmPasswordError(null);
     return true;
   };
-
   const handleRegister = async () => {
     setMessage(null);
     setSuccessMessage(null);
-
     const isNameValid = validateName(name);
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
-
     if (!isNameValid || !isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       const { data, error } = await signUpWithEmail(email.trim(), password, name.trim());
-
       if (error) {
         if (error.message.includes('User already registered')) {
           setMessage('This email is already registered. Please sign in instead.');
@@ -130,7 +117,6 @@ export default function RegisterScreen() {
         setIsSubmitting(false);
         return;
       }
-
       if (data?.session) {
         setSuccessMessage('Account created successfully!');
         setTimeout(() => {
@@ -149,7 +135,6 @@ export default function RegisterScreen() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -165,13 +150,11 @@ export default function RegisterScreen() {
               <Text style={styles.brandTagline}>Memory Capsule</Text>
             </View>
           </View>
-
           {/* Heading */}
           <View style={styles.headerBlock}>
             <Text style={styles.title}>Create account</Text>
             <Text style={styles.subtitle}>Start preserving your moments and memories today.</Text>
           </View>
-
           {/* Card */}
           <View style={styles.card}>
             {/* Full Name */}
@@ -197,7 +180,6 @@ export default function RegisterScreen() {
               </View>
               {nameError ? <Text style={styles.fieldError}>{nameError}</Text> : null}
             </View>
-
             {/* Email */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>Email address</Text>
@@ -223,7 +205,6 @@ export default function RegisterScreen() {
               </View>
               {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
             </View>
-
             {/* Password */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>Password (8+ chars, upper, lower, num)</Text>
@@ -255,7 +236,6 @@ export default function RegisterScreen() {
               </View>
               {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
             </View>
-
             {/* Confirm Password */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>Confirm password</Text>
@@ -290,19 +270,16 @@ export default function RegisterScreen() {
                 <Text style={styles.fieldError}>{confirmPasswordError}</Text>
               ) : null}
             </View>
-
             {message ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorMessage}>{message}</Text>
               </View>
             ) : null}
-
             {successMessage ? (
               <View style={styles.successContainer}>
                 <Text style={styles.successMessage}>{successMessage}</Text>
               </View>
             ) : null}
-
             {/* Submit Button */}
             <Pressable
               onPress={handleRegister}
@@ -321,7 +298,6 @@ export default function RegisterScreen() {
               )}
             </Pressable>
           </View>
-
           {/* Footer */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account?</Text>
@@ -338,10 +314,8 @@ export default function RegisterScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     safeArea: {
       flex: 1,

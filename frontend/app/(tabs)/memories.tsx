@@ -2,7 +2,6 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, spacing, layout } from '@/constants/theme';
 import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
 import { MemoryCard } from '@/components/ui/MemoryCard';
@@ -13,26 +12,21 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard } from '@/components/ui/Skeleton';
-
 const MEMORY_FILTERS = ['All', 'People', 'Places', 'Events'];
-
 type MemorySection = {
   key: string;
   title: string;
   data: LocalPhotoPost[];
 };
-
 export default function MemoriesScreen() {
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       getLocalPhotoPosts()
         .then((savedPosts) => {
           if (isActive) {
@@ -46,27 +40,22 @@ export default function MemoriesScreen() {
             setIsLoading(false);
           }
         });
-
       return () => {
         isActive = false;
       };
     }, []),
   );
-
-  // Group posts by month with fixed filter & search logic
   const sections: MemorySection[] = useMemo(() => {
     const filtered = posts.filter((post) => {
       if (post.isArchived) return false;
       if (selectedFilter !== 'All' && post.category !== selectedFilter) return false;
       if (!searchQuery.trim()) return true;
-
       const query = searchQuery.toLowerCase();
       const caption = (post.caption || '').toLowerCase();
       const title = (post.title || '').toLowerCase();
       const location = (post.location || '').toLowerCase();
       const tags = (post.tags || []).join(' ').toLowerCase();
       const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
-
       return (
         caption.includes(query) ||
         title.includes(query) ||
@@ -75,7 +64,6 @@ export default function MemoriesScreen() {
         dateStr.includes(query)
       );
     });
-
     const groups: Record<string, LocalPhotoPost[]> = {};
     for (const post of filtered) {
       const date = new Date(post.createdAt);
@@ -83,7 +71,6 @@ export default function MemoriesScreen() {
       if (!groups[key]) groups[key] = [];
       groups[key].push(post);
     }
-
     return Object.entries(groups)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, items]) => {
@@ -95,16 +82,13 @@ export default function MemoriesScreen() {
         return { key, title: monthTitle, data: items };
       });
   }, [posts, selectedFilter, searchQuery]);
-
   const handleSearchToggle = () => {
     setShowSearch((prev) => !prev);
   };
-
   const totalVisibleMemories = useMemo(
     () => sections.reduce((sum, s) => sum + s.data.length, 0),
     [sections],
   );
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -130,7 +114,6 @@ export default function MemoriesScreen() {
                 accessibilityLabel: showSearch ? 'Close search' : 'Search memories',
               }}
             />
-
             {showSearch && (
               <View style={styles.searchContainer}>
                 <SearchBar
@@ -142,7 +125,6 @@ export default function MemoriesScreen() {
                 />
               </View>
             )}
-
             <FilterChips
               filters={MEMORY_FILTERS}
               selectedFilter={selectedFilter}
@@ -205,7 +187,6 @@ export default function MemoriesScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

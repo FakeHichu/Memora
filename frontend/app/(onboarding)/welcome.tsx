@@ -2,19 +2,16 @@ import { router } from 'expo-router';
 import React from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/Button';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { borders, colors, radius, spacing, typography } from '@/constants/theme';
-
 const features: { icon: JamIconName; title: string; detail: string }[] = [
   { icon: 'camera', title: 'Save a moment', detail: 'Photos, right from your day' },
   { icon: 'pencil', title: 'Tell its story', detail: 'Add the little details' },
   { icon: 'calendar', title: 'Look back', detail: 'Memories, in their own time' },
   { icon: 'search', title: 'Find it again', detail: 'Your moments, easy to find' },
 ];
-
 export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,14 +33,12 @@ export default function WelcomeScreen() {
             <Text style={styles.privateLabel}>JUST FOR YOU</Text>
           </View>
         </View>
-
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>YOUR LIFE, IN LITTLE MOMENTS</Text>
           <Text style={styles.title}>Keep the moments{"\n"}that feel like you.</Text>
           <Text style={styles.subtitle}>
             A little home for your photos, stories, and all the things you never want to forget.
           </Text>
-
           <View style={styles.illustration}>
             <View style={styles.illustrationHalo} />
             <View style={[styles.floatCard, styles.floatCardBack]}>
@@ -59,7 +54,6 @@ export default function WelcomeScreen() {
               <Icon name="heart" size={19} color={colors.accentLight} />
               <Text style={styles.sideCardLabel}>KEEPSAKE</Text>
             </View>
-
             <View style={styles.memoryPreview}>
               <View style={styles.previewImage}>
                 <View style={styles.previewSun} />
@@ -79,7 +73,6 @@ export default function WelcomeScreen() {
                 </View>
               </View>
             </View>
-
             <View style={styles.savedBadge}>
               <View style={styles.savedBadgeIcon}>
                 <Icon name="bookmark" size={13} color={colors.accentLight} />
@@ -88,7 +81,6 @@ export default function WelcomeScreen() {
             </View>
           </View>
         </View>
-
         <View style={styles.featureCard}>
           <View style={styles.featureHeader}>
             <Text style={styles.featureTitle}>Made for your memories</Text>
@@ -118,7 +110,6 @@ export default function WelcomeScreen() {
             <Icon name="chevron-right" size={16} color={colors.textMuted} />
           </View>
         </View>
-
         <View style={styles.actions}>
           <Button
             title="Get started"
@@ -142,7 +133,6 @@ export default function WelcomeScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

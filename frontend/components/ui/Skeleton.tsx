@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
 import { radius, spacing, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type SkeletonProps = {
   width?: number | string;
   height?: number;
@@ -10,12 +9,10 @@ type SkeletonProps = {
   style?: ViewStyle;
   animate?: boolean;
 };
-
 export function Skeleton({ width = '100%', height = 16, borderRadius, style, animate = true }: SkeletonProps) {
   const { colors } = useAppTheme();
   const styles = createSkeletonStyles(colors);
   const shimmerRef = useRef(new Animated.Value(0));
-
   useEffect(() => {
     if (!animate) return;
     const animation = Animated.loop(
@@ -35,13 +32,10 @@ export function Skeleton({ width = '100%', height = 16, borderRadius, style, ani
     animation.start();
     return () => animation.stop();
   }, [animate, shimmerRef]);
-
-  // eslint-disable-next-line react-hooks/refs
   const opacity = shimmerRef.current.interpolate({
     inputRange: [0, 1],
     outputRange: [0.35, 0.75],
   });
-
   return (
     <Animated.View
       style={[
@@ -59,9 +53,6 @@ export function Skeleton({ width = '100%', height = 16, borderRadius, style, ani
     />
   );
 }
-
-// Pre-built skeleton shapes
-
 export function SkeletonMemoryCard({ aspectRatio = 4 / 3, variant = 'timeline' }: { aspectRatio?: number; variant?: 'timeline' | 'compact' | 'editorial' }) {
   const { colors } = useAppTheme();
   const styles = createSkeletonMemoryStyles(colors);
@@ -70,7 +61,6 @@ export function SkeletonMemoryCard({ aspectRatio = 4 / 3, variant = 'timeline' }
     compact: { imageRadius: radius.md, padding: 0, gap: spacing.xs, titleWidth: '70%', subtitleWidth: '90%', metaWidth: '40%' },
     editorial: { imageRadius: radius.xl, padding: spacing.lg, gap: spacing.md, titleWidth: '50%', subtitleWidth: '70%', metaWidth: '60%' },
   }[variant];
-
   return (
     <View style={styles.container}>
       <View style={[styles.image, { aspectRatio }]}>
@@ -84,7 +74,6 @@ export function SkeletonMemoryCard({ aspectRatio = 4 / 3, variant = 'timeline' }
     </View>
   );
 }
-
 export function SkeletonText({
   lines = 3,
   lastLineWidth = '60%',
@@ -94,7 +83,6 @@ export function SkeletonText({
 }) {
   const { colors } = useAppTheme();
   const styles = createSkeletonStyles(colors);
-
   return (
     <View style={[styles.textContainer, { gap: spacing.xs }]}>
       {Array.from({ length: lines }).map((_, i) => (
@@ -107,11 +95,9 @@ export function SkeletonText({
     </View>
   );
 }
-
 export function SkeletonProfileHeader() {
   const { colors } = useAppTheme();
   const styles = createSkeletonProfileStyles(colors);
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -133,11 +119,9 @@ export function SkeletonProfileHeader() {
     </View>
   );
 }
-
 export function SkeletonSettingsSection({ rows = 3 }: { rows?: number }) {
   const { colors } = useAppTheme();
   const styles = createSkeletonSettingsStyles(colors);
-
   return (
     <View style={[styles.container, { gap: spacing.xs }]}>
       <Skeleton width="30%" height={16} borderRadius={radius.xs} />
@@ -153,11 +137,9 @@ export function SkeletonSettingsSection({ rows = 3 }: { rows?: number }) {
     </View>
   );
 }
-
 export function SkeletonPostDetail() {
   const { colors } = useAppTheme();
   const styles = createSkeletonPostStyles(colors);
-
   return (
     <View style={styles.container}>
       <Skeleton width="100%" height={undefined} style={{ aspectRatio: 3 / 4, borderRadius: 0 }} />
@@ -193,10 +175,8 @@ export function SkeletonPostDetail() {
     </View>
   );
 }
-
 export function SkeletonAuthForm() {
   const styles = createSkeletonAuthStyles();
-
   return (
     <View style={[styles.container, { gap: spacing.lg }]}>
       <Skeleton width={48} height={48} borderRadius={radius.md} />
@@ -214,7 +194,6 @@ export function SkeletonAuthForm() {
     </View>
   );
 }
-
 function createSkeletonStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     skeleton: {
@@ -225,7 +204,6 @@ function createSkeletonStyles(colors: ReturnType<typeof useAppTheme>['colors']) 
     },
   });
 }
-
 function createSkeletonMemoryStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {
@@ -248,7 +226,6 @@ function createSkeletonMemoryStyles(colors: ReturnType<typeof useAppTheme>['colo
     },
   });
 }
-
 function createSkeletonProfileStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {
@@ -282,7 +259,6 @@ function createSkeletonProfileStyles(colors: ReturnType<typeof useAppTheme>['col
     },
   });
 }
-
 function createSkeletonSettingsStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {
@@ -301,7 +277,6 @@ function createSkeletonSettingsStyles(colors: ReturnType<typeof useAppTheme>['co
     },
   });
 }
-
 function createSkeletonPostStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {
@@ -331,7 +306,6 @@ function createSkeletonPostStyles(colors: ReturnType<typeof useAppTheme>['colors
     },
   });
 }
-
 function createSkeletonAuthStyles() {
   return StyleSheet.create({
     container: {

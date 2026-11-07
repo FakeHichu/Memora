@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
 import { clearLocalPhotoPosts, getLocalPhotoPosts, getLocalProfile } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
@@ -13,7 +12,6 @@ import { hasSupabaseConfig } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAuth } from '@/hooks/useAuth';
 import { SkeletonProfileHeader } from '@/components/ui/Skeleton';
-
 export default function ProfileScreen() {
   const { session, isLoading: isAuthLoading } = useAuth();
   const [photoCount, setPhotoCount] = useState(0);
@@ -25,7 +23,6 @@ export default function ProfileScreen() {
     },
   );
   const [isLoading, setIsLoading] = useState(true);
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -41,17 +38,14 @@ export default function ProfileScreen() {
       };
     }, []),
   );
-
   const isSignedIn = Boolean(session?.user);
   const displayName =
     (session?.user?.user_metadata?.full_name as string | undefined) ||
     session?.user?.email?.split('@')[0] ||
     localProfile.name;
   const displayEmail = session?.user?.email || localProfile.email;
-
   const confirmClearPhotos = () => {
     if (Platform.OS === 'web') {
-      // eslint-disable-next-line no-alert
       if (
         typeof window !== 'undefined' &&
         window.confirm('Delete all photos? This permanently removes the photos saved in this app.')
@@ -71,26 +65,22 @@ export default function ProfileScreen() {
       },
     ]);
   };
-
   const handleSignOut = async () => {
     if (hasSupabaseConfig) {
       await signOut();
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <AppHeader title="Profile" subtitle="Your account" />
-
         {/* Loading Skeleton */}
         {(isLoading || isAuthLoading) && (
           <View style={styles.skeletonWrapper}>
             <SkeletonProfileHeader />
           </View>
         )}
-
         {/* Account Section */}
         {!isLoading && !isAuthLoading && (
           <>
@@ -108,7 +98,6 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               </View>
-
               {isSignedIn && (
                 <>
                   <ProfileDivider />
@@ -125,7 +114,6 @@ export default function ProfileScreen() {
                   />
                 </>
               )}
-
               {!isSignedIn && hasSupabaseConfig && (
                 <>
                   <ProfileDivider />
@@ -138,7 +126,6 @@ export default function ProfileScreen() {
                 </>
               )}
             </ProfileSection>
-
             {/* Photo Storage Section */}
             <ProfileSection title="Photo Storage">
               <ProfileRow
@@ -154,7 +141,6 @@ export default function ProfileScreen() {
               />
               <ProfileDivider />
               <ProfileRow label="Offline mode" value="Always available locally" icon="cloud" />
-
               {photoCount > 0 && (
                 <>
                   <ProfileDivider />
@@ -168,14 +154,12 @@ export default function ProfileScreen() {
                 </>
               )}
             </ProfileSection>
-
             {/* Notifications Section */}
             <ProfileSection title="Notifications">
               <ProfileRow label="Daily reminder" value="9:00 PM" icon="clock" />
               <ProfileDivider />
               <ProfileRow label="Memory notifications" value="On" icon="bell" />
             </ProfileSection>
-
             {/* Settings & Preferences */}
             <ProfileSection title="Preferences">
               <ProfileRow
@@ -194,13 +178,11 @@ export default function ProfileScreen() {
             </ProfileSection>
           </>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

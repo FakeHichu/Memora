@@ -1,15 +1,12 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
-
 import { radius, spacing, typography, shadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { LocalPhotoPost } from '@/lib/photo-draft';
 import { ReactionBar } from './ReactionBar';
 import { TagList } from './TagBadge';
 import { Icon } from './Icons';
-
 type MemoryCardDensity = 'editorial' | 'compact' | 'immersive' | 'timeline';
-
 type MemoryCardProps = {
   memory: LocalPhotoPost;
   density?: MemoryCardDensity;
@@ -27,7 +24,6 @@ type MemoryCardProps = {
   isSelected?: boolean;
   selectionMode?: boolean;
 };
-
 export const MemoryCard = React.memo(function MemoryCard({
   memory,
   density = 'compact',
@@ -47,7 +43,6 @@ export const MemoryCard = React.memo(function MemoryCard({
 }: MemoryCardProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   const date = new Date(memory.createdAt);
   const formattedDate = date.toLocaleDateString(undefined, {
     month: 'short',
@@ -58,9 +53,7 @@ export const MemoryCard = React.memo(function MemoryCard({
     hour: 'numeric',
     minute: '2-digit',
   });
-
   const memoryId = `MEMORY_${memory.id.slice(-3).padStart(3, '0')}`;
-
   const densityConfig = {
     editorial: {
       aspectRatio: aspectRatio || 16 / 11,
@@ -111,13 +104,9 @@ export const MemoryCard = React.memo(function MemoryCard({
       showId: true,
     },
   }[density];
-
   const config = densityConfig;
   const isInteractive = onPress || onLongPress;
-
-  // Reaction count or badge count
   const totalReactions = Object.values(memory.reactions || {}).reduce((acc, count) => acc + count, 0);
-
   return (
     <Pressable
       onPress={selectionMode ? onLongPress : onPress}
@@ -145,7 +134,6 @@ export const MemoryCard = React.memo(function MemoryCard({
           </View>
         </View>
       )}
-
       <View style={[styles.imageWrapper, { borderRadius: config.imageRadius }]}>
         <Image
           source={{ uri: memory.uri }}
@@ -161,7 +149,6 @@ export const MemoryCard = React.memo(function MemoryCard({
           blurRadius={isBlurred ? 25 : 0}
           resizeMode="cover"
         />
-
         {/* Floating Top Left Pill Badge: Time / Duration (like 25 min in reference image) */}
         {!isBlurred && (
           <View style={styles.topLeftPill}>
@@ -169,7 +156,6 @@ export const MemoryCard = React.memo(function MemoryCard({
             <Text style={styles.pillText}>{timeString || 'Recently'}</Text>
           </View>
         )}
-
         {/* Floating Top Right Pill Badge: Hearts / Favorites (like 385 in reference image) */}
         {!isBlurred && (
           <View style={styles.topRightPill}>
@@ -184,33 +170,28 @@ export const MemoryCard = React.memo(function MemoryCard({
             </Text>
           </View>
         )}
-
         {/* Pinned indicator */}
         {memory.isPinned && !isBlurred && (
           <View style={styles.pinnedIndicator}>
             <Text style={styles.pinnedIcon}>📌</Text>
           </View>
         )}
-
         {/* Archive indicator */}
         {memory.isArchived && (
           <View style={styles.archivedBanner}>
             <Text style={styles.archivedText}>ARCHIVED</Text>
           </View>
         )}
-
         {isBlurred && (
           <View style={styles.blurOverlay}>
             <Text style={styles.blurText}>🔒 Post today's photo to reveal</Text>
           </View>
         )}
-
         {authorName && (
           <View style={styles.authorBadge}>
             <Text style={styles.authorBadgeText}>{authorName}</Text>
           </View>
         )}
-
         {/* Editorial Floating Bottom Card Overlay (like the Leek pasta title card in image 1) */}
         {density === 'editorial' && (
           <View style={styles.floatingBottomCard}>
@@ -222,13 +203,11 @@ export const MemoryCard = React.memo(function MemoryCard({
                 <Text style={styles.ratingText}>★ 4.9</Text>
               </View>
             </View>
-
             {memory.caption && memory.title && (
               <Text style={styles.floatingCardCaption} numberOfLines={1}>
                 {memory.caption}
               </Text>
             )}
-
             {memory.location && (
               <View style={styles.locationPill}>
                 <Text style={styles.locationText} numberOfLines={1}>
@@ -239,7 +218,6 @@ export const MemoryCard = React.memo(function MemoryCard({
           </View>
         )}
       </View>
-
       {/* Non-editorial content layout */}
       {density !== 'editorial' &&
       (config.showCaption || showMetadata || showReactions || memory.prompt || showTags) ? (
@@ -250,7 +228,6 @@ export const MemoryCard = React.memo(function MemoryCard({
           ]}
         >
           {(showMemoryId || config.showId) && <Text style={styles.memoryId}>{memoryId}</Text>}
-
           {/* Title */}
           {memory.title && (
             <Text
@@ -260,7 +237,6 @@ export const MemoryCard = React.memo(function MemoryCard({
               {memory.title}
             </Text>
           )}
-
           {memory.prompt && (
             <View style={styles.promptBadge}>
               <Text style={styles.promptBadgeText} numberOfLines={1}>
@@ -268,7 +244,6 @@ export const MemoryCard = React.memo(function MemoryCard({
               </Text>
             </View>
           )}
-
           {memory.caption && config.showCaption && !memory.title && (
             <Text
               style={[config.captionStyle, styles.caption, { color: colors.textPrimary }]}
@@ -277,12 +252,10 @@ export const MemoryCard = React.memo(function MemoryCard({
               {memory.caption}
             </Text>
           )}
-
           {/* Tags */}
           {showTags && memory.tags && memory.tags.length > 0 && density !== 'compact' && (
             <TagList tags={memory.tags} maxVisible={3} />
           )}
-
           {showMetadata && (
             <View style={styles.metaRow}>
               <Text style={[config.metaStyle, styles.metaText]}>{formattedDate}</Text>
@@ -294,7 +267,6 @@ export const MemoryCard = React.memo(function MemoryCard({
               )}
             </View>
           )}
-
           {showReactions && onReact && (
             <ReactionBar
               reactions={memory.reactions}
@@ -308,10 +280,8 @@ export const MemoryCard = React.memo(function MemoryCard({
     </Pressable>
   );
 });
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     container: {
       backgroundColor: colors.card,

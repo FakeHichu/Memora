@@ -1,17 +1,14 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle, Platform } from 'react-native';
-
 import { spacing } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
-
 type HeaderAction = {
   icon: string;
   onPress: () => void;
   accessibilityLabel?: string;
   badge?: number;
 };
-
 type AppHeaderProps = {
   title?: string;
   subtitle?: string;
@@ -24,7 +21,6 @@ type AppHeaderProps = {
   style?: ViewStyle;
   transparent?: boolean;
 };
-
 export function AppHeader({
   title,
   subtitle,
@@ -39,8 +35,6 @@ export function AppHeader({
 }: AppHeaderProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode, transparent);
-
-  // Mode 1: Modern Feed / Home Header (Avatar + Greeting + Actions, then Big Title)
   if (avatar && greeting) {
     return (
       <View style={[styles.modernContainer, style]}>
@@ -55,7 +49,6 @@ export function AppHeader({
               </Text>
             </View>
           </View>
-
           <View style={styles.actionsRow}>
             {actions && actions.length > 0 ? (
               actions.map((act, i) => (
@@ -97,7 +90,6 @@ export function AppHeader({
             ) : null}
           </View>
         </View>
-
         {/* Big Bold Greeting Title */}
         {title && (
           <View style={styles.bigTitleBlock}>
@@ -108,8 +100,6 @@ export function AppHeader({
       </View>
     );
   }
-
-  // Mode 2: Standard / Sub-screen Header (e.g. Details / Favorites)
   return (
     <View style={[styles.container, style]}>
       <View style={styles.navRow}>
@@ -128,13 +118,11 @@ export function AppHeader({
         ) : (
           <View style={styles.circlePlaceholder} />
         )}
-
         <View style={styles.centerTitleContainer}>
           <Text style={styles.centerTitleText} numberOfLines={1}>
             {title}
           </Text>
         </View>
-
         <View style={styles.actionsRow}>
           {actions && actions.length > 0 ? (
             actions.map((act, i) => (
@@ -168,7 +156,6 @@ export function AppHeader({
           )}
         </View>
       </View>
-
       {subtitle && (
         <View style={styles.subtextBlock}>
           <Text style={styles.subtitle}>{subtitle}</Text>
@@ -177,10 +164,8 @@ export function AppHeader({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light', transparent: boolean) {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     modernContainer: {
       paddingHorizontal: spacing.lg,

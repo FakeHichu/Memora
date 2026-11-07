@@ -2,7 +2,6 @@ export type UserRole = 'owner' | 'admin' | 'member';
 export type ClassStatus = 'active' | 'archived';
 export type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'removed';
 export type ReactionType = 'heart' | 'laugh' | 'cry' | 'fire' | 'dead' | 'respect';
-
 export interface Profile {
   id: string;
   username: string;
@@ -11,7 +10,6 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
-
 export interface ClassRecord {
   id: string;
   name: string;
@@ -24,7 +22,6 @@ export interface ClassRecord {
   status: ClassStatus;
   member_count?: number;
 }
-
 export interface ClassMemberRecord {
   id: string;
   class_id: string;
@@ -34,14 +31,12 @@ export interface ClassMemberRecord {
   profile?: Profile;
   streak_count?: number;
 }
-
 export interface DailyPromptRecord {
   id: string;
   prompt_text: string;
   prompt_date: string;
   created_at: string;
 }
-
 export interface DailyPostRecord {
   id: string;
   class_id: string;
@@ -59,7 +54,6 @@ export interface DailyPostRecord {
   reactions?: Record<string, number>;
   user_reaction?: string | null;
 }
-
 export interface ReactionRecord {
   id: string;
   post_id: string;
@@ -67,7 +61,6 @@ export interface ReactionRecord {
   reaction_type: ReactionType;
   created_at: string;
 }
-
 export interface ReportRecord {
   id: string;
   post_id: string;

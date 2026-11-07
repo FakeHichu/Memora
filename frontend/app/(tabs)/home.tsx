@@ -2,7 +2,6 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { radius, spacing, typography, layout, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import {
@@ -28,28 +27,23 @@ import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
 import { Avatar } from '@/components/ui/Avatar';
 import { SearchBar } from '@/components/ui/SearchBar';
-
 const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
-
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
 }
-
 function getTodayPrompt(): string {
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
   );
   return defaultPrompts[dayOfYear % defaultPrompts.length];
 }
-
 function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
   const today = new Date();
   const month = today.getMonth();
   const day = today.getDate();
-
   return posts.filter((post) => {
     const postDate = new Date(post.createdAt);
     return (
@@ -60,7 +54,6 @@ function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
     );
   });
 }
-
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
@@ -71,9 +64,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [profileName, setProfileName] = useState('Memory Keeper');
   const { open: openCommandPalette } = useCommandPalette();
-
   const todayPrompt = getTodayPrompt();
-
   React.useEffect(() => {
     let isActive = true;
     getLocalProfile()
@@ -85,11 +76,9 @@ export default function HomeScreen() {
       isActive = false;
     };
   }, []);
-
   const loadPosts = useCallback(() => {
     let isActive = true;
     setIsLoading(true);
-
     Promise.all([getLocalPhotoPosts(), getFavoritePosts()])
       .then(([savedPosts, favPosts]) => {
         if (isActive) {
@@ -105,14 +94,11 @@ export default function HomeScreen() {
           setIsLoading(false);
         }
       });
-
     return () => {
       isActive = false;
     };
   }, []);
-
   useFocusEffect(loadPosts);
-
   const activePosts = posts.filter((p) => !p.isArchived);
   const postedToday = hasPostedToday(activePosts);
   const todayMemory = getTodayPost(activePosts);
@@ -120,19 +106,16 @@ export default function HomeScreen() {
   const featuredMemory = onThisDayMemories[0] || activePosts[0];
   const pinnedMemories = activePosts.filter((p) => p.isPinned);
   const streak = computeCurrentStreak(posts);
-
   const handleCaptureWithPrompt = () => {
     setPhotoDraft('', todayPrompt);
     router.push('/(tabs)/create');
   };
-
   const handleReact = async (postId: string, emoji: string) => {
     const updated = await toggleLocalPhotoReaction(postId, emoji);
     if (updated) {
       setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
     }
   };
-
   const matchesSearch = (post: LocalPhotoPost): boolean => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return true;
@@ -149,14 +132,11 @@ export default function HomeScreen() {
       dateStr.includes(query)
     );
   };
-
   const filteredPosts = activePosts.filter((post) => {
     const matchesFilter = selectedFilter === 'All' || post.category === selectedFilter;
     return matchesFilter && matchesSearch(post);
   });
-
   const recentPosts = filteredPosts.filter((p) => !p.isPinned).slice(0, 8);
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -164,7 +144,6 @@ export default function HomeScreen() {
         <View style={[styles.ambientGlow, styles.ambientGlowPrimary]} />
         <View style={[styles.ambientGlow, styles.ambientGlowSecondary]} />
       </View>
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Modern App Header matching reference Screen 1 */}
         <AppHeader
@@ -185,7 +164,6 @@ export default function HomeScreen() {
             },
           ]}
         />
-
         {/* Pill Search Bar with Embedded Right Search Button */}
         <View style={styles.searchContainer}>
           <SearchBar
@@ -195,7 +173,6 @@ export default function HomeScreen() {
             onClear={() => setSearchQuery('')}
           />
         </View>
-
         {/* Category Pill Filters */}
         <View style={styles.filterSection}>
           <FilterChips
@@ -204,7 +181,6 @@ export default function HomeScreen() {
             onFilterChange={setSelectedFilter}
           />
         </View>
-
         {/* Stats Row */}
         {!isLoading && activePosts.length > 0 && (
           <View style={styles.statsRow}>
@@ -234,7 +210,6 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-
         {/* Most Popular / Featured Memory Hero Section (matching reference image Screen 1) */}
         {featuredMemory && (
           <View style={styles.heroSection}>
@@ -244,7 +219,6 @@ export default function HomeScreen() {
                 <Text style={styles.sectionHeaderAction}>See all</Text>
               </Pressable>
             </View>
-
             <MemoryCard
               memory={featuredMemory}
               density="editorial"
@@ -256,7 +230,6 @@ export default function HomeScreen() {
             />
           </View>
         )}
-
         {/* Daily Prompt Hero Card */}
         <View style={styles.promptHeroCard}>
           <View style={styles.promptHeader}>
@@ -268,9 +241,7 @@ export default function HomeScreen() {
               {postedToday ? 'Today complete' : 'Your daily moment'}
             </Text>
           </View>
-
           <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
-
           {isLoading ? (
             <View style={styles.promptActionWrapper}>
               <Skeleton width="100%" height={44} borderRadius={radius.round} />
@@ -302,7 +273,6 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
-
         {/* Pinned Memories Section */}
         {pinnedMemories.length > 0 && (
           <View style={styles.sectionBlock}>
@@ -323,7 +293,6 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-
         {/* Recent Memories Feed */}
         <View style={styles.sectionBlock}>
           <SectionHeader
@@ -339,7 +308,6 @@ export default function HomeScreen() {
                 : undefined
             }
           />
-
           {isLoading ? (
             <View style={styles.memoriesFeed}>
               {[0, 1, 2].map((i) => (
@@ -386,13 +354,11 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     safeArea: {
@@ -425,7 +391,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       width: '100%',
       maxWidth: layout.maxContentWidth,
       alignSelf: 'center',
-      paddingBottom: 110, // Generous spacing for floating bottom tab bar
+      paddingBottom: 110,
     },
     searchContainer: {
       marginBottom: spacing.sm,

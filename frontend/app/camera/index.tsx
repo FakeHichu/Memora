@@ -4,10 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, spacing, typography, radius } from '@/constants/theme';
 import { setPhotoDraft } from '@/lib/photo-draft';
-
 export default function CameraIndexScreen() {
   const cameraRef = useRef<CameraView | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -15,17 +13,13 @@ export default function CameraIndexScreen() {
   const [cameraReady, setCameraReady] = useState(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const capturePhoto = async () => {
     if (!cameraReady || isTakingPhoto) return;
-
     setIsTakingPhoto(true);
     setErrorMessage(null);
-
     try {
       const photo = await cameraRef.current?.takePictureAsync({ quality: 0.9 });
       if (!photo?.uri) throw new Error('The camera did not return a photo.');
-
       setPhotoDraft(photo.uri);
       router.replace('/camera/preview');
     } catch (error) {
@@ -33,7 +27,6 @@ export default function CameraIndexScreen() {
       setIsTakingPhoto(false);
     }
   };
-
   const chooseFromLibrary = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -41,7 +34,6 @@ export default function CameraIndexScreen() {
         quality: 0.9,
       });
       const selectedUri = result.assets?.[0]?.uri;
-
       if (!result.canceled && selectedUri) {
         setPhotoDraft(selectedUri);
         router.replace('/camera/preview');
@@ -50,7 +42,6 @@ export default function CameraIndexScreen() {
       setErrorMessage('Could not open your photo library.');
     }
   };
-
   if (!permission) {
     return (
       <View style={styles.permissionScreen}>
@@ -58,7 +49,6 @@ export default function CameraIndexScreen() {
       </View>
     );
   }
-
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.permissionScreen}>
@@ -73,7 +63,6 @@ export default function CameraIndexScreen() {
       </SafeAreaView>
     );
   }
-
   return (
     <View style={styles.screen}>
       <CameraView
@@ -103,7 +92,6 @@ export default function CameraIndexScreen() {
             <Text style={styles.topControlText}>Flip</Text>
           </Pressable>
         </View>
-
         <View style={styles.bottomControls}>
           <Text style={styles.prompt}>Show us something interesting you saw today.</Text>
           {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
@@ -129,7 +117,6 @@ export default function CameraIndexScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,

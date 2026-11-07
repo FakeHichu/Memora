@@ -1,14 +1,11 @@
 import React from 'react';
 import { Platform, StyleSheet, View, ViewProps } from 'react-native';
-
 import { radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type CardProps = ViewProps & {
   variant?: 'default' | 'elevated' | 'outlined' | 'filled' | 'editorial' | 'chrome' | 'glass';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 };
-
 export function Card({
   children,
   style,
@@ -17,9 +14,7 @@ export function Card({
   ...props
 }: CardProps) {
   const { colors } = useAppTheme();
-
   const styles = createStyles(colors);
-
   const variantStyles = {
     default: styles.variantDefault,
     elevated: styles.variantElevated,
@@ -29,7 +24,6 @@ export function Card({
     chrome: styles.variantChrome,
     glass: styles.variantGlass,
   }[variant];
-
   const paddingStyles = {
     none: styles.paddingNone,
     sm: styles.paddingSm,
@@ -37,7 +31,6 @@ export function Card({
     lg: styles.paddingLg,
     xl: styles.paddingXl,
   }[padding];
-
   const shadowStyle =
     Platform.OS === 'web'
       ? variant === 'elevated'
@@ -54,14 +47,12 @@ export function Card({
           : variant === 'chrome'
             ? shadows.md
             : shadows.sm;
-
   return (
     <View {...props} style={[styles.card, variantStyles, paddingStyles, shadowStyle, style]}>
       {children}
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     card: {

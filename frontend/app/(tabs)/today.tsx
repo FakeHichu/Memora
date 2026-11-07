@@ -2,17 +2,14 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Avatar } from '@/components/ui/Avatar';
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
 import { previewPosts, previewStories, type PreviewStory } from '@/lib/social-preview';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 const currentDate = new Date();
 type HomeNotice = 'notifications' | 'messages';
-
 export default function TodayScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
@@ -27,11 +24,9 @@ export default function TodayScreen() {
   const firstName = typeof accountName === 'string'
     ? accountName.split(' ')[0]
     : session?.user.email?.split('@')[0] ?? 'friend';
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       getLocalPhotoPosts()
         .then((posts) => {
           if (isActive) setLocalPhotoPosts(posts);
@@ -42,13 +37,11 @@ export default function TodayScreen() {
         .finally(() => {
           if (isActive) setIsLoading(false);
         });
-
       return () => {
         isActive = false;
       };
     }, []),
   );
-
   const toggleLike = (postId: string) => {
     setLikedPosts((current) => {
       const next = new Set(current);
@@ -57,7 +50,6 @@ export default function TodayScreen() {
       return next;
     });
   };
-
   const sharePreview = async (caption: string) => {
     try {
       await Share.share({ message: caption });
@@ -65,7 +57,6 @@ export default function TodayScreen() {
       setShowPreviewNote(true);
     }
   };
-
   const feedPosts = [
     ...localPhotoPosts.map((post) => ({
       id: post.id,
@@ -82,7 +73,6 @@ export default function TodayScreen() {
     })),
     ...previewPosts.map((post) => ({ ...post, isPreview: true })),
   ];
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -103,7 +93,6 @@ export default function TodayScreen() {
             </Pressable>
           </View>
         </View>
-
         <View style={styles.welcomeRow}>
           <View style={styles.welcomeCopy}>
             <Text style={styles.dateKicker}>{currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()}</Text>
@@ -113,7 +102,6 @@ export default function TodayScreen() {
             <Text style={styles.searchIcon}>⌕</Text>
           </Pressable>
         </View>
-
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.sectionTitle}>Moments</Text>
@@ -123,7 +111,6 @@ export default function TodayScreen() {
             <Text style={styles.sampleLabel}>SAMPLE</Text>
           </Pressable>
         </View>
-
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storyRail}>
           <Pressable style={styles.storyItem} onPress={() => router.push('/camera')} accessibilityRole="button" accessibilityLabel="Add your moment">
             <View style={styles.addStoryFrame}>
@@ -139,7 +126,6 @@ export default function TodayScreen() {
             </Pressable>
           ))}
         </ScrollView>
-
         <View style={styles.feedHeading}>
           <View>
             <Text style={styles.sectionTitle}>For you</Text>
@@ -147,7 +133,6 @@ export default function TodayScreen() {
           </View>
           <Text style={styles.feedFilter}>LATEST  ⌄</Text>
         </View>
-
         {isLoading ? <Text style={styles.emptyMessage}>Gathering your memories…</Text> : null}
         {!isLoading && feedPosts.length === 0 ? (
           <View style={styles.emptyState}>
@@ -159,7 +144,6 @@ export default function TodayScreen() {
             </Pressable>
           </View>
         ) : null}
-
         {feedPosts.map((post) => {
           const isLiked = likedPosts.has(post.id);
           return (
@@ -172,9 +156,7 @@ export default function TodayScreen() {
                 </View>
                 <Text style={styles.privateMark}>{post.isPreview ? 'SAMPLE' : 'PRIVATE'}</Text>
               </View>
-
               <Image source={{ uri: post.photoUri }} style={styles.postPhoto} resizeMode="cover" accessibilityLabel={`Memory shared by ${post.name}`} />
-
               {post.location ? <Text style={styles.locationLine}>⌖  {post.location}</Text> : null}
               <View style={styles.postActions}>
                 <View style={styles.actionGroup}>
@@ -198,7 +180,6 @@ export default function TodayScreen() {
             </View>
           );
         })}
-
         <Pressable style={styles.yearbookStrip} onPress={() => router.push('/(tabs)/yearbook')} accessibilityRole="button" accessibilityLabel="Open your yearbook">
           <View>
             <Text style={styles.yearbookEyebrow}>KEEP THE GOOD PARTS</Text>
@@ -208,7 +189,6 @@ export default function TodayScreen() {
           <Text style={styles.yearbookArrow}>↗</Text>
         </Pressable>
       </ScrollView>
-
       <Modal visible={Boolean(activeStory)} animationType="fade" onRequestClose={() => setActiveStory(null)}>
         {activeStory ? (
           <View style={styles.storyViewer}>
@@ -225,7 +205,6 @@ export default function TodayScreen() {
           </View>
         ) : null}
       </Modal>
-
       <Modal transparent visible={showPreviewNote} animationType="fade" onRequestClose={() => setShowPreviewNote(false)}>
         <Pressable style={styles.noteBackdrop} onPress={() => setShowPreviewNote(false)}>
           <View style={styles.noteSheet}>
@@ -238,7 +217,6 @@ export default function TodayScreen() {
           </View>
         </Pressable>
       </Modal>
-
       <Modal transparent visible={Boolean(activeNotice)} animationType="slide" onRequestClose={() => setActiveNotice(null)}>
         <View style={styles.noteBackdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setActiveNotice(null)} accessibilityRole="button" accessibilityLabel="Close activity panel" />
@@ -259,7 +237,6 @@ export default function TodayScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },

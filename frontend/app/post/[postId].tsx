@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { spacing, layout } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import {
@@ -28,7 +27,6 @@ import { IconButton } from '@/components/ui/IconButton';
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/ui/Icons';
 import { Avatar } from '@/components/ui/Avatar';
-
 export default function PostDetailScreen() {
   const insets = useSafeAreaInsets();
   const { postId } = useLocalSearchParams<{ postId: string }>();
@@ -38,7 +36,6 @@ export default function PostDetailScreen() {
   const [post, setPost] = useState<LocalPhotoPost | null>(null);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
   const [relatedMemories, setRelatedMemories] = useState<LocalPhotoPost[]>([]);
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -50,7 +47,6 @@ export default function PostDetailScreen() {
       };
     }, [postId]),
   );
-
   useEffect(() => {
     let isActive = true;
     if (post) {
@@ -68,7 +64,6 @@ export default function PostDetailScreen() {
       isActive = false;
     };
   }, [post]);
-
   const date = post ? new Date(post.createdAt) : null;
   const formattedDate = date?.toLocaleDateString(undefined, {
     weekday: 'short',
@@ -80,11 +75,9 @@ export default function PostDetailScreen() {
     hour: 'numeric',
     minute: '2-digit',
   });
-
   const handleDelete = () => {
     if (!post) return;
     if (Platform.OS === 'web') {
-      // eslint-disable-next-line no-alert
       if (typeof window !== 'undefined' && window.confirm('Delete this memory? This cannot be undone.')) {
         deleteLocalPhotoPost(post.id).then(() => router.back());
       }
@@ -102,7 +95,6 @@ export default function PostDetailScreen() {
       },
     ]);
   };
-
   const handleShare = async () => {
     if (!post) return;
     try {
@@ -122,10 +114,8 @@ export default function PostDetailScreen() {
         });
       }
     } catch {
-      // ignore cancelled shares
     }
   };
-
   const handleToggleFavorite = async () => {
     if (!post) return;
     const updated = await toggleFavorite(post.id);
@@ -138,9 +128,7 @@ export default function PostDetailScreen() {
       });
     }
   };
-
   const description = post ? post.caption || '' : '';
-
   const metadataRows: { label: string; value: string }[] = post
     ? [
         { label: 'Category', value: post.category || 'General' },
@@ -152,11 +140,9 @@ export default function PostDetailScreen() {
         { label: 'Time', value: timeString || '—' },
       ]
     : [];
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-
       {showFullPhoto && post && (
         <PhotoViewer
           source={{ uri: post.uri }}
@@ -166,7 +152,6 @@ export default function PostDetailScreen() {
           caption={post.caption}
         />
       )}
-
       {/* Top Navigation Row (matching Screen 2 "Details") */}
       <View style={styles.topNavRow}>
         <IconButton
@@ -176,9 +161,7 @@ export default function PostDetailScreen() {
           size="sm"
           accessibilityLabel="Go back"
         />
-
         <Text style={styles.navTitle}>Details</Text>
-
         <View style={styles.rightNavActions}>
           <IconButton
             icon="heart"
@@ -196,7 +179,6 @@ export default function PostDetailScreen() {
           />
         </View>
       </View>
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Hero Card (matching Screen 2 Hero Photo) */}
         {post ? (
@@ -208,13 +190,11 @@ export default function PostDetailScreen() {
               accessibilityLabel="View photo fullscreen"
             >
               <Image source={{ uri: post.uri }} style={styles.heroImage} resizeMode="cover" />
-
               {/* Floating Top Left Badge: Time (e.g. 25 min in image 2) */}
               <View style={styles.topLeftPill}>
                 <Icon name="clock" size={13} color="#FFFFFF" />
                 <Text style={styles.pillText}>{timeString || 'Recently'}</Text>
               </View>
-
               {/* Floating Top Right Badge: Hearts (e.g. 385 in image 2) */}
               <View style={styles.topRightPill}>
                 <Icon
@@ -225,7 +205,6 @@ export default function PostDetailScreen() {
                 />
                 <Text style={styles.pillText}>{post.isFavorite ? 'Loved' : 'Fav'}</Text>
               </View>
-
               {/* Floating Bottom Author Pill inside the Hero Photo (matching Mia Rose pill in image 2) */}
               <View style={styles.floatingAuthorPill}>
                 <View style={styles.authorInfoBlock}>
@@ -237,7 +216,6 @@ export default function PostDetailScreen() {
                     </Text>
                   </View>
                 </View>
-
                 <View style={styles.authorActionPills}>
                   <Pressable
                     onPress={() => router.push(`/edit/${post.id}`)}
@@ -262,14 +240,12 @@ export default function PostDetailScreen() {
             <Text style={styles.emptyHeroText}>Memory not found</Text>
           </View>
         )}
-
         {post && (
           <View style={styles.detailsBody}>
             {/* Memory Title */}
             <Text style={styles.memoryTitle}>
               {post.title || post.caption || 'Captured Moment'}
             </Text>
-
             {/* Tag Badges (matching Easy, 2 Serving, 4.8 in reference image) */}
             <View style={styles.pillTagsRow}>
               <View style={styles.tagCapsule}>
@@ -284,7 +260,6 @@ export default function PostDetailScreen() {
                 <Text style={[styles.tagCapsuleText, { color: colors.highlight }]}>★ 4.9</Text>
               </View>
             </View>
-
             {/* Description Paragraph */}
             {description ? (
               <Text style={styles.memoryDescription}>{description}</Text>
@@ -294,7 +269,6 @@ export default function PostDetailScreen() {
                 Memora.
               </Text>
             )}
-
             {/* Prompt Quote (if any) */}
             {post.prompt ? (
               <View style={styles.promptCard}>
@@ -302,7 +276,6 @@ export default function PostDetailScreen() {
                 <Text style={styles.promptText}>"{post.prompt}"</Text>
               </View>
             ) : null}
-
             {/* Metadata Card */}
             {metadataRows.length > 0 && (
               <View style={styles.metadataCard}>
@@ -315,7 +288,6 @@ export default function PostDetailScreen() {
                 ))}
               </View>
             )}
-
             {/* Related Moments (matching Cooking Steps / Highlights in image 2) */}
             {relatedMemories.length > 0 && (
               <View style={styles.relatedSection}>
@@ -344,10 +316,8 @@ export default function PostDetailScreen() {
             )}
           </View>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
-
       {/* Floating Bottom Action Bar (matching "Start Cooking" capsule in reference image 2) */}
       {post && (
         <View style={[styles.floatingBottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
@@ -363,10 +333,8 @@ export default function PostDetailScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     safeArea: {
       flex: 1,

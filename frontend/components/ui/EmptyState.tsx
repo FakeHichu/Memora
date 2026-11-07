@@ -1,10 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-
 import { spacing, typography, radius, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
-
 type EmptyStateVariant =
   | 'default'
   | 'camera'
@@ -17,7 +15,6 @@ type EmptyStateVariant =
   | 'bell'
   | 'cloud'
   | 'prompt';
-
 type EmptyStateProps = {
   title: string;
   message?: string;
@@ -36,7 +33,6 @@ type EmptyStateProps = {
   illustration?: React.ReactNode;
   accessibilityLabel?: string;
 };
-
 function getVariantConfig(colors: ReturnType<typeof useAppTheme>['colors']): Record<EmptyStateVariant, { icon: string; illustrationColor: string }> {
   return {
     default: { icon: 'cloud', illustrationColor: colors.textMuted },
@@ -52,7 +48,6 @@ function getVariantConfig(colors: ReturnType<typeof useAppTheme>['colors']): Rec
     prompt: { icon: 'calendar', illustrationColor: colors.accent },
   };
 }
-
 function EmptyStateIllustration({
   variant,
   color,
@@ -92,7 +87,6 @@ function EmptyStateIllustration({
     cloud: 'cloud',
     prompt: 'calendar',
   };
-
   return (
     <View style={[styles.illustrationWrapper, { width: size, height: size }]}>
       <View style={[styles.illustrationBg, { backgroundColor: `${color}15`, width: size, height: size }]}>
@@ -102,7 +96,6 @@ function EmptyStateIllustration({
     </View>
   );
 }
-
 export function EmptyState({
   title,
   message,
@@ -116,10 +109,8 @@ export function EmptyState({
 }: EmptyStateProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   const config = getVariantConfig(colors);
   const effectiveColor = config[variant]?.illustrationColor ?? colors.textMuted;
-
   return (
     <View style={[styles.container, style]} accessibilityLabel={accessibilityLabel || title}>
       {illustration ? (
@@ -127,10 +118,8 @@ export function EmptyState({
       ) : (
         <EmptyStateIllustration variant={variant} color={effectiveColor} size={96} />
       )}
-
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
-
       {(action || secondaryAction) && (
         <View style={styles.actionsContainer}>
           {secondaryAction && (
@@ -170,7 +159,6 @@ export function EmptyState({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {

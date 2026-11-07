@@ -10,11 +10,8 @@ import {
   Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, spacing, radius, typography, animation, borders } from '@/constants/theme';
-
 import { Icon } from '@/components/ui/Icons';
-
 type PhotoViewerProps = {
   source: { uri: string };
   onClose: () => void;
@@ -23,13 +20,11 @@ type PhotoViewerProps = {
   caption?: string;
   style?: ViewStyle;
 };
-
 /* eslint-disable react-hooks/refs */
 export function PhotoViewer({ source, onClose, title, date, caption, style }: PhotoViewerProps) {
   const fadeAnim = React.useRef(new Animated.Value(0));
   const scaleAnim = React.useRef(new Animated.Value(0.95));
   const slideAnim = React.useRef(new Animated.Value(20));
-
   React.useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim.current, {
@@ -51,9 +46,7 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
         useNativeDriver: true,
       }),
     ]).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   const close = () => {
     Animated.parallel([
       Animated.timing(fadeAnim.current, {
@@ -70,11 +63,9 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
       }),
     ]).start(() => onClose());
   };
-
   return (
     <Animated.View style={[styles.overlay, { opacity: fadeAnim.current }]}>
       <Pressable onPress={close} style={styles.backdrop} accessibilityLabel="Close photo viewer" />
-
       <Animated.View
         style={[
           {
@@ -94,9 +85,7 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
             </Pressable>
           </View>
         </SafeAreaView>
-
         <Image source={source} style={styles.image} resizeMode="contain" />
-
         {(title || date || caption) && (
           <View style={styles.bottomSheet}>
             {title && <Text style={styles.title}>{title}</Text>}
@@ -108,7 +97,6 @@ export function PhotoViewer({ source, onClose, title, date, caption, style }: Ph
     </Animated.View>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,

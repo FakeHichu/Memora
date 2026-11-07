@@ -1,10 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
-
 import { borders, shadows, webShadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
-
 type IconButtonProps = {
   icon: string;
   onPress: () => void;
@@ -14,7 +12,6 @@ type IconButtonProps = {
   accessibilityLabel?: string;
   disabled?: boolean;
 };
-
 const KNOWN_ICONS: Set<string> = new Set([
   'home',
   'calendar',
@@ -46,7 +43,6 @@ const KNOWN_ICONS: Set<string> = new Set([
   'tag',
   'map-marker',
 ]);
-
 export function IconButton({
   icon,
   onPress,
@@ -58,19 +54,16 @@ export function IconButton({
 }: IconButtonProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   const sizeStyles = {
     sm: styles.sizeSm,
     md: styles.sizeMd,
     lg: styles.sizeLg,
   }[size];
-
   const iconSizes = {
     sm: 16,
     md: 20,
     lg: 24,
   }[size];
-
   const variantStyles = {
     default: styles.variantDefault,
     chrome: styles.variantChrome,
@@ -78,9 +71,7 @@ export function IconButton({
     ghost: styles.variantGhost,
     overlay: styles.variantOverlay,
   }[variant];
-
   const pressedStyle = Platform.OS === 'web' ? webShadows.xs : shadows.xs;
-
   const iconColors = {
     default: colors.textPrimary,
     chrome: colors.textOnChrome,
@@ -88,9 +79,7 @@ export function IconButton({
     ghost: colors.textSecondary,
     overlay: colors.textPrimary,
   };
-
   const isIconComponent = KNOWN_ICONS.has(icon);
-
   return (
     <Pressable
       onPress={onPress}
@@ -120,11 +109,9 @@ export function IconButton({
     </Pressable>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
   const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
-
   return StyleSheet.create({
     base: {
       borderRadius: 999,

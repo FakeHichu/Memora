@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
 import {
   getLocalPhotoPosts,
@@ -27,10 +26,7 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icons';
 import { FilterChips } from '@/components/ui/FilterChips';
-
 const SEARCH_FILTERS = ['All', 'Favorites', 'People', 'Places', 'Events'];
-
-// Highlight matching text in search results
 function HighlightedText({
   text,
   query,
@@ -43,15 +39,12 @@ function HighlightedText({
   if (!query.trim() || !text) {
     return <Text style={style}>{text}</Text>;
   }
-
   const lowerText = text.toLowerCase();
   const lowerQuery = query.toLowerCase();
   const idx = lowerText.indexOf(lowerQuery);
-
   if (idx === -1) {
     return <Text style={style}>{text}</Text>;
   }
-
   return (
     <Text style={style}>
       {text.slice(0, idx)}
@@ -60,7 +53,6 @@ function HighlightedText({
     </Text>
   );
 }
-
 const highlightStyle = {
   match: {
     backgroundColor: 'rgba(122, 159, 216, 0.25)',
@@ -69,7 +61,6 @@ const highlightStyle = {
     borderRadius: 2,
   },
 };
-
 export default function SearchScreen() {
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,11 +71,9 @@ export default function SearchScreen() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const searchInputRef = useRef<TextInput>(null);
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       Promise.all([getLocalPhotoPosts(), getRecentSearches()])
         .then(([savedPosts, savedSearches]) => {
           if (isActive) {
@@ -99,34 +88,26 @@ export default function SearchScreen() {
             setIsLoading(false);
           }
         });
-
       return () => {
         isActive = false;
       };
     }, []),
   );
-
-  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // Run search when debounced query changes
   useEffect(() => {
     const timer = setTimeout(() => {
       const query = debouncedQuery.toLowerCase().trim();
-
       if (!query) {
         setResults([]);
         setHasSearched(false);
         return;
       }
-
       setHasSearched(true);
-
       let filtered = posts.filter((post) => {
         if (!post.isArchived) {
           const caption = (post.caption || '').toLowerCase();
@@ -148,8 +129,6 @@ export default function SearchScreen() {
         }
         return false;
       });
-
-      // Apply filter
       if (selectedFilter !== 'All') {
         if (selectedFilter === 'Favorites') {
           filtered = filtered.filter((p) => p.isFavorite);
@@ -157,26 +136,19 @@ export default function SearchScreen() {
           filtered = filtered.filter((p) => p.category === selectedFilter);
         }
       }
-
       setResults(filtered);
     }, 0);
     return () => clearTimeout(timer);
   }, [debouncedQuery, posts, selectedFilter]);
-
-  // Save search when user stops typing and there are results
   useEffect(() => {
     if (!debouncedQuery.trim()) return;
     if (results.length === 0) return;
-
     addRecentSearch(debouncedQuery.trim()).then(() => {
       getRecentSearches().then(setRecentSearches);
     });
   }, [debouncedQuery, results.length]);
-
-  // Web keyboard shortcut: / to focus search
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-
     const handler = (event: KeyboardEvent) => {
       if (event.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         event.preventDefault();
@@ -186,29 +158,23 @@ export default function SearchScreen() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
-
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
   };
-
   const handleClear = () => {
     setSearchQuery('');
     setDebouncedQuery('');
     setHasSearched(false);
   };
-
   const handleRecentSearchPress = (query: string) => {
     setSearchQuery(query);
     setDebouncedQuery(query);
   };
-
   const handleClearRecentSearches = async () => {
     await clearRecentSearches();
     setRecentSearches([]);
   };
-
   const recentPosts = posts.filter((p) => !p.isArchived).slice(0, 6);
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -225,7 +191,6 @@ export default function SearchScreen() {
               : 'Find your memories'
           }
         />
-
         {/* Search Input */}
         <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
@@ -260,7 +225,6 @@ export default function SearchScreen() {
             ) : null}
           </View>
         </View>
-
         {/* Filters */}
         {hasSearched && (
           <FilterChips
@@ -269,7 +233,6 @@ export default function SearchScreen() {
             onFilterChange={setSelectedFilter}
           />
         )}
-
         {isLoading ? (
           <View style={styles.skeletonGrid}>
             {[0, 1, 2].map((i) => (
@@ -344,7 +307,6 @@ export default function SearchScreen() {
                 </View>
               </View>
             )}
-
             {/* Recent Memories */}
             {recentPosts.length > 0 && (
               <View style={styles.recentSection}>
@@ -369,7 +331,6 @@ export default function SearchScreen() {
                 </View>
               </View>
             )}
-
             {recentPosts.length === 0 && !isLoading && (
               <EmptyState
                 title="No memories yet"
@@ -385,13 +346,11 @@ export default function SearchScreen() {
             )}
           </>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

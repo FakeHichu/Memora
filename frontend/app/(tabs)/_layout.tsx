@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { MemoraTabBar } from '@/components/ui/MemoraTabBar';
-
 export default function TabsLayout() {
   return (
     <Tabs

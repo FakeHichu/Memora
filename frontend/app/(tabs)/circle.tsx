@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -27,16 +26,13 @@ import {
   type LocalPhotoPost,
 } from '@/lib/photo-draft';
 import { useClass } from '@/hooks/useClass';
-
 export default function CircleScreen() {
   const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
   const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(false);
-
   const loadPosts = useCallback(() => {
     let isActive = true;
-
     getLocalPhotoPosts()
       .then((savedPosts) => {
         if (isActive) {
@@ -50,16 +46,12 @@ export default function CircleScreen() {
           setIsLoading(false);
         }
       });
-
     return () => {
       isActive = false;
     };
   }, []);
-
   useFocusEffect(loadPosts);
-
   const userPostedToday = hasPostedToday(sharedPosts);
-
   const handleCopyCode = () => {
     if (activeClass?.join_code) {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -68,7 +60,6 @@ export default function CircleScreen() {
         try {
           Clipboard.setString(activeClass.join_code);
         } catch {
-          // ignore
         }
       }
       setCopiedCode(true);
@@ -78,14 +69,12 @@ export default function CircleScreen() {
       }
     }
   };
-
   const handleReact = async (postId: string, emoji: string) => {
     const updated = await toggleLocalPhotoReaction(postId, emoji);
     if (updated) {
       setSharedPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
     }
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -94,7 +83,6 @@ export default function CircleScreen() {
           title="Circle"
           subtitle={activeClass ? activeClass.name : 'Shared class memories'}
         />
-
         {/* Loading state */}
         {(isClassLoading || isLoading) && (
           <View style={{ gap: spacing.md }}>
@@ -102,7 +90,6 @@ export default function CircleScreen() {
             <SkeletonMemoryCard aspectRatio={4 / 3} variant="timeline" />
           </View>
         )}
-
         {/* If no class joined */}
         {!isClassLoading && !isLoading && !activeClass && (
           <View style={styles.noClassContainer}>
@@ -123,7 +110,6 @@ export default function CircleScreen() {
             />
           </View>
         )}
-
         {/* Active Class Info Card */}
         {activeClass && (
           <>
@@ -141,7 +127,6 @@ export default function CircleScreen() {
                   </Text>
                   <Text style={styles.classYear}>Class of {activeClass.academic_year}</Text>
                 </View>
-
                 {/* Invite code badge & button */}
                 <Pressable
                   onPress={handleCopyCode}
@@ -154,7 +139,6 @@ export default function CircleScreen() {
                   <Text style={styles.copyHint}>{copiedCode ? '✓ Copied' : 'Tap to copy'}</Text>
                 </Pressable>
               </View>
-
               {/* Class Switcher if multiple classes */}
               {classes.length > 1 && (
                 <ScrollView
@@ -183,7 +167,6 @@ export default function CircleScreen() {
                   ))}
                 </ScrollView>
               )}
-
               <View style={styles.classStats}>
                 <View style={styles.stat}>
                   <Text style={styles.statValue}>{activeClass.member_count || 1}</Text>
@@ -201,7 +184,6 @@ export default function CircleScreen() {
                 </View>
               </View>
             </View>
-
             {/* Today's Circle Feed */}
             <SectionHeader
               title="Today in Your Circle"
@@ -211,7 +193,6 @@ export default function CircleScreen() {
                   : 'Post your photo to unblur classmates'
               }
             />
-
             {isLoading ? (
               <View style={styles.loadingState}>
                 <Text style={styles.loadingText}>Loading circle memories…</Text>
@@ -245,7 +226,6 @@ export default function CircleScreen() {
                 ))}
               </View>
             )}
-
             {/* Class Actions */}
             <View style={styles.classActionsRow}>
               <Button
@@ -263,13 +243,11 @@ export default function CircleScreen() {
             </View>
           </>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
 import { Icon } from '@/components/ui/Icons';
@@ -24,11 +23,8 @@ import { Card } from '@/components/ui/Card';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { TagBadge } from '@/components/ui/TagBadge';
 import { useToast } from '@/components/ui/Toast';
-
 const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
-
 type CreateStep = 'landing' | 'details';
-
 export default function CreateScreen() {
   const { showToast } = useToast();
   const [step, setStep] = useState<CreateStep>('landing');
@@ -42,7 +38,6 @@ export default function CreateScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const handleBack = useCallback(() => {
     if (step === 'details') {
       if (caption.trim() || title.trim() || location.trim() || tags.length > 0) {
@@ -69,7 +64,6 @@ export default function CreateScreen() {
       router.back();
     }
   }, [step, caption, title, location, tags]);
-
   useEffect(() => {
     if (Platform.OS === 'android') {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -82,7 +76,6 @@ export default function CreateScreen() {
       return () => backHandler.remove();
     }
   }, [step, handleBack]);
-
   const handleTakePhoto = async () => {
     try {
       setErrorMessage(null);
@@ -91,14 +84,12 @@ export default function CreateScreen() {
         setErrorMessage('Camera permission is required to capture memories.');
         return;
       }
-
       setIsProcessing(true);
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.9,
         allowsEditing: false,
       });
-
       if (!result.canceled && result.assets[0]?.uri) {
         setPhotoUri(result.assets[0].uri);
         setStep('details');
@@ -109,7 +100,6 @@ export default function CreateScreen() {
       setIsProcessing(false);
     }
   };
-
   const handleChooseFromLibrary = async () => {
     try {
       setErrorMessage(null);
@@ -118,14 +108,12 @@ export default function CreateScreen() {
         setErrorMessage('Photo library permission is required to select photos.');
         return;
       }
-
       setIsProcessing(true);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.9,
         allowsEditing: false,
       });
-
       if (!result.canceled && result.assets[0]?.uri) {
         setPhotoUri(result.assets[0].uri);
         setStep('details');
@@ -136,24 +124,19 @@ export default function CreateScreen() {
       setIsProcessing(false);
     }
   };
-
   const handleAddTag = () => {
     const normalized = newTag.toLowerCase().trim();
     if (!normalized || tags.includes(normalized) || tags.length >= 10) return;
     setTags((prev) => [...prev, normalized]);
     setNewTag('');
   };
-
   const handleRemoveTag = (tag: string) => {
     setTags((prev) => prev.filter((t) => t !== tag));
   };
-
   const handleSave = async () => {
     if (!photoUri) return;
-
     setIsSaving(true);
     setErrorMessage(null);
-
     try {
       await publishLocalPhoto(
         photoUri,
@@ -171,7 +154,6 @@ export default function CreateScreen() {
       setIsSaving(false);
     }
   };
-
   if (step === 'landing') {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -189,9 +171,7 @@ export default function CreateScreen() {
             <Text style={styles.screenTitle}>New Memory</Text>
             <View style={{ width: 44 }} />
           </View>
-
           <Text style={styles.landingQuestion}>What do you want to remember?</Text>
-
           <View style={styles.landingOptions}>
             <Pressable
               onPress={handleTakePhoto}
@@ -211,7 +191,6 @@ export default function CreateScreen() {
               </View>
               <Icon name="chevron-right" size={16} color={colors.textMuted} />
             </Pressable>
-
             <Pressable
               onPress={handleChooseFromLibrary}
               disabled={isProcessing}
@@ -235,8 +214,6 @@ export default function CreateScreen() {
       </SafeAreaView>
     );
   }
-
-  // Details step
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -264,14 +241,12 @@ export default function CreateScreen() {
               <Text style={styles.retakeText}>Retake</Text>
             </Pressable>
           </View>
-
           {/* Photo Preview */}
           <View style={styles.photoPreviewContainer}>
             {photoUri && (
               <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
             )}
           </View>
-
           <Card style={styles.detailsCard} padding="lg">
             {/* Title */}
             <View style={styles.field}>
@@ -289,7 +264,6 @@ export default function CreateScreen() {
                 accessibilityLabel="Memory title"
               />
             </View>
-
             {/* Caption */}
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Caption</Text>
@@ -305,7 +279,6 @@ export default function CreateScreen() {
                 accessibilityLabel="Memory caption"
               />
             </View>
-
             {/* Category */}
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Category</Text>
@@ -331,7 +304,6 @@ export default function CreateScreen() {
                 ))}
               </View>
             </View>
-
             {/* Location */}
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Location (optional)</Text>
@@ -347,7 +319,6 @@ export default function CreateScreen() {
                 accessibilityLabel="Memory location"
               />
             </View>
-
             {/* Tags */}
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>Tags (optional)</Text>
@@ -389,9 +360,7 @@ export default function CreateScreen() {
               <Text style={styles.tagHint}>{tags.length}/10 tags</Text>
             </View>
           </Card>
-
           {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-
           <View style={styles.actionButtons}>
             <Button
               title={isSaving ? 'Saving…' : 'Save Memory'}
@@ -407,7 +376,6 @@ export default function CreateScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

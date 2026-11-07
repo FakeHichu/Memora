@@ -1,9 +1,7 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type AvatarProps = {
   name: string;
   size?: number;
@@ -11,7 +9,6 @@ type AvatarProps = {
   tint?: string;
   ring?: boolean;
 };
-
 export function Avatar({ name, size = 44, photoUri, tint, ring = false }: AvatarProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
@@ -21,7 +18,6 @@ export function Avatar({ name, size = 44, photoUri, tint, ring = false }: Avatar
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('');
-
   return (
     <View
       style={[
@@ -46,7 +42,6 @@ export function Avatar({ name, size = 44, photoUri, tint, ring = false }: Avatar
     </View>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   frame: {

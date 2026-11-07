@@ -3,63 +3,47 @@ import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-nat
 import { useAppTheme } from '@/providers/ThemeProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SPLASH_SHOWN_KEY = 'memora.splash_shown.v1';
-
 export default function SplashScreen() {
   const { mode, colors } = useAppTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [hasCompleted, setHasCompleted] = useState(false);
   const router = useRouter();
-
   useEffect(() => {
     let isActive = true;
-
-    // Check if splash has already been shown
     AsyncStorage.getItem(SPLASH_SHOWN_KEY).then((shown) => {
       if (!isActive) return;
-
       if (shown === 'true') {
-        // Splash already shown, proceed directly to app
         setHasCompleted(true);
         return;
       }
-
-      // First launch - show splash for 2.5 seconds
       const splashTimeout = setTimeout(async () => {
         if (!isActive) return;
         try {
-          // Initialize authentication session - session already restored by useAuth on app start
-          // Just mark splash as shown and proceed
           AsyncStorage.setItem(SPLASH_SHOWN_KEY, 'true').catch(() => undefined);
           setHasCompleted(true);
           router.replace('/(tabs)/home');
         } catch (err) {
-          // Even if initialization fails, proceed to app
           if (!isActive) return;
           AsyncStorage.setItem(SPLASH_SHOWN_KEY, 'true').catch(() => undefined);
           setHasCompleted(true);
           router.replace('/(tabs)/home');
         }
       }, 2500);
-
       return () => {
         isActive = false;
         clearTimeout(splashTimeout);
       };
     });
   }, [router, isLoading]);
-
   if (hasCompleted) {
-    return null; // Render nothing, let the navigation proceed
+    return null;
   }
-
   const isDark = mode === 'dark';
   const backgroundColor = isDark ? '#0B0813' : '#F7F2E9';
   const textColor = isDark ? '#F6F0FF' : '#30243D';
   const accentColor = isDark ? '#8052C8' : '#80658F';
-
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -67,13 +51,10 @@ export default function SplashScreen() {
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>MEMORA</Text>
         </View>
-
         {/* Application Name */}
         <Text style={styles.appName}>Memora</Text>
-
         {/* Tagline */}
         <Text style={styles.tagline}>Your memories, together.</Text>
-
         {/* Subtle loading animation */}
         {isLoading && (
           <ActivityIndicator
@@ -86,7 +67,6 @@ export default function SplashScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

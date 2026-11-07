@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import {
   radius,
   spacing,
@@ -34,7 +33,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors);
@@ -44,15 +42,12 @@ export default function SettingsScreen() {
   const [showImportInput, setShowImportInput] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [isImporting, setIsImporting] = useState(false);
-
   const handleExport = async () => {
     setIsExporting(true);
     try {
       const data = await exportAllData();
       const json = exportDataAsJSON(data);
-
       if (Platform.OS === 'web') {
-        // Web: trigger download
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -74,19 +69,16 @@ export default function SettingsScreen() {
       setIsExporting(false);
     }
   };
-
   const handleImport = async () => {
     if (!importJson.trim()) {
       showToast({ message: 'Paste your JSON export first.', variant: 'warning' });
       return;
     }
-
     setIsImporting(true);
     try {
       const result = await importData(importJson.trim());
       setImportJson('');
       setShowImportInput(false);
-
       if (result.errors.length > 0 && result.imported === 0) {
         showToast({ message: result.errors[0], variant: 'error' });
       } else {
@@ -102,13 +94,11 @@ export default function SettingsScreen() {
       setIsImporting(false);
     }
   };
-
   const handleClearData = async () => {
     await clearLocalPhotoPosts();
     setConfirmClear(false);
     showToast({ message: 'All memories deleted', variant: 'error', duration: 2000 });
   };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -129,7 +119,6 @@ export default function SettingsScreen() {
           <Text style={styles.title}>Settings</Text>
           <View style={{ width: 40 }} />
         </View>
-
         {/* About */}
         <ProfileSection title="About">
           <View style={styles.appInfo}>
@@ -149,7 +138,6 @@ export default function SettingsScreen() {
             icon="padlock"
           />
         </ProfileSection>
-
         {/* Appearance */}
         <ProfileSection title="Appearance">
           <View style={styles.appearanceControl}>
@@ -196,7 +184,6 @@ export default function SettingsScreen() {
           <ProfileDivider />
           <ProfileRow label="App icon" value="Default" icon="picture" />
         </ProfileSection>
-
         {/* Data */}
         <ProfileSection title="Import & Export">
           <ProfileRow
@@ -212,7 +199,6 @@ export default function SettingsScreen() {
             icon="cloud"
             onPress={() => setShowImportInput(!showImportInput)}
           />
-
           {showImportInput && (
             <View style={styles.importContainer}>
               <TextInput
@@ -248,7 +234,6 @@ export default function SettingsScreen() {
             </View>
           )}
         </ProfileSection>
-
         {/* Keyboard Shortcuts */}
         {Platform.OS === 'web' && (
           <ProfileSection title="Keyboard Shortcuts">
@@ -266,7 +251,6 @@ export default function SettingsScreen() {
             </View>
           </ProfileSection>
         )}
-
         {/* Danger Zone */}
         <ProfileSection title="Data & Safety">
           <ProfileRow
@@ -278,7 +262,6 @@ export default function SettingsScreen() {
           />
         </ProfileSection>
       </ScrollView>
-
       <ConfirmDialog
         visible={confirmClear}
         title="Delete all memories?"
@@ -291,7 +274,6 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: {

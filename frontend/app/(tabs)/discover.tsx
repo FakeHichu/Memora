@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Avatar } from '@/components/ui/Avatar';
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
 import { previewPosts, previewStories, previewTopics } from '@/lib/social-preview';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export default function DiscoverScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors);
@@ -15,7 +13,6 @@ export default function DiscoverScreen() {
   const filteredTopics = previewTopics.filter((topic) => `${topic.title} ${topic.count}`.toLowerCase().includes(normalizedQuery));
   const filteredPeople = previewStories.filter((story) => story.name.toLowerCase().includes(normalizedQuery));
   const filteredPosts = previewPosts.filter((post) => `${post.name} ${post.caption} ${post.location}`.toLowerCase().includes(normalizedQuery));
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -26,7 +23,6 @@ export default function DiscoverScreen() {
           </View>
           <Text style={styles.headerMark}>DISCOVER</Text>
         </View>
-
         <View style={styles.searchWrap}>
           <Text style={styles.searchIcon}>⌕</Text>
           <TextInput
@@ -44,12 +40,10 @@ export default function DiscoverScreen() {
             </Pressable>
           ) : null}
         </View>
-
         <View style={styles.previewNotice}>
           <View style={styles.previewDot} />
           <Text style={styles.previewNoticeText}>PREVIEW CONTENT · NOT CONNECTED TO A LIVE FEED</Text>
         </View>
-
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.eyebrow}>A PLACE TO START</Text>
@@ -67,7 +61,6 @@ export default function DiscoverScreen() {
             </Pressable>
           )) : <Text style={styles.noResults}>No preview topics match that search.</Text>}
         </ScrollView>
-
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.eyebrow}>PEOPLE TO REMEMBER</Text>
@@ -85,7 +78,6 @@ export default function DiscoverScreen() {
           ))}
           {!filteredPeople.length ? <Text style={styles.noResults}>No preview people match that search.</Text> : null}
         </ScrollView>
-
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.eyebrow}>A MOMENT FROM THE COMMUNITY</Text>
@@ -104,7 +96,6 @@ export default function DiscoverScreen() {
           </View>
         ))}
         {!filteredPosts.length ? <Text style={styles.noResults}>No preview moments match that search.</Text> : null}
-
         <View style={styles.communityNote}>
           <Text style={styles.communityGlyph}>⌂</Text>
           <View style={styles.communityCopy}>
@@ -117,7 +108,6 @@ export default function DiscoverScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },

@@ -1,9 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-
 import { radius, spacing, typography, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type TagBadgeProps = {
   label: string;
   onPress?: () => void;
@@ -12,7 +10,6 @@ type TagBadgeProps = {
   size?: 'sm' | 'md';
   style?: ViewStyle;
 };
-
 export function TagBadge({
   label,
   onPress,
@@ -23,7 +20,6 @@ export function TagBadge({
 }: TagBadgeProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   const content = (
     <View
       style={[
@@ -56,7 +52,6 @@ export function TagBadge({
       )}
     </View>
   );
-
   if (onPress && !onRemove) {
     return (
       <Pressable
@@ -69,10 +64,8 @@ export function TagBadge({
       </Pressable>
     );
   }
-
   return content;
 }
-
 type TagListProps = {
   tags: string[];
   onRemove?: (tag: string) => void;
@@ -82,7 +75,6 @@ type TagListProps = {
   maxVisible?: number;
   style?: ViewStyle;
 };
-
 export function TagList({
   tags,
   onRemove,
@@ -94,12 +86,9 @@ export function TagList({
 }: TagListProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   const visible = maxVisible ? tags.slice(0, maxVisible) : tags;
   const remaining = maxVisible ? tags.length - maxVisible : 0;
-
   if (tags.length === 0) return null;
-
   return (
     <View style={[styles.tagList, style]}>
       {visible.map((tag) => (
@@ -120,7 +109,6 @@ export function TagList({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     tagList: {

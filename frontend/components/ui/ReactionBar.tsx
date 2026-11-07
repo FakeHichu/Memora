@@ -1,9 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
 import { radius, spacing, typography, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export const REACTION_EMOJIS = [
   { type: 'heart', emoji: '❤️', label: 'Love' },
   { type: 'fire', emoji: '🔥', label: 'Fire' },
@@ -12,14 +10,12 @@ export const REACTION_EMOJIS = [
   { type: 'cry', emoji: '😭', label: 'Cry' },
   { type: 'dead', emoji: '💀', label: 'Dead' },
 ];
-
 type ReactionBarProps = {
   reactions?: Record<string, number>;
   userReaction?: string | null;
   onReact: (emoji: string) => void;
   compact?: boolean;
 };
-
 export function ReactionBar({
   reactions = {},
   userReaction = null,
@@ -28,13 +24,11 @@ export function ReactionBar({
 }: ReactionBarProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
       {REACTION_EMOJIS.map(({ emoji, label }) => {
         const count = reactions[emoji] || 0;
         const isSelected = userReaction === emoji;
-
         return (
           <Pressable key={emoji} onPress={() => onReact(emoji)} style={[
               styles.pill,
@@ -58,7 +52,6 @@ export function ReactionBar({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {

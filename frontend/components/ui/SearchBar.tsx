@@ -1,10 +1,8 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
-
 import { spacing, typography } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
-
 type SearchBarProps = {
   placeholder?: string;
   value: string;
@@ -15,7 +13,6 @@ type SearchBarProps = {
   autoFocus?: boolean;
   floating?: boolean;
 };
-
 export function SearchBar({
   placeholder = 'Search your memories…',
   value,
@@ -29,14 +26,12 @@ export function SearchBar({
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
   const hasText = value.length > 0;
-
   return (
     <View style={[styles.container, floating && styles.containerFloating, style]}>
       <View style={styles.pillTrack}>
         <View style={styles.leftIconContainer}>
           <Icon name="search" size={19} color={colors.textSecondary} />
         </View>
-
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -51,7 +46,6 @@ export function SearchBar({
           spellCheck={false}
           returnKeyType="search"
         />
-
         {hasText && onClear ? (
           <Pressable
             onPress={onClear}
@@ -74,10 +68,8 @@ export function SearchBar({
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     container: {
       paddingHorizontal: spacing.lg,

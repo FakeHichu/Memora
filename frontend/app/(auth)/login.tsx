@@ -11,19 +11,16 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { hasSupabaseConfig } from '@/lib/supabase/client';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 export default function LoginScreen() {
   const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors, mode);
   const { rememberMe, setRememberMe, signInWithEmail } = useAuth();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -31,7 +28,6 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-
   const validateEmail = (val: string): boolean => {
     const trimmed = val.trim();
     if (!trimmed) {
@@ -46,7 +42,6 @@ export default function LoginScreen() {
     setEmailError(null);
     return true;
   };
-
   const validatePassword = (val: string): boolean => {
     if (!val) {
       setPasswordError('Password is required');
@@ -59,23 +54,16 @@ export default function LoginScreen() {
     setPasswordError(null);
     return true;
   };
-
   const handleLogin = async () => {
     setErrorMessage(null);
-
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-
     if (!isEmailValid || !isPasswordValid) return;
-
     setIsSubmitting(true);
-
     try {
       console.log('Attempting login with email:', email.trim());
       const { data, error } = await signInWithEmail(email.trim(), password);
-
       console.log('Login response:', { hasData: !!data, hasError: !!error, error: error?.message });
-
       if (error) {
         console.error('Login error:', error);
         if (error.message.includes('Invalid login credentials')) {
@@ -90,7 +78,6 @@ export default function LoginScreen() {
         setIsSubmitting(false);
         return;
       }
-
       if (data?.session) {
         console.log('Login successful, navigating to welcome');
         router.replace('/(onboarding)/welcome');
@@ -109,14 +96,11 @@ export default function LoginScreen() {
       setIsSubmitting(false);
     }
   };
-
   const continueLocally = () => router.replace('/(onboarding)/welcome');
   const toggleTheme = () => setMode(mode === 'dark' ? 'light' : 'dark');
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-
       {/* Top right theme toggle */}
       <View style={styles.topBar}>
         <Pressable
@@ -129,7 +113,6 @@ export default function LoginScreen() {
           </Text>
         </Pressable>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           {/* Brand Mark Pill */}
@@ -142,13 +125,11 @@ export default function LoginScreen() {
               <Text style={styles.brandTagline}>Memory Capsule</Text>
             </View>
           </View>
-
           {/* Heading */}
           <View style={styles.headerBlock}>
             <Text style={styles.title}>Welcome back</Text>
             <Text style={styles.subtitle}>Sign in to access your memories and moments.</Text>
           </View>
-
           {/* Form Card */}
           <View style={styles.card}>
             {hasSupabaseConfig ? (
@@ -178,7 +159,6 @@ export default function LoginScreen() {
                   </View>
                   {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
                 </View>
-
                 {/* Password field */}
                 <View style={styles.fieldContainer}>
                   <Text style={styles.fieldLabel}>Password</Text>
@@ -212,7 +192,6 @@ export default function LoginScreen() {
                   </View>
                   {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
                 </View>
-
                 {/* Remember Me toggle */}
                 <View style={styles.rememberMeContainer}>
                   <Pressable
@@ -232,13 +211,11 @@ export default function LoginScreen() {
                     {rememberMe ? 'Remember Me' : "Don't remember"}
                   </Text>
                 </View>
-
                 {errorMessage ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorMessage}>{errorMessage}</Text>
                   </View>
                 ) : null}
-
                 {/* Primary Button */}
                 <Pressable
                   onPress={handleLogin}
@@ -256,7 +233,6 @@ export default function LoginScreen() {
                     <Text style={styles.primaryButtonText}>Sign in</Text>
                   )}
                 </Pressable>
-
                 <Link href="/(auth)/forgot-password" asChild>
                   <Pressable disabled={isSubmitting} style={styles.forgotPassLink}>
                     <Text style={[styles.link, isSubmitting && styles.linkDisabled]}>
@@ -288,10 +264,8 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     safeArea: {
       flex: 1,

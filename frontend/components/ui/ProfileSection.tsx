@@ -1,9 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-
 import { colors, radius, spacing, typography, borders } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
-
 type ProfileSectionProps = {
   title: string;
   children: React.ReactNode;
@@ -13,7 +11,6 @@ type ProfileSectionProps = {
     onPress: () => void;
   };
 };
-
 export function ProfileSection({ title, children, style, action }: ProfileSectionProps) {
   return (
     <View style={[styles.section, style]}>
@@ -29,7 +26,6 @@ export function ProfileSection({ title, children, style, action }: ProfileSectio
     </View>
   );
 }
-
 type ProfileRowProps = {
   label: string;
   value: string;
@@ -38,7 +34,6 @@ type ProfileRowProps = {
   style?: ViewStyle;
   destructive?: boolean;
 };
-
 export function ProfileRow({
   label,
   value,
@@ -70,15 +65,12 @@ export function ProfileRow({
     </Pressable>
   );
 }
-
 type ProfileDividerProps = {
   style?: ViewStyle;
 };
-
 export function ProfileDivider({ style }: ProfileDividerProps) {
   return <View style={[styles.divider, style]} />;
 }
-
 const styles = StyleSheet.create({
   section: {
     backgroundColor: colors.surface,

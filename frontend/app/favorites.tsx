@@ -2,7 +2,6 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { spacing, layout, breakpoints, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { getFavoritePosts, toggleFavorite, type LocalPhotoPost } from '@/lib/photo-draft';
@@ -13,7 +12,6 @@ import { useToast } from '@/components/ui/Toast';
 import { IconButton } from '@/components/ui/IconButton';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Icon } from '@/components/ui/Icons';
-
 export default function FavoritesScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
@@ -23,11 +21,9 @@ export default function FavoritesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-
   const loadFavorites = useCallback(() => {
     let isActive = true;
     setIsLoading(true);
-
     getFavoritePosts()
       .then((posts) => {
         if (isActive) {
@@ -41,14 +37,11 @@ export default function FavoritesScreen() {
           setIsLoading(false);
         }
       });
-
     return () => {
       isActive = false;
     };
   }, []);
-
   useFocusEffect(loadFavorites);
-
   const handleToggleFavorite = async (postId: string) => {
     const updated = await toggleFavorite(postId);
     if (updated) {
@@ -56,7 +49,6 @@ export default function FavoritesScreen() {
       showToast({ message: 'Removed from favorites', variant: 'default', duration: 1500 });
     }
   };
-
   const visibleFavorites = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return favorites.filter((post) => {
@@ -76,19 +68,16 @@ export default function FavoritesScreen() {
       );
     });
   }, [favorites, searchQuery]);
-
   const columns =
     screenWidth >= breakpoints.desktop
       ? layout.photoGridColumns.desktop
       : screenWidth >= breakpoints.tablet
         ? layout.photoGridColumns.tablet
-        : 2; // Always clean 2-column on phone matching reference image Screen 3
-
+        : 2;
   const horizontalPadding = spacing.lg * 2;
   const gridGap = 14;
   const tileWidth = (screenWidth - horizontalPadding - gridGap * (columns - 1)) / columns;
   const tileImageHeight = tileWidth * 0.95;
-
   const rows = useMemo(() => {
     const result: LocalPhotoPost[][] = [];
     for (let i = 0; i < visibleFavorites.length; i += columns) {
@@ -96,13 +85,11 @@ export default function FavoritesScreen() {
     }
     return result;
   }, [visibleFavorites, columns]);
-
   const formatMemoryDate = (post: LocalPhotoPost) =>
     new Date(post.createdAt).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
     });
-
   const renderCard = (post: LocalPhotoPost) => (
     <Pressable
       key={post.id}
@@ -125,7 +112,6 @@ export default function FavoritesScreen() {
           <Icon name="heart" size={15} color={colors.highlight} fill={colors.highlight} />
         </Pressable>
       </View>
-
       {/* Centered Rounded Image */}
       <View style={styles.cardImageContainer}>
         <Image
@@ -134,7 +120,6 @@ export default function FavoritesScreen() {
           resizeMode="cover"
         />
       </View>
-
       {/* Bottom Subtitle / Time badge */}
       <View style={styles.cardFooter}>
         <Text style={styles.cardSubtitle} numberOfLines={1}>
@@ -144,7 +129,6 @@ export default function FavoritesScreen() {
       </View>
     </Pressable>
   );
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -167,12 +151,10 @@ export default function FavoritesScreen() {
             accessibilityLabel="Search favorites"
           />
         </View>
-
         {/* Big Headline (matching Screen 3 "Favorite recipes") */}
         <View style={styles.headingBlock}>
           <Text style={styles.headingText}>Favorite memories</Text>
         </View>
-
         {/* Collapsible Search Bar */}
         {showSearch && (
           <View style={styles.searchSection}>
@@ -185,7 +167,6 @@ export default function FavoritesScreen() {
             />
           </View>
         )}
-
         {isLoading ? (
           <View style={styles.loadingGrid}>
             {[0, 1, 2, 3].map((i) => (
@@ -221,16 +202,13 @@ export default function FavoritesScreen() {
             ))}
           </View>
         )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   return StyleSheet.create({
     safeArea: {
       flex: 1,

@@ -2,13 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Platform } from 'react-native';
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export type MemoryCategory = 'All' | 'People' | 'Places' | 'Events' | 'General';
-
 export type LocalPhotoPost = {
   id: string;
   uri: string;
@@ -27,14 +21,12 @@ export type LocalPhotoPost = {
   reactions?: Record<string, number>;
   userReaction?: string | null;
 };
-
 export type LocalProfile = {
   name: string;
   handle: string;
   bio: string;
   email: string;
 };
-
 export type LocalCollection = {
   id: string;
   name: string;
@@ -44,63 +36,38 @@ export type LocalCollection = {
   updatedAt?: string;
   coverMemoryId?: string;
 };
-
 export type ExportedData = {
   version: '1';
   exportedAt: string;
   posts: LocalPhotoPost[];
   collections: LocalCollection[];
 };
-
-// ============================================================================
-// STORAGE KEYS
-// ============================================================================
-
 const legacyPostsStorageKey = 'camera-app.posts.v1';
 const postsStorageKey = 'memora.posts.v1';
 const profileStorageKey = 'memora.profile.v1';
 const collectionsStorageKey = 'memora.collections.v1';
 const recentSearchesKey = 'memora.recent-searches.v1';
 const recentlyViewedKey = 'memora.recently-viewed.v1';
-
-// ============================================================================
-// IN-MEMORY DRAFT STATE
-// ============================================================================
-
 let photoDraft: string | null = null;
 let promptDraft: string | null = null;
-
 const photosDirectory =
   Platform.OS === 'web' ? null : new Directory(Paths.document, 'memora-photos');
-
-// ============================================================================
-// DRAFT MANAGEMENT
-// ============================================================================
-
 export function setPhotoDraft(uri: string, prompt?: string) {
   photoDraft = uri;
   if (prompt) {
     promptDraft = prompt;
   }
 }
-
 export function getPhotoDraft() {
   return photoDraft;
 }
-
 export function getPromptDraft() {
   return promptDraft;
 }
-
 export function clearPhotoDraft() {
   photoDraft = null;
   promptDraft = null;
 }
-
-// ============================================================================
-// CORE POST OPERATIONS
-// ============================================================================
-
 export async function publishLocalPhoto(
   uri: string,
   caption: string,
@@ -116,7 +83,6 @@ export async function publishLocalPhoto(
     format: SaveFormat.JPEG,
     base64: Platform.OS === 'web',
   });
-
   let storedUri = image.uri;
   if (Platform.OS === 'web') {
     if (!image.base64) throw new Error('Could not prepare the photo for local storage.');
@@ -128,7 +94,6 @@ export async function publishLocalPhoto(
     await new File(image.uri).copy(destination);
     storedUri = destination.uri;
   }
-
   const post: LocalPhotoPost = {
     id,
     uri: storedUri,
@@ -146,26 +111,21 @@ export async function publishLocalPhoto(
     reactions: {},
     userReaction: null,
   };
-
   const posts = await getLocalPhotoPosts();
   const updatedPosts = [post, ...posts];
   await AsyncStorage.setItem(postsStorageKey, JSON.stringify(updatedPosts));
   clearPhotoDraft();
   return updatedPosts;
 }
-
 export async function getLocalPhotoPosts(): Promise<LocalPhotoPost[]> {
   let savedPosts = await AsyncStorage.getItem(postsStorageKey);
   if (!savedPosts) {
-    // Check legacy key
     savedPosts = await AsyncStorage.getItem(legacyPostsStorageKey);
     if (savedPosts) {
       await AsyncStorage.setItem(postsStorageKey, savedPosts);
     }
   }
-
   if (!savedPosts) return [];
-
   try {
     const parsed = JSON.parse(savedPosts);
     if (!Array.isArray(parsed)) {
@@ -173,7 +133,6 @@ export async function getLocalPhotoPosts(): Promise<LocalPhotoPost[]> {
       return [];
     }
     const posts = parsed as LocalPhotoPost[];
-    // Migrate old posts: ensure new fields exist
     return posts.map((p) => ({
       isFavorite: false,
       isPinned: false,
@@ -186,23 +145,19 @@ export async function getLocalPhotoPosts(): Promise<LocalPhotoPost[]> {
     return [];
   }
 }
-
 export async function getLocalPhotoPost(id: string): Promise<LocalPhotoPost | null> {
   const posts = await getLocalPhotoPosts();
   return posts.find((post) => post.id === id) ?? null;
 }
-
 async function savePostsToStorage(posts: LocalPhotoPost[]): Promise<void> {
   await AsyncStorage.setItem(postsStorageKey, JSON.stringify(posts));
 }
-
 async function updatePost(
   id: string,
   updater: (post: LocalPhotoPost) => LocalPhotoPost,
 ): Promise<LocalPhotoPost | null> {
   const posts = await getLocalPhotoPosts();
   let updatedPost: LocalPhotoPost | null = null;
-
   const nextPosts = posts.map((post) => {
     if (post.id === id) {
       updatedPost = updater(post);
@@ -210,14 +165,11 @@ async function updatePost(
     }
     return post;
   });
-
   if (updatedPost) {
     await savePostsToStorage(nextPosts);
   }
-
   return updatedPost;
 }
-
 export async function updateLocalPhotoCaption(
   id: string,
   caption: string,
@@ -228,7 +180,6 @@ export async function updateLocalPhotoCaption(
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function updateLocalPhotoPost(
   id: string,
   updates: Partial<
@@ -241,12 +192,10 @@ export async function updateLocalPhotoPost(
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function deleteLocalPhotoPost(id: string): Promise<boolean> {
   const posts = await getLocalPhotoPosts();
   const target = posts.find((p) => p.id === id);
   if (!target) return false;
-
   if (Platform.OS !== 'web' && target.uri) {
     try {
       const file = new File(target.uri);
@@ -255,15 +204,12 @@ export async function deleteLocalPhotoPost(id: string): Promise<boolean> {
       console.warn('Failed to delete file from disk:', e);
     }
   }
-
   const filtered = posts.filter((p) => p.id !== id);
   await savePostsToStorage(filtered);
   return true;
 }
-
 export async function clearLocalPhotoPosts() {
   const posts = await getLocalPhotoPosts();
-
   if (Platform.OS !== 'web') {
     for (const post of posts) {
       try {
@@ -274,59 +220,40 @@ export async function clearLocalPhotoPosts() {
       }
     }
   }
-
   await AsyncStorage.removeItem(postsStorageKey);
   await AsyncStorage.removeItem(legacyPostsStorageKey);
 }
-
-// ============================================================================
-// REACTIONS
-// ============================================================================
-
 export async function toggleLocalPhotoReaction(
   id: string,
   reactionEmoji: string,
 ): Promise<LocalPhotoPost | null> {
   const posts = await getLocalPhotoPosts();
   let updatedPost: LocalPhotoPost | null = null;
-
   const nextPosts = posts.map((post) => {
     if (post.id === id) {
       const reactions = { ...(post.reactions || {}) };
       const currentReaction = post.userReaction;
-
       if (currentReaction === reactionEmoji) {
-        // Toggle off
         reactions[reactionEmoji] = Math.max(0, (reactions[reactionEmoji] || 1) - 1);
         if (reactions[reactionEmoji] === 0) delete reactions[reactionEmoji];
         updatedPost = { ...post, reactions, userReaction: null };
       } else {
-        // Remove previous reaction if any
         if (currentReaction && reactions[currentReaction]) {
           reactions[currentReaction] = Math.max(0, reactions[currentReaction] - 1);
           if (reactions[currentReaction] === 0) delete reactions[currentReaction];
         }
-        // Add new reaction
         reactions[reactionEmoji] = (reactions[reactionEmoji] || 0) + 1;
         updatedPost = { ...post, reactions, userReaction: reactionEmoji };
       }
-
       return updatedPost;
     }
     return post;
   });
-
   if (updatedPost) {
     await savePostsToStorage(nextPosts);
   }
-
   return updatedPost;
 }
-
-// ============================================================================
-// FAVORITES
-// ============================================================================
-
 export async function toggleFavorite(id: string): Promise<LocalPhotoPost | null> {
   return updatePost(id, (post) => ({
     ...post,
@@ -334,16 +261,10 @@ export async function toggleFavorite(id: string): Promise<LocalPhotoPost | null>
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function getFavoritePosts(): Promise<LocalPhotoPost[]> {
   const posts = await getLocalPhotoPosts();
   return posts.filter((p) => p.isFavorite && !p.isArchived);
 }
-
-// ============================================================================
-// PIN
-// ============================================================================
-
 export async function togglePin(id: string): Promise<LocalPhotoPost | null> {
   return updatePost(id, (post) => ({
     ...post,
@@ -351,11 +272,6 @@ export async function togglePin(id: string): Promise<LocalPhotoPost | null> {
     updatedAt: new Date().toISOString(),
   }));
 }
-
-// ============================================================================
-// ARCHIVE
-// ============================================================================
-
 export async function archivePost(id: string): Promise<LocalPhotoPost | null> {
   return updatePost(id, (post) => ({
     ...post,
@@ -364,7 +280,6 @@ export async function archivePost(id: string): Promise<LocalPhotoPost | null> {
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function unarchivePost(id: string): Promise<LocalPhotoPost | null> {
   return updatePost(id, (post) => ({
     ...post,
@@ -372,16 +287,10 @@ export async function unarchivePost(id: string): Promise<LocalPhotoPost | null> 
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function getArchivedPosts(): Promise<LocalPhotoPost[]> {
   const posts = await getLocalPhotoPosts();
   return posts.filter((p) => p.isArchived);
 }
-
-// ============================================================================
-// TAGS
-// ============================================================================
-
 export async function addTagToPost(id: string, tag: string): Promise<LocalPhotoPost | null> {
   const normalized = tag.toLowerCase().trim();
   if (!normalized) return null;
@@ -395,7 +304,6 @@ export async function addTagToPost(id: string, tag: string): Promise<LocalPhotoP
     };
   });
 }
-
 export async function removeTagFromPost(id: string, tag: string): Promise<LocalPhotoPost | null> {
   const normalized = tag.toLowerCase().trim();
   return updatePost(id, (post) => ({
@@ -404,7 +312,6 @@ export async function removeTagFromPost(id: string, tag: string): Promise<LocalP
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function getAllTags(): Promise<string[]> {
   const posts = await getLocalPhotoPosts();
   const tagSet = new Set<string>();
@@ -417,19 +324,11 @@ export async function getAllTags(): Promise<string[]> {
   }
   return Array.from(tagSet).sort();
 }
-
-// ============================================================================
-// BULK ACTIONS
-// ============================================================================
-
 export type BulkAction =
   'delete' | 'archive' | 'unarchive' | 'favorite' | 'unfavorite' | 'pin' | 'unpin';
-
 export async function bulkAction(ids: string[], action: BulkAction): Promise<void> {
   const posts = await getLocalPhotoPosts();
-
   if (action === 'delete') {
-    // Delete files from disk first
     if (Platform.OS !== 'web') {
       for (const id of ids) {
         const post = posts.find((p) => p.id === id);
@@ -447,13 +346,10 @@ export async function bulkAction(ids: string[], action: BulkAction): Promise<voi
     await savePostsToStorage(filtered);
     return;
   }
-
   const idSet = new Set(ids);
   const now = new Date().toISOString();
-
   const updatedPosts = posts.map((post) => {
     if (!idSet.has(post.id)) return post;
-
     switch (action) {
       case 'archive':
         return { ...post, isArchived: true, isPinned: false, updatedAt: now };
@@ -471,14 +367,8 @@ export async function bulkAction(ids: string[], action: BulkAction): Promise<voi
         return post;
     }
   });
-
   await savePostsToStorage(updatedPosts);
 }
-
-// ============================================================================
-// COLLECTIONS
-// ============================================================================
-
 async function getCollectionsRaw(): Promise<LocalCollection[]> {
   const stored = await AsyncStorage.getItem(collectionsStorageKey);
   if (!stored) return [];
@@ -489,16 +379,13 @@ async function getCollectionsRaw(): Promise<LocalCollection[]> {
     return [];
   }
 }
-
 export async function getCollections(): Promise<LocalCollection[]> {
   return getCollectionsRaw();
 }
-
 export async function getCollection(id: string): Promise<LocalCollection | null> {
   const collections = await getCollections();
   return collections.find((c) => c.id === id) ?? null;
 }
-
 export async function createCollection(
   name: string,
   description?: string,
@@ -512,20 +399,17 @@ export async function createCollection(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
   const collections = await getCollectionsRaw();
   const updated = [collection, ...collections];
   await AsyncStorage.setItem(collectionsStorageKey, JSON.stringify(updated));
   return collection;
 }
-
 export async function updateCollection(
   id: string,
   updates: Partial<Pick<LocalCollection, 'name' | 'description' | 'color' | 'coverMemoryId'>>,
 ): Promise<LocalCollection | null> {
   const collections = await getCollectionsRaw();
   let updatedCollection: LocalCollection | null = null;
-
   const next = collections.map((c) => {
     if (c.id === id) {
       updatedCollection = { ...c, ...updates, updatedAt: new Date().toISOString() };
@@ -533,22 +417,17 @@ export async function updateCollection(
     }
     return c;
   });
-
   if (updatedCollection) {
     await AsyncStorage.setItem(collectionsStorageKey, JSON.stringify(next));
   }
-
   return updatedCollection;
 }
-
 export async function deleteCollection(id: string, unassignMemories = true): Promise<boolean> {
   const collections = await getCollectionsRaw();
   const exists = collections.some((c) => c.id === id);
   if (!exists) return false;
-
   const filtered = collections.filter((c) => c.id !== id);
   await AsyncStorage.setItem(collectionsStorageKey, JSON.stringify(filtered));
-
   if (unassignMemories) {
     const posts = await getLocalPhotoPosts();
     const updated = posts.map((p) =>
@@ -558,10 +437,8 @@ export async function deleteCollection(id: string, unassignMemories = true): Pro
     );
     await savePostsToStorage(updated);
   }
-
   return true;
 }
-
 export async function assignMemoryToCollection(
   postId: string,
   collectionId: string | null,
@@ -572,16 +449,10 @@ export async function assignMemoryToCollection(
     updatedAt: new Date().toISOString(),
   }));
 }
-
 export async function getPostsInCollection(collectionId: string): Promise<LocalPhotoPost[]> {
   const posts = await getLocalPhotoPosts();
   return posts.filter((p) => p.collectionId === collectionId && !p.isArchived);
 }
-
-// ============================================================================
-// EXPORT / IMPORT
-// ============================================================================
-
 export async function exportAllData(): Promise<ExportedData> {
   const [posts, collections] = await Promise.all([getLocalPhotoPosts(), getCollections()]);
   return {
@@ -591,17 +462,14 @@ export async function exportAllData(): Promise<ExportedData> {
     collections,
   };
 }
-
 export function exportDataAsJSON(data: ExportedData): string {
   return JSON.stringify(data, null, 2);
 }
-
 export type ImportResult = {
   imported: number;
   skipped: number;
   errors: string[];
 };
-
 export async function importData(jsonString: string): Promise<ImportResult> {
   let parsed: unknown;
   try {
@@ -609,7 +477,6 @@ export async function importData(jsonString: string): Promise<ImportResult> {
   } catch {
     return { imported: 0, skipped: 0, errors: ['Invalid JSON format.'] };
   }
-
   if (
     typeof parsed !== 'object' ||
     parsed === null ||
@@ -618,9 +485,7 @@ export async function importData(jsonString: string): Promise<ImportResult> {
   ) {
     return { imported: 0, skipped: 0, errors: ['Invalid Memora export format.'] };
   }
-
   const exportData = parsed as ExportedData;
-
   if (exportData.version !== '1') {
     return {
       imported: 0,
@@ -628,39 +493,31 @@ export async function importData(jsonString: string): Promise<ImportResult> {
       errors: [`Unsupported export version: ${exportData.version}`],
     };
   }
-
   if (!Array.isArray(exportData.posts)) {
     return { imported: 0, skipped: 0, errors: ['No posts array found.'] };
   }
-
   const existingPosts = await getLocalPhotoPosts();
   const existingIds = new Set(existingPosts.map((p) => p.id));
-
   let imported = 0;
   let skipped = 0;
   const errors: string[] = [];
   const newPosts: LocalPhotoPost[] = [];
-
   for (const post of exportData.posts) {
     if (typeof post !== 'object' || !post || !('id' in post) || !('uri' in post)) {
       errors.push(`Skipped invalid post entry.`);
       skipped++;
       continue;
     }
-
     const typedPost = post as LocalPhotoPost;
     if (existingIds.has(typedPost.id)) {
       skipped++;
       continue;
     }
-
-    // Validate required fields
     if (!typedPost.id || !typedPost.uri || !typedPost.createdAt) {
       errors.push(`Skipped post missing required fields.`);
       skipped++;
       continue;
     }
-
     newPosts.push({
       ...typedPost,
       isFavorite: typedPost.isFavorite ?? false,
@@ -671,14 +528,11 @@ export async function importData(jsonString: string): Promise<ImportResult> {
     });
     imported++;
   }
-
   if (newPosts.length > 0) {
     const merged = [...newPosts, ...existingPosts];
     merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     await savePostsToStorage(merged);
   }
-
-  // Import collections too (if present)
   if (Array.isArray(exportData.collections) && exportData.collections.length > 0) {
     const existingCollections = await getCollectionsRaw();
     const existingCollectionIds = new Set(existingCollections.map((c) => c.id));
@@ -688,16 +542,9 @@ export async function importData(jsonString: string): Promise<ImportResult> {
       await AsyncStorage.setItem(collectionsStorageKey, JSON.stringify(mergedCollections));
     }
   }
-
   return { imported, skipped, errors };
 }
-
-// ============================================================================
-// RECENTLY VIEWED
-// ============================================================================
-
 const MAX_RECENTLY_VIEWED = 20;
-
 export async function recordRecentlyViewed(postId: string): Promise<void> {
   try {
     const stored = await AsyncStorage.getItem(recentlyViewedKey);
@@ -710,36 +557,25 @@ export async function recordRecentlyViewed(postId: string): Promise<void> {
     const updated = [postId, ...filtered].slice(0, MAX_RECENTLY_VIEWED);
     await AsyncStorage.setItem(recentlyViewedKey, JSON.stringify(updated));
   } catch {
-    // Graceful fallback for corrupted local storage
   }
 }
-
 export async function getRecentlyViewedPosts(): Promise<LocalPhotoPost[]> {
   try {
     const stored = await AsyncStorage.getItem(recentlyViewedKey);
     if (!stored) return [];
-
     const parsed = JSON.parse(stored);
     const ids: string[] = Array.isArray(parsed) ? parsed : [];
     const posts = await getLocalPhotoPosts();
     const postMap = new Map(posts.map((p) => [p.id, p]));
-
     return ids.map((id) => postMap.get(id)).filter((p): p is LocalPhotoPost => p !== undefined);
   } catch {
     return [];
   }
 }
-
-// ============================================================================
-// RECENT SEARCHES
-// ============================================================================
-
 const MAX_RECENT_SEARCHES = 10;
-
 export async function addRecentSearch(query: string): Promise<void> {
   const trimmed = query.trim();
   if (!trimmed) return;
-
   try {
     const stored = await AsyncStorage.getItem(recentSearchesKey);
     let searches: string[] = [];
@@ -751,10 +587,8 @@ export async function addRecentSearch(query: string): Promise<void> {
     const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_SEARCHES);
     await AsyncStorage.setItem(recentSearchesKey, JSON.stringify(updated));
   } catch {
-    // Graceful fallback
   }
 }
-
 export async function getRecentSearches(): Promise<string[]> {
   try {
     const stored = await AsyncStorage.getItem(recentSearchesKey);
@@ -765,22 +599,15 @@ export async function getRecentSearches(): Promise<string[]> {
     return [];
   }
 }
-
 export async function clearRecentSearches(): Promise<void> {
   await AsyncStorage.removeItem(recentSearchesKey);
 }
-
-// ============================================================================
-// PROFILE
-// ============================================================================
-
 export async function getLocalProfile(): Promise<LocalProfile> {
   const stored = await AsyncStorage.getItem(profileStorageKey);
   if (stored) {
     try {
       return JSON.parse(stored) as LocalProfile;
     } catch {
-      // fallback
     }
   }
   return {
@@ -790,56 +617,40 @@ export async function getLocalProfile(): Promise<LocalProfile> {
     email: '',
   };
 }
-
 export async function saveLocalProfile(profile: Partial<LocalProfile>): Promise<LocalProfile> {
   const existing = await getLocalProfile();
   const updated: LocalProfile = { ...existing, ...profile };
   await AsyncStorage.setItem(profileStorageKey, JSON.stringify(updated));
   return updated;
 }
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
 export function hasPostedToday(posts: LocalPhotoPost[]): boolean {
   const todayStr = new Date().toISOString().slice(0, 10);
   return posts.some((post) => post.createdAt.slice(0, 10) === todayStr && !post.isArchived);
 }
-
 export function getTodayPost(posts: LocalPhotoPost[]): LocalPhotoPost | null {
   const todayStr = new Date().toISOString().slice(0, 10);
   return posts.find((post) => post.createdAt.slice(0, 10) === todayStr && !post.isArchived) ?? null;
 }
-
 export function computeCurrentStreak(posts: LocalPhotoPost[]): number {
   if (posts.length === 0) return 0;
-
   const activePosts = posts.filter((p) => !p.isArchived);
   const datesWithPosts = new Set(activePosts.map((p) => p.createdAt.slice(0, 10)));
-
   let streak = 0;
   const today = new Date();
-
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
-
     if (datesWithPosts.has(dateStr)) {
       streak++;
     } else if (i > 0) {
-      // First day (today) can be missed — only break if day > 0
       break;
     }
   }
-
   return streak;
 }
-
 export function getMostActiveMonth(posts: LocalPhotoPost[]): string | null {
   if (posts.length === 0) return null;
-
   const counts: Record<string, number> = {};
   for (const post of posts) {
     if (!post.isArchived) {
@@ -848,10 +659,8 @@ export function getMostActiveMonth(posts: LocalPhotoPost[]): string | null {
       counts[key] = (counts[key] || 0) + 1;
     }
   }
-
   const top = Object.entries(counts).sort(([, a], [, b]) => b - a)[0];
   if (!top) return null;
-
   const [yearMonthStr] = top;
   const [year, month] = yearMonthStr.split('-').map(Number);
   return new Date(year, month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });

@@ -1,9 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle, Pressable } from 'react-native';
-
 import { spacing, typography } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type SectionHeaderProps = {
   title: string;
   subtitle?: string;
@@ -13,11 +11,9 @@ type SectionHeaderProps = {
   };
   style?: ViewStyle;
 };
-
 export function SectionHeader({ title, subtitle, action, style }: SectionHeaderProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   return (
     <View style={[styles.container, style]}>
       <View style={styles.textContainer}>
@@ -32,7 +28,6 @@ export function SectionHeader({ title, subtitle, action, style }: SectionHeaderP
     </View>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {

@@ -1,16 +1,13 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
-
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon, type JamIconName } from './Icons';
-
 export type BottomNavTab = {
   name: string;
   label?: string;
   iconName: JamIconName;
 };
-
 const DEFAULT_TABS: BottomNavTab[] = [
   { name: 'Home', iconName: 'home' },
   { name: 'Memories', iconName: 'picture' },
@@ -18,14 +15,12 @@ const DEFAULT_TABS: BottomNavTab[] = [
   { name: 'Circle', iconName: 'users' },
   { name: 'Profile', iconName: 'user' },
 ];
-
 export type BottomNavProps = {
   activeTab: string;
   onTabPress: (tab: string) => void;
   tabs?: BottomNavTab[];
   style?: ViewStyle;
 };
-
 export function BottomNavigation({
   activeTab,
   onTabPress,
@@ -34,7 +29,6 @@ export function BottomNavigation({
 }: BottomNavProps) {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-
   return (
     <View pointerEvents="box-none" style={[styles.wrapper, style]}>
       <View style={styles.navBar} accessibilityRole="tablist">
@@ -43,11 +37,9 @@ export function BottomNavigation({
             activeTab.toLowerCase() === tab.name.toLowerCase() ||
             activeTab.toLowerCase() === (tab.label || '').toLowerCase();
           const isAdd = tab.name.toLowerCase() === 'add' || tab.name.toLowerCase() === 'create';
-
           let buttonStyle = styles.inactiveCircle;
           let iconColor = styles.inactiveIconColor.color;
           let iconSize = 20;
-
           if (isAdd) {
             buttonStyle = styles.createCircle;
             iconColor = styles.createIconColor.color;
@@ -57,7 +49,6 @@ export function BottomNavigation({
             iconColor = styles.activeIconColor.color;
             iconSize = 20;
           }
-
           return (
             <Pressable
               key={tab.name}
@@ -80,26 +71,18 @@ export function BottomNavigation({
     </View>
   );
 }
-
-// Default export alias matching user snippet `export default function BottomNav`
 export default BottomNavigation;
-
 function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
   const isDark = mode === 'dark';
-
   const navBg = isDark ? 'rgba(30, 22, 46, 0.72)' : 'rgba(48, 36, 61, 0.78)';
   const navBorder = isDark ? 'rgba(203, 166, 247, 0.30)' : 'rgba(128, 101, 143, 0.32)';
-
   const activeBg = isDark ? '#CBA6F7' : '#FFFDF8';
   const activeTextColor = isDark ? '#1E1E2E' : '#261D32';
-
   const inactiveBg = 'rgba(255, 255, 255, 0.10)';
   const inactiveBorder = 'rgba(255, 255, 255, 0.10)';
   const inactiveTextColor = isDark ? '#A6ADC8' : '#D1C7DF';
-
   const createBg = isDark ? '#CBA6F7' : '#80658F';
   const createTextColor = isDark ? '#1E1E2E' : '#FFFFFF';
-
   return StyleSheet.create({
     wrapper: {
       position: 'absolute',

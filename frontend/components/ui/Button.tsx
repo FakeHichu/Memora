@@ -1,8 +1,6 @@
 import { Insets, Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
-
 import { radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
 type ButtonProps = {
   title: string;
   onPress: () => void;
@@ -15,7 +13,6 @@ type ButtonProps = {
   rightIcon?: string;
   hitSlop?: Insets | number;
 };
-
 export function Button({
   title,
   onPress,
@@ -30,19 +27,16 @@ export function Button({
 }: ButtonProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-
   const sizeStyles = {
     sm: styles.sizeSm,
     md: styles.sizeMd,
     lg: styles.sizeLg,
   }[size];
-
   const sizeTextStyles = {
     sm: styles.sizeSmText,
     md: styles.sizeMdText,
     lg: styles.sizeLgText,
   }[size];
-
   const variantStyles = {
     primary: styles.variantPrimary,
     secondary: styles.variantSecondary,
@@ -52,9 +46,7 @@ export function Button({
     destructive: styles.variantDestructive,
     subtle: styles.variantSubtle,
   }[variant];
-
   const pressedStyle = Platform.OS === 'web' ? webShadows.xs : shadows.xs;
-
   return (
     <Pressable
       onPress={onPress}
@@ -92,10 +84,8 @@ export function Button({
     </Pressable>
   );
 }
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
-
   return StyleSheet.create({
     base: {
       borderRadius: radius.md,

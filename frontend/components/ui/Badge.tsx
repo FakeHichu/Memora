@@ -1,14 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
 import { colors, radius, spacing, borders } from '@/constants/theme';
-
 type BadgeProps = {
   label: string;
   tone?: 'primary' | 'neutral' | 'success' | 'accent' | 'subtle' | 'chrome';
   size?: 'sm' | 'md';
 };
-
 export function Badge({ label, tone = 'neutral', size = 'md' }: BadgeProps) {
   const sizeStyles = size === 'sm' ? styles.sizeSm : styles.sizeMd;
   const toneStyles = {
@@ -19,7 +16,6 @@ export function Badge({ label, tone = 'neutral', size = 'md' }: BadgeProps) {
     subtle: styles.toneSubtle,
     chrome: styles.toneChrome,
   }[tone];
-
   const sizeTextStyles = size === 'sm' ? styles.sizeSmText : styles.sizeMdText;
   const toneTextStyles = {
     primary: styles.tonePrimaryText,
@@ -29,14 +25,12 @@ export function Badge({ label, tone = 'neutral', size = 'md' }: BadgeProps) {
     subtle: styles.toneSubtleText,
     chrome: styles.toneChromeText,
   }[tone];
-
   return (
     <View style={[styles.badge, sizeStyles, toneStyles]}>
       <Text style={[styles.text, sizeTextStyles, toneTextStyles]}>{label}</Text>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',

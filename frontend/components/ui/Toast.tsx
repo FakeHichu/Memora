@@ -2,13 +2,7 @@ import React, { createContext, useCallback, useContext, useRef, useState } from 
 import { Animated, Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { radius, spacing, typography, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export type ToastVariant = 'default' | 'success' | 'error' | 'warning';
-
 export type ToastOptions = {
   message: string;
   variant?: ToastVariant;
@@ -18,29 +12,17 @@ export type ToastOptions = {
     onPress: () => void;
   };
 };
-
 type ToastItem = ToastOptions & {
   id: string;
 };
-
 type ToastContextValue = {
   showToast: (options: ToastOptions) => void;
   dismissToast: () => void;
 };
-
-// ============================================================================
-// CONTEXT
-// ============================================================================
-
 const ToastContext = createContext<ToastContextValue>({
   showToast: () => {},
   dismissToast: () => {},
 });
-
-// ============================================================================
-// PROVIDER
-// ============================================================================
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
@@ -48,24 +30,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const slideY = useRef(new Animated.Value(80));
   const opacity = useRef(new Animated.Value(0));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const dismiss = useCallback(() => {
     Animated.parallel([
       Animated.timing(slideY.current, { toValue: 80, duration: 200, useNativeDriver: true }),
       Animated.timing(opacity.current, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]).start(() => setToast(null));
   }, [slideY, opacity]);
-
   const showToast = useCallback(
     (options: ToastOptions) => {
       if (timerRef.current) clearTimeout(timerRef.current);
-
       const id = String(Date.now());
       setToast({ ...options, id });
-
       slideY.current.setValue(80);
       opacity.current.setValue(0);
-
       Animated.parallel([
         Animated.spring(slideY.current, {
           toValue: 0,
@@ -75,22 +52,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         }),
         Animated.timing(opacity.current, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
-
       const duration = options.duration ?? (options.action ? 5000 : 2500);
       timerRef.current = setTimeout(dismiss, duration);
     },
     [slideY, opacity, dismiss],
   );
-
   const dismissToast = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     dismiss();
   }, [dismiss]);
-
-  // Create animated style object to avoid eslint refs warning
-  // eslint-disable-next-line react-hooks/refs
   const toastAnimatedStyle = { transform: [{ translateY: slideY.current }], opacity: opacity.current };
-
   const variantStyle =
     toast?.variant === 'success'
       ? styles.variantSuccess
@@ -99,7 +70,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         : toast?.variant === 'warning'
           ? styles.variantWarning
           : styles.variantDefault;
-
   return (
     <ToastContext.Provider value={{ showToast, dismissToast }}>
       {children}
@@ -134,19 +104,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-
-// ============================================================================
-// HOOK
-// ============================================================================
-
 export function useToast() {
   return useContext(ToastContext);
 }
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     container: {
