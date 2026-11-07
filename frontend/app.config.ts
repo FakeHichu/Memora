@@ -31,7 +31,7 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     backendUrl:
-      process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http:
+      process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:4000',
     appName: process.env.EXPO_PUBLIC_APP_NAME ?? 'Memora',
     eas: {
       ...config.extra?.eas,

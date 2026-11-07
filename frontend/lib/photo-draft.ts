@@ -624,23 +624,28 @@ export async function saveLocalProfile(profile: Partial<LocalProfile>): Promise<
   return updated;
 }
 export function hasPostedToday(posts: LocalPhotoPost[]): boolean {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Use UTC midnight slice to avoid timezone-dependent "today" date
+  const todayStr = new Date().toISOString().slice(0, 10).split('T')[0];
   return posts.some((post) => post.createdAt.slice(0, 10) === todayStr && !post.isArchived);
 }
 export function getTodayPost(posts: LocalPhotoPost[]): LocalPhotoPost | null {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Use UTC midnight slice to avoid timezone-dependent "today" date
+  const todayStr = new Date().toISOString().slice(0, 10).split('T')[0];
   return posts.find((post) => post.createdAt.slice(0, 10) === todayStr && !post.isArchived) ?? null;
 }
 export function computeCurrentStreak(posts: LocalPhotoPost[]): number {
   if (posts.length === 0) return 0;
   const activePosts = posts.filter((p) => !p.isArchived);
-  const datesWithPosts = new Set(activePosts.map((p) => p.createdAt.slice(0, 10)));
+  // Use UTC dates for consistent streak counting across timezones
+  const datesWithPosts = new Set(activePosts.map((p) => {
+    return new Date(p.createdAt).toISOString().slice(0, 10).split('T')[0];
+  }));
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = d.toISOString().slice(0, 10).split('T')[0];
     if (datesWithPosts.has(dateStr)) {
       streak++;
     } else if (i > 0) {

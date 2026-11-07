@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { env } from '../config/env.js';
 import type { 
   GroupEntity, 
   GroupMemberEntity, 
@@ -9,8 +10,8 @@ import type {
   DailyPostEntity
 } from "../types/index.js";
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  env.supabaseUrl,
+  env.supabaseServiceRoleKey,
   {
     auth: {
       persistSession: false,

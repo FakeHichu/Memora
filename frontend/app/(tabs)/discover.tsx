@@ -1,18 +1,164 @@
-import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { radius, spacing, typography, type ThemeColors } from '@/constants/theme';
-import { previewPosts, previewStories, previewTopics } from '@/lib/social-preview';
+import { useAuth } from '@/hooks/useAuth';
+import { useClass } from '@/hooks/useClass';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { supabase } from '@/lib/supabase/client';
+
 export default function DiscoverScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors);
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredTopics = previewTopics.filter((topic) => `${topic.title} ${topic.count}`.toLowerCase().includes(normalizedQuery));
-  const filteredPeople = previewStories.filter((story) => story.name.toLowerCase().includes(normalizedQuery));
-  const filteredPosts = previewPosts.filter((post) => `${post.name} ${post.caption} ${post.location}`.toLowerCase().includes(normalizedQuery));
+  const { session } = useAuth();
+  const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
+  const [posts, setPosts] = useState<Array<{
+    id: string;
+    photoUrl?: string;
+    authorName?: string;
+    reactionsMap?: Record<string, number>;
+    userReaction?: string | null;
+    comments?: Array<{ id: string; content: string; authorName: string }>;
+    caption: string;
+    location: string;
+  }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+    async function fetchPosts() {
+      if (!supabase || !session?.session?.user?.id) {
+        if (isActive) setPosts([]);
+        return;
+      }
+
+      const userId = session.session.user.id;
+      let classIds: string[] = [];
+
+      // Get all classes the user is a member of
+      if (supabase) {
+        const { data: memberRows, error: memberErr } = await supabase
+          .from('class_members')
+          .select('class_id')
+          .eq('user_id', userId);
+
+        if (!memberErr && memberRows) {
+          classIds = memberRows.map((row: any) => row.class_id);
+        }
+      }
+
+      // Also include the active class if it exists
+      if (activeClass?.id && !classIds.includes(activeClass.id)) {
+        classIds.push(activeClass.id);
+      }
+
+      if (isActive && classIds.length > 0) {
+        // Fetch daily posts from all the user's classes
+        const { data, error } = await supabase
+          .from('daily_posts')
+          .select(
+            `*, 
+             reactions (*), 
+             profiles:user_id (display_name, username, avatar_path), 
+             comments (*, profiles:user_id (display_name, username, avatar_path), comments (*))`
+          )
+          .in('class_id', classIds)
+          .order('created_at', { ascending: false });
+
+        if (!error && isActive) {
+          const formatted = data?.map((post: any) => {
+            let photoUrl: string | undefined;
+            try {
+              photoUrl = post.photo_path;
+            } catch {
+              photoUrl = post.photo_path;
+            }
+            const reactions = post.reactions || [];
+            const reactionsMap: Record<string, number> = {};
+            let userReaction: string | null = null;
+            for (const r of reactions) {
+              reactionsMap[r.reaction_type] = (reactionsMap[r.reaction_type] || 0) + 1;
+              if (r.user_id === userId) {
+                userReaction = r.reaction_type;
+              }
+            }
+            const authorProfile = post.profiles;
+            const authorName =
+              authorProfile?.display_name || authorProfile?.username || 'Classmate';
+
+            // Get comments for this post
+            const comments = post.comments
+              ? post.comments.map((c: any) => ({
+                  id: c.id,
+                  content: c.content,
+                  authorName:
+                    c.profiles?.display_name || c.profiles?.username || "Classmate",
+                }))
+              : [];
+
+            return {
+              id: post.id,
+              photoUrl,
+              authorName,
+              reactionsMap,
+              userReaction,
+              comments,
+              caption: post.caption || '',
+              location: post.location || '',
+            };
+          }) || [];
+
+          if (isActive) setPosts(formatted);
+        }
+      } else if (isActive) {
+        if (isActive) setPosts([]);
+      }
+    }
+
+    fetchPosts();
+
+    // Listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        if (!isActive) return;
+        setIsLoading(true);
+        fetchPosts();
+      }
+    );
+
+    // Listen for class membership changes
+    const { data: classListener } = supabase
+      .from('class_members')
+      .on('*', (_event: any, newRow: any) => {
+        if (!isActive) return;
+        setIsLoading(true);
+        fetchPosts();
+      })
+      .eq('user_id', session?.session?.user?.id || '')
+      .subscribe();
+
+    return () => {
+      isActive = false;
+      listener.subscription.unsubscribe();
+      if (classListener) classListener.unsubscribe();
+    };
+  }, [session, activeClass, supabase, normalizedQuery]);
+
+  const filteredPosts = posts.filter((post) =>
+    `${post.caption} ${post.location} ${post.authorName}`.toLowerCase().includes(normalizedQuery)
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -40,10 +186,6 @@ export default function DiscoverScreen() {
             </Pressable>
           ) : null}
         </View>
-        <View style={styles.previewNotice}>
-          <View style={styles.previewDot} />
-          <Text style={styles.previewNoticeText}>PREVIEW CONTENT · NOT CONNECTED TO A LIVE FEED</Text>
-        </View>
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.eyebrow}>A PLACE TO START</Text>
@@ -52,14 +194,14 @@ export default function DiscoverScreen() {
           <Text style={styles.sectionArrow}>↗</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topicRail}>
-          {filteredTopics.length ? filteredTopics.map((topic, index) => (
-            <Pressable key={topic.id} onPress={() => setQuery(topic.title)} style={[styles.topicCard, { backgroundColor: mode === 'dark' ? topic.tint : colors.surface }]} accessibilityRole="button" accessibilityLabel={`${topic.title}, ${topic.count}, preview`}>
+          {filteredPosts.length ? filteredPosts.map((post, index) => (
+            <Pressable key={post.id} onPress={() => setQuery(post.caption)} style={[styles.topicCard, { backgroundColor: mode === 'dark' ? colors.surface : colors.background }]} accessibilityRole="button" accessibilityLabel={`${post.caption}, preview`}>
               <Text style={styles.topicIndex}>0{index + 1} / PREVIEW</Text>
               <View style={styles.topicShape}><Text style={styles.topicShapeText}>{index === 0 ? '✳' : index === 1 ? '◌' : '⌁'}</Text></View>
-              <Text style={styles.topicTitle}>{topic.title}</Text>
-              <Text style={styles.topicCount}>{topic.count}</Text>
+              <Text style={styles.topicTitle}>{post.caption}</Text>
+              <Text style={styles.topicCount}>{post.location || ''}</Text>
             </Pressable>
-          )) : <Text style={styles.noResults}>No preview topics match that search.</Text>}
+          )) : <Text style={styles.noResults}>No moments match that search.</Text>}
         </ScrollView>
         <View style={styles.sectionHeader}>
           <View>
@@ -69,14 +211,7 @@ export default function DiscoverScreen() {
           <Text style={styles.sampleTag}>SAMPLE</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.peopleRail}>
-          {filteredPeople.map((person) => (
-            <View key={person.id} style={styles.personItem}>
-              <Avatar name={person.name} size={62} photoUri={person.photoUri} ring />
-              <Text style={styles.personName}>{person.name}</Text>
-              <Text style={styles.personMeta}>Preview profile</Text>
-            </View>
-          ))}
-          {!filteredPeople.length ? <Text style={styles.noResults}>No preview people match that search.</Text> : null}
+          {/* Placeholder - people would come from a different query */}
         </ScrollView>
         <View style={styles.sectionHeader}>
           <View>
@@ -84,23 +219,34 @@ export default function DiscoverScreen() {
             <Text style={styles.sectionTitle}>Recent moments</Text>
           </View>
         </View>
-        {filteredPosts.map((post) => (
-          <View key={post.id} style={styles.feature}>
-            <Image source={{ uri: post.photoUri }} style={styles.featureImage} resizeMode="cover" accessibilityLabel={post.caption} />
-            <View style={styles.featureShade} />
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTag}>SAMPLE MOMENT</Text>
-              <Text style={styles.featureTitle}>{post.caption}</Text>
-              <Text style={styles.featureMeta}>{post.location}  ·  {post.likes} appreciations</Text>
-            </View>
+        {isLoading ? (
+          <View style={styles.loadingState}>
+            <Text>Loading community moments…</Text>
           </View>
-        ))}
-        {!filteredPosts.length ? <Text style={styles.noResults}>No preview moments match that search.</Text> : null}
+        ) : filteredPosts.length === 0 ? (
+          <View style={styles.noResults}>
+            <Text style={styles.noResults}>No moments match that search.</Text>
+          </View>
+        ) : (
+          <View style={styles.feedPosts}>
+            {filteredPosts.map((post) => (
+              <View key={post.id} style={styles.feature}>
+                <Image source={{ uri: post.photoUrl || '/assets/placeholder.jpg' }} style={styles.featureImage} resizeMode="cover" accessibilityLabel={post.caption} />
+                <View style={styles.featureShade} />
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTag}>Community Moment</Text>
+                  <Text style={styles.featureTitle}>{post.caption}</Text>
+                  <Text style={styles.featureMeta}>{post.authorName}  ·  {post.location || ''}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
         <View style={styles.communityNote}>
           <Text style={styles.communityGlyph}>⌂</Text>
           <View style={styles.communityCopy}>
             <Text style={styles.communityTitle}>Your private class community</Text>
-            <Text style={styles.communityMessage}>Class discovery will use verified memberships when connected.</Text>
+            <Text style={styles.communityMessage}>Discovery shows verified class membership moments when connected.</Text>
           </View>
           <Text style={styles.communityArrow}>›</Text>
         </View>
@@ -135,12 +281,9 @@ function createStyles(colors: ThemeColors) {
   topicTitle: { maxWidth: 130, color: colors.text, fontFamily: 'Georgia', fontSize: 20, fontWeight: '700' },
   topicCount: { color: colors.muted, fontSize: 11, fontWeight: '600' },
   peopleRail: { gap: spacing.lg, paddingRight: spacing.lg },
-  personItem: { width: 76, alignItems: 'center', gap: spacing.xs },
-  personName: { color: colors.text, fontSize: 12, fontWeight: '600' },
-  personMeta: { color: colors.muted, fontSize: 9 },
-  sampleTag: { color: colors.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.8 },
   noResults: { paddingVertical: spacing.lg, color: colors.muted, fontSize: 13 },
-  feature: { height: 270, overflow: 'hidden', borderRadius: radius.lg, backgroundColor: '#343A36' },
+  loadingState: { paddingVertical: spacing.xxl, alignItems: 'center', paddingHorizontal: spacing.lg },
+  feature: { height: 270, overflow: 'hidden', borderRadius: radius.lg, backgroundColor: colors.surface },
   featureImage: { width: '100%', height: '100%' },
   featureShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,9,15,0.46)' },
   featureContent: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, gap: spacing.sm },

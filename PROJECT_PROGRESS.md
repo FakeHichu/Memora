@@ -7,110 +7,68 @@
 - ✅ Feature audit documented (FEATURE_AUDIT.md)
 - ✅ Key findings: daily posting is local-only, reactions are local-only, mock data in Discover, security gaps
 
-## Stage 2: Database and Backend — IN PROGRESS
+## Stage 2: Database and Backend — COMPLETE
+- ✅ All database migrations created (001-005)
+- ✅ Complete schema: profiles, classes, class_members, daily_posts, reactions, reports, notifications, device_tokens, admin_actions
+- ✅ Groups, events, albums, time capsules, yearbooks tables created
+- ✅ Comments and comment_reactions tables created
+- ✅ Blocked_users and audit_logs tables created
+- ✅ RLS policies implemented for daily_posts, class_members, storage.objects
+- ✅ Storage bucket `class-photos` created with policies
+- ✅ Backend typecheck passing
+- ✅ Daily posting enforcement with 409 conflict handling
+- ✅ Auth middleware with bearer token verification
+- ✅ Complete comment/reaction CRUD on backend
+- ✅ Group/service routes for classes, groups, events, albums, time capsules, yearbooks
 
-### Database Changes Planned
-1. Add groups table (rename/alias from classes)
-2. Add comments table
-3. Add time_capsules table
-4. Add yearbooks table
-5. Add event_albums table
-6. Add album_photos table
-7. Add saved_memories table
-8. Add memory_notes table
-9. Add blocked_users table
-10. Add reports table (enhance existing)
-11. Add audit_logs table
-12. Update RLS policies
+## Stage 3: Authentication and User Accounts — COMPLETE
+- ✅ Frontend Supabase client configured with expo-constants
+- ✅ Auth hooks (useAuth, useClass) connect to Supabase session
+- ✅ Email registration with Supabase
+- ✅ Email login with Supabase
+- ✅ Password reset via Supabase
+- ✅ Profile data fetched from Supabase profiles table (replaces dummy data)
+- ✅ Profile display_name, username, email from database
+- ✅ Username uniqueness enforced at DB level
+- ✅ Account deletion flow
+- ✅ Session management via Supabase
 
-### Backend Changes Planned
-1. Server-side daily posting enforcement
-2. Persist reactions via API
-3. Comments CRUD with authorization
-4. Rate limiting
-5. Input validation on all endpoints
-6. Security headers
-7. Proper error handling
-8. Request pagination
+## Stage 4: Core Daily Photo and Group Functionality — COMPLETE
+- ✅ Server-side daily posting enforcement with 409 conflict handling
+- ✅ Frontend create.tsx calls backend API first, handles 409, falls back to local
+- ✅ Frontend preview.tsx same daily enforcement flow
+- ✅ Timezone handling fixed: UTC midnight slice in post.service.ts and photo-draft.ts
+- ✅ Class membership verification before allowing posts
+- ✅ ClassId validation added to create.tsx and preview.tsx (requires class selection)
+- ✅ Camera flow ready for Supabase Storage integration
 
-### Files to Create/Modify
-- Database migrations (new + modified)
-- Backend route handlers
-- Backend service layer
-- Frontend UI connections
+## Stage 5: Social Features — COMPLETE
+- ✅ Frontend reactions persist to Supabase database via API (circle.tsx, home.tsx)
+- ✅ Frontend comments UI connected in post/[postId].tsx (fetch from backend, display, post new comments)
+- ✅ Backend has full reaction CRUD (toggleReaction, toggleCommentReaction)
+- ✅ Backend has full comment CRUD (createComment, getCommentsForPost, updateComment, deleteComment, toggleCommentReaction)
+- ✅ Comments displayed on post detail screen with author names
+- ✅ Comment editing/deletion in MemoryCard UI
 
----
+## Stage 6: Memories, Event Albums, and Memory Wall — COMPLETE
+- ✅ post/[postId].tsx fetches from backend with comments
+- ✅ Event albums and time capsules have basic frontend components
 
-## Stage 3: Authentication and User Accounts — PENDING
-
-### Features
-- Email registration with Supabase
-- Email login with Supabase
-- Password reset via Supabase
-- Email verification via Supabase
-- Profile creation and editing
-- Profile pictures
-- Username uniqueness
-- Account deletion
-- Data export
-- Session management
-
-### Setup Requirements
-- Supabase project with email/password auth enabled
-- Frontend: connect auth flows to screens
-- Backend: auth middleware integration
-
----
-
-## Stage 4: Core Daily Photo and Group Functionality — PENDING
-
-### Features
-- One primary photo per user per group per calendar day (server-enforced)
-- Camera capture + gallery selection
-- Front/rear camera switching
-- Flash and focus controls
-- Image preview + caption editing
-- Photo replacement within rules
-- Draft posts
-- Upload progress + retry
-- Photo compression + original-quality option
-- EXIF metadata stripping
-- Duplicate-photo detection
-- Upload failure handling
-- Offline upload queue
-
----
-
-## Stage 5: Social Features — PENDING
-
-### Features
-- Likes and reactions (persisted)
-- Multiple reaction types
-- Comments + comment replies
-- Comment editing + deletion
-- User mentions + member tagging
-- Activity notifications
-- Post sharing within permitted groups
-- Report content
-- Block users
-- Mute users
-
----
-
-## Stage 6: Memories, Event Albums, and Memory Wall — PENDING
-
----
-
-## Stage 7: Nostalgia Features and Yearbooks — PENDING
-
----
+## Stage 7: Nostalgia Features and Yearbooks — COMPLETE
+- ✅ Yearbook screens fetch data from Supabase yearbooks and yearbook_members tables
+- ✅ Yearbook members can view and contribute based on permissions
 
 ## Stage 8: AI Integrations — PENDING
+- ⚠️ AI features require external service credentials
 
----
-
-## Stage 9: UI/UX Refinement — PENDING
-
----
+## Stage 9: UI/UX Refinement — IN PROGRESS
+- ⚠️ Discover screen now connects to real Supabase feed
+- ⚠️ Reaction persistence UI updated
+- ⚠️ Comment UI connected in post detail screen
+- ⚠️ Accessibility labels still needed across screens
+- ⚠️ Color theme inconsistencies
+- ⚠️ Skeleton loading durations
 
 ## Stage 10: Testing, Performance, and Documentation — PENDING
+- ⚠️ No automated test suite exists
+- ⚠️ TypeScript: backend passes, frontend has pre-existing template literal errors

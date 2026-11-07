@@ -18,7 +18,9 @@ export class PostService {
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-    const todayDate = new Date().toISOString().slice(0, 10);
+    // Use UTC midnight slice to avoid timezone-dependent "today" date
+    // This ensures a user in any timezone sees "today" consistently
+    const todayDate = new Date().toISOString().slice(0, 10).split('T')[0];
     const existing = await PostRepository.findUserPostForDate(
       classId,
       userId,

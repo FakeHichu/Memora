@@ -10,7 +10,7 @@ export const supabase = env.supabaseUrl && env.supabaseServiceRoleKey
   : null;
 export function getSupabaseClient() {
   if (!supabase) {
-    throw new Error('Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+    throw new Error('Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
   return supabase;
 }

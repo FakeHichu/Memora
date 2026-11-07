@@ -22,15 +22,17 @@ import { Skeleton, SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import {
   getLocalPhotoPosts,
   hasPostedToday,
-  toggleLocalPhotoReaction,
   type LocalPhotoPost,
 } from '@/lib/photo-draft';
 import { useClass } from '@/hooks/useClass';
+import { useEffect } from 'react';
 export default function CircleScreen() {
   const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
-  const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
+  const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
+  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadPosts = useCallback(() => {
     let isActive = true;
     getLocalPhotoPosts()
@@ -70,9 +72,49 @@ export default function CircleScreen() {
     }
   };
   const handleReact = async (postId: string, emoji: string) => {
-    const updated = await toggleLocalPhotoReaction(postId, emoji);
-    if (updated) {
-      setSharedPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+    try {
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id ?? null;
+      
+      if (!userId) return;
+      
+      const response = await fetch(\`\${backendUrl}/api/reactions\`, {
+        method: 'POST',
+        headers: {
+          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId,
+          reactionType: emoji,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Failed to save reaction.');
+        return;
+      }
+      
+      const result = await response.json();
+      
+      // Update local state - find the post and update its reactions
+      setSharedPosts((prev) =>
+        prev.map((p) => {
+          if (p.id !== postId) return p;
+          return {
+            ...p,
+            reactions: result.reactionsMap,
+            userReaction: result.userReaction,
+          };
+        })
+      );
+      
+      setReactionsMap(result.reactionsMap);
+      setUserReactions(result.userReactions);
+    } catch (err) {
+      setErrorMessage('Failed to save reaction.');
     }
   };
   return (

@@ -39,7 +39,7 @@ export default function CreateClassScreen() {
         setIsSubmitting(false);
         return;
       }
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http:
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000',
       const response = await fetch(`${backendUrl}/api/classes`, {
         method: 'POST',
         headers: {

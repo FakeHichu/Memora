@@ -150,11 +150,17 @@ export default function CreateScreen() {
         return;
       }
       
+      if (!classId) {
+        setErrorMessage('Please select a class first. Join or create a class to post daily memories.');
+        setIsSaving(false);
+        return;
+      }
+      
       const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-      const response = await fetch(\`\${backendUrl}/api/daily-posts\`, {
+      const response = await fetch(`${backendUrl}/api/daily-posts`, {
         method: 'POST',
         headers: {
-          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -213,12 +219,6 @@ export default function CreateScreen() {
       showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
       router.replace('/(tabs)/home');
     } finally {
-      setIsSaving(false);
-    }
-  };
-      router.replace('/(tabs)/home');
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not save memory.');
       setIsSaving(false);
     }
   };

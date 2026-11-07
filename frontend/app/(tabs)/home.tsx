@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/supabase/client';
 import { radius, spacing, typography, layout, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import {
@@ -10,7 +11,6 @@ import {
   getFavoritePosts,
   hasPostedToday,
   setPhotoDraft,
-  toggleLocalPhotoReaction,
   getLocalProfile,
   computeCurrentStreak,
   type LocalPhotoPost,
@@ -60,6 +60,9 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [favorites, setFavorites] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
+  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [profileName, setProfileName] = useState('Memory Keeper');
@@ -111,9 +114,49 @@ export default function HomeScreen() {
     router.push('/(tabs)/create');
   };
   const handleReact = async (postId: string, emoji: string) => {
-    const updated = await toggleLocalPhotoReaction(postId, emoji);
-    if (updated) {
-      setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+    try {
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id ?? null;
+      
+      if (!userId) return;
+      
+      const response = await fetch(\`\${backendUrl}/api/reactions\`, {
+        method: 'POST',
+        headers: {
+          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId,
+          reactionType: emoji,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Failed to save reaction.');
+        return;
+      }
+      
+      const result = await response.json();
+      
+      // Update local state - find the post and update its reactions
+      setPosts((prev =>
+        prev.map((p) => {
+          if (p.id !== postId) return p;
+          return {
+            ...p,
+            reactions: result.reactionsMap,
+            userReaction: result.userReaction,
+          };
+        })
+      ));
+      
+      setReactionsMap(result.reactionsMap);
+      setUserReactions(result.userReactions);
+    } catch (err) {
+      setErrorMessage('Failed to save reaction.');
     }
   };
   const matchesSearch = (post: LocalPhotoPost): boolean => {

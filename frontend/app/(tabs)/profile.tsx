@@ -4,11 +4,11 @@ import React, { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
-import { clearLocalPhotoPosts, getLocalPhotoPosts, getLocalProfile } from '@/lib/photo-draft';
+import { clearLocalPhotoPosts, getLocalPhotoPosts } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { signOut } from '@/lib/supabase/auth';
-import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAuth } from '@/hooks/useAuth';
 import { SkeletonProfileHeader } from '@/components/ui/Skeleton';
@@ -22,28 +22,42 @@ export default function ProfileScreen() {
       email: '',
     },
   );
+  const [supabaseProfile, setSupabaseProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-      Promise.all([getLocalPhotoPosts(), getLocalProfile()]).then(([posts, prof]) => {
-        if (isActive) {
-          setPhotoCount(posts.length);
-          setLocalProfile(prof);
-          setIsLoading(false);
+      async function fetchProfile() {
+        if (!supabase || isAuthLoading) return;
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session?.user?.id)
+            .single();
+          if (!error && isActive) {
+            setSupabaseProfile(data);
+          }
+        } catch {
+          /* keep local fallback */
         }
-      });
+        finally {
+          if (isActive) setIsLoading(false);
+        }
+      }
+      fetchProfile();
       return () => {
         isActive = false;
       };
-    }, []),
+    }, [session, supabase, isAuthLoading]),
   );
   const isSignedIn = Boolean(session?.user);
   const displayName =
+    supabaseProfile?.display_name ||
     (session?.user?.user_metadata?.full_name as string | undefined) ||
     session?.user?.email?.split('@')[0] ||
     localProfile.name;
-  const displayEmail = session?.user?.email || localProfile.email;
+  const displayEmail = supabaseProfile?.email || session?.user?.email || localProfile.email;
   const confirmClearPhotos = () => {
     if (Platform.OS === 'web') {
       if (
@@ -94,7 +108,7 @@ export default function ProfileScreen() {
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>{displayName}</Text>
                   <Text style={styles.profileStatus}>
-                    {isSignedIn ? 'Signed in with email' : 'Using local storage only'}
+                    {isSignedIn ? (supabaseProfile ? 'Synced with account' : 'Signed in with email') : 'Using local storage only'}
                   </Text>
                 </View>
               </View>
@@ -104,6 +118,9 @@ export default function ProfileScreen() {
                   {displayEmail ? (
                     <ProfileRow label="Email" value={displayEmail} icon="envelope" />
                   ) : null}
+              {supabaseProfile && (
+                <ProfileRow label="Username" value={supabaseProfile.username || ''} icon="person" />
+              )}
                   <ProfileDivider />
                   <ProfileRow
                     label="Sign out"

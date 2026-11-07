@@ -20,6 +20,9 @@ import {
   getPromptDraft,
   publishLocalPhoto,
 } from '@/lib/photo-draft';
+import { supabase } from '@/lib/supabase/client';
+import { useClass } from '@/hooks/useClass';
+import { useEffect } from 'react';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
@@ -55,12 +58,39 @@ export default function CameraPreviewScreen() {
     setIsSaving(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
+      const classId = activeClass?.id ?? null;
       const userId = sessionData?.session?.user?.id ?? null;
       
       if (!userId) {
         setErrorMessage('User not authenticated. Please sign in.');
         setIsSaving(false);
         return;
+      }
+      
+      if (!classId) {
+        setErrorMessage('Please select a class first. Join or create a class to post daily memories.');
+        setIsSaving(false);
+        return;
+      }
+      
+      // Upload photo to Supabase Storage
+      let photoPath = photoUri;
+      try {
+        const fileName = `${userId}/${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from('class-photos')
+          .upload(fileName, await fetch(photoUri).then(res => res.blob()), {
+            cacheControl: '3600',
+            contentType: 'image/jpeg',
+          });
+        if (uploadError) throw uploadError;
+        const { data: publicUrlData } = supabase.storage
+          .from('class-photos')
+          .getPublicUrl(fileName);
+        photoPath = publicUrlData.publicUrl;
+      } catch (uploadErr) {
+        // If upload fails, use local path as fallback
+        console.warn('Storage upload failed, using local path:', uploadErr);
       }
       
       const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
@@ -71,9 +101,9 @@ export default function CameraPreviewScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          classId: null,
+          classId,
           userId,
-          photoPath: photoUri,
+          photoPath,
           caption: caption.trim(),
         }),
       });
@@ -86,24 +116,47 @@ export default function CameraPreviewScreen() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Could not save photo to server.');
+        setErrorMessage(errorData.message || 'Could not save memory to server.');
         setIsSaving(false);
-        await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
-        setErrorMessage('📸 Photo saved locally!');
-        setIsSaving(false);
+        await publishLocalPhoto(
+          photoUri,
+          caption.trim(),
+          undefined,
+          category,
+          title.trim() || undefined,
+          tags,
+          location.trim() || undefined,
+        );
+        showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
         router.replace('/(tabs)/home');
         return;
       }
       
-      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
-      setErrorMessage('📸 Photo saved!');
-      setIsSaving(false);
+      await publishLocalPhoto(
+        photoUri,
+        caption.trim(),
+        undefined,
+        category,
+        title.trim() || undefined,
+        tags,
+        location.trim() || undefined,
+      );
+      showToast({ message: '📸 Memory saved!', variant: 'success', duration: 2000 });
       router.replace('/(tabs)/home');
     } catch (err) {
-      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
-      setErrorMessage('📸 Photo saved locally!');
-      setIsSaving(false);
+      await publishLocalPhoto(
+        photoUri,
+        caption.trim(),
+        undefined,
+        category,
+        title.trim() || undefined,
+        tags,
+        location.trim() || undefined,
+      );
+      showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
       router.replace('/(tabs)/home');
+    } finally {
+      setIsSaving(false);
     }
   };
       clearPhotoDraft();
