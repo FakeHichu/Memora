@@ -16,4 +16,24 @@ router.post(
   "/:postId/reactions",
   PostController.toggleReaction as unknown as RequestHandler,
 );
+router.post(
+  "/:postId/comments",
+  PostController.createComment as unknown as RequestHandler,
+);
+router.get(
+  "/:postId/comments",
+  PostController.getComments as unknown as RequestHandler,
+);
+router.patch(
+  "/:postId/comments/:commentId",
+  PostController.updateComment as unknown as RequestHandler,
+);
+router.delete(
+  "/:postId/comments/:commentId",
+  PostController.deleteComment as unknown as RequestHandler,
+);
+router.post(
+  "/:postId/comments/:commentId/reactions",
+  PostController.toggleCommentReaction as unknown as RequestHandler,
+);
 export const postRoutes = router;

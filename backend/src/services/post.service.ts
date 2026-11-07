@@ -1,7 +1,7 @@
 import { ClassRepository } from "../repositories/class.repository.js";
 import { PostRepository } from "../repositories/post.repository.js";
 import { StorageService } from "../storage/storage.service.js";
-import type { DailyPostEntity, ReactionEntity } from "../types/index.js";
+import type { DailyPostEntity, ReactionEntity, CommentEntity, CommentReactionEntity } from "../types/index.js";
 export class PostService {
   static async createDailyPost(
     classId: string,
@@ -51,6 +51,7 @@ export class PostService {
         authorName?: string;
         reactionsMap?: Record<string, number>;
         userReaction?: string | null;
+        comments?: Array<{ id: string; content: string; authorName: string }>;
       }
     >;
   }> {
@@ -95,12 +96,22 @@ export class PostService {
         const authorProfile = post.profiles;
         const authorName =
           authorProfile?.display_name || authorProfile?.username || "Classmate";
+        // Get comments for this post
+        const comments = post.comments
+          ? post.comments.map((c: any) => ({
+              id: c.id,
+              content: c.content,
+              authorName:
+                c.profiles?.display_name || c.profiles?.username || "Classmate",
+            }))
+          : [];
         return {
           ...post,
           photoUrl,
           authorName,
           reactionsMap,
           userReaction,
+          comments,
         };
       }),
     );
@@ -162,5 +173,84 @@ export class PostService {
       throw err;
     }
     return PostRepository.toggleReaction(postId, userId, reactionType);
+  }
+
+  // --- Comments ---
+
+  static async createComment(
+    postId: string,
+    userId: string,
+    content: string,
+    parentId?: string | null,
+  ): Promise<CommentEntity> {
+    return PostRepository.createComment(postId, userId, content, parentId);
+  }
+  static async getCommentsForPost(
+    postId: string,
+    userId: string,
+  ): Promise<CommentEntity[]> {
+    // Check membership
+    const post = await PostRepository.findById(postId);
+    if (!post) return [];
+    const isMember = await ClassRepository.isMember(post.class_id, userId);
+    if (!isMember) return [];
+    return PostRepository.getCommentsForPost(postId);
+  }
+  static async updateComment(
+    commentId: string,
+    userId: string,
+    content: string,
+  ): Promise<CommentEntity | null> {
+    const comment = await PostRepository.findByCommentId(commentId);
+    if (!comment) {
+      const err = new Error("Comment not found.");
+      (err as unknown as { status: number }).status = 404;
+      throw err;
+    }
+    if (comment.user_id !== userId) {
+      const err = new Error("Only the author can edit this comment.");
+      (err as unknown as { status: number }).status = 403;
+      throw err;
+    }
+    return PostRepository.updateComment(commentId, userId, content);
+  }
+  static async deleteComment(
+    commentId: string,
+    userId: string,
+  ): Promise<void> {
+    const comment = await PostRepository.findByCommentId(commentId);
+    if (!comment) {
+      const err = new Error("Comment not found.");
+      (err as unknown as { status: number }).status = 404;
+      throw err;
+    }
+    if (comment.user_id !== userId) {
+      const err = new Error("Only the author can delete this comment.");
+      (err as unknown as { status: number }).status = 403;
+      throw err;
+    }
+    await PostRepository.deleteComment(commentId, userId);
+  }
+  static async toggleCommentReaction(
+    commentId: string,
+    userId: string,
+    reactionType: "heart" | "laugh" | "cry" | "fire" | "dead" | "respect",
+  ): Promise<{ action: "added" | "removed"; reaction: CommentReactionEntity | null }> {
+    // Check membership
+    const comment = await PostRepository.findByCommentId(commentId);
+    if (!comment) {
+      const err = new Error("Comment not found.");
+      (err as unknown as { status: number }).status = 404;
+      throw err;
+    }
+    const post = await PostRepository.findById(comment.post_id);
+    if (!post) return { action: "added", reaction: null };
+    const isMember = await ClassRepository.isMember(post.class_id, userId);
+    if (!isMember) {
+      const err = new Error("You must be a member to react.");
+      (err as unknown as { status: number }).status = 403;
+      throw err;
+    }
+    return PostRepository.toggleCommentReaction(commentId, userId, reactionType);
   }
 }

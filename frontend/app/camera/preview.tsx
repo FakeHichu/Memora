@@ -40,6 +40,72 @@ export default function CameraPreviewScreen() {
     setIsSaving(true);
     try {
       await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
+      setIsSaving(false);
+    }
+  };
+  
+  const handleSave = async () => {
+    if (!photoUri) {
+      setErrorMessage('Take a photo before posting.');
+      return;
+    }
+    setErrorMessage(null);
+    setIsSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id ?? null;
+      
+      if (!userId) {
+        setErrorMessage('User not authenticated. Please sign in.');
+        setIsSaving(false);
+        return;
+      }
+      
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const response = await fetch(\`\${backendUrl}/api/daily-posts\`, {
+        method: 'POST',
+        headers: {
+          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId: null,
+          userId,
+          photoPath: photoUri,
+          caption: caption.trim(),
+        }),
+      });
+      
+      if (response.status === 409) {
+        setErrorMessage('You have already posted a photo today. Daily limit reached.');
+        setIsSaving(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Could not save photo to server.');
+        setIsSaving(false);
+        await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
+        setErrorMessage('📸 Photo saved locally!');
+        setIsSaving(false);
+        router.replace('/(tabs)/home');
+        return;
+      }
+      
+      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
+      setErrorMessage('📸 Photo saved!');
+      setIsSaving(false);
+      router.replace('/(tabs)/home');
+    } catch (err) {
+      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
+      setErrorMessage('📸 Photo saved locally!');
+      setIsSaving(false);
+      router.replace('/(tabs)/home');
+    }
+  };
       clearPhotoDraft();
       router.replace('/(tabs)/home');
     } catch (error) {

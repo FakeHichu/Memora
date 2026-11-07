@@ -70,7 +70,7 @@ export function useClass() {
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
-          const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http:
+          const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost'//localhost':
           const response = await fetch(`${backendUrl}/api/classes/join`, {
             method: 'POST',
             headers: {

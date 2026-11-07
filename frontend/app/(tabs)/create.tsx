@@ -133,11 +133,62 @@ export default function CreateScreen() {
   const handleRemoveTag = (tag: string) => {
     setTags((prev) => prev.filter((t) => t !== tag));
   };
+  
+  
   const handleSave = async () => {
     if (!photoUri) return;
     setIsSaving(true);
     setErrorMessage(null);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const classId = activeClass?.id ?? null;
+      const userId = sessionData?.session?.user?.id ?? null;
+      
+      if (!userId) {
+        setErrorMessage('User not authenticated. Please sign in.');
+        setIsSaving(false);
+        return;
+      }
+      
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const response = await fetch(\`\${backendUrl}/api/daily-posts\`, {
+        method: 'POST',
+        headers: {
+          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId,
+          userId,
+          photoPath: photoUri,
+          caption: caption.trim(),
+        }),
+      });
+      
+      if (response.status === 409) {
+        setErrorMessage('You have already posted a photo today. Daily limit reached.');
+        setIsSaving(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Could not save memory to server.');
+        setIsSaving(false);
+        await publishLocalPhoto(
+          photoUri,
+          caption.trim(),
+          undefined,
+          category,
+          title.trim() || undefined,
+          tags,
+          location.trim() || undefined,
+        );
+        showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
+        router.replace('/(tabs)/home');
+        return;
+      }
+      
       await publishLocalPhoto(
         photoUri,
         caption.trim(),
@@ -148,6 +199,23 @@ export default function CreateScreen() {
         location.trim() || undefined,
       );
       showToast({ message: '📸 Memory saved!', variant: 'success', duration: 2000 });
+      router.replace('/(tabs)/home');
+    } catch (err) {
+      await publishLocalPhoto(
+        photoUri,
+        caption.trim(),
+        undefined,
+        category,
+        title.trim() || undefined,
+        tags,
+        location.trim() || undefined,
+      );
+      showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
+      router.replace('/(tabs)/home');
+    } finally {
+      setIsSaving(false);
+    }
+  };
       router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save memory.');

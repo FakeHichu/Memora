@@ -1,5 +1,13 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { ClassEntity, ClassMemberEntity } from "../types/index.js";
+import type { 
+  GroupEntity, 
+  GroupMemberEntity, 
+  GroupInvitationEntity, 
+  MemoraUserProfile,
+  ClassEntity,
+  ClassMemberEntity,
+  DailyPostEntity
+} from "../types/index.js";
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -11,90 +19,85 @@ const supabaseAdmin = createClient(
   }
 );
 export class ClassRepository {
-  static async createClassWithOwner(
+  // --- Groups ---
+
+  static async createGroup(
     name: string,
-    schoolName: string | null,
-    academicYear: number,
-    ownerUserId: string,
-  ): Promise<ClassEntity> {
-    const client: SupabaseClient = supabaseAdmin;
-    const randomBytes = new Uint8Array(8);
-    crypto.getRandomValues(randomBytes);
-    const joinCode = `MEM-${randomBytes.toString('hex').substring(0, 8).toUpperCase()}`;
-    const { data: newClass, error: classError } = await client
-      .from("classes")
+    userId: string,
+    description?: string | null,
+    isPrivate: boolean = true,
+    inviteOnly: boolean = false,
+  ): Promise<GroupEntity> {
+    const cleanCode = `GRP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const { data: newGroup, error } = await supabaseAdmin
+      .from("groups")
       .insert({
         name,
-        school_name: schoolName,
-        academic_year: academicYear,
-        join_code: joinCode,
-        created_by: ownerUserId,
+        description,
+        is_private: isPrivate,
+        invite_only: inviteOnly,
+        join_code: cleanCode,
+        created_by: userId,
         status: "active",
       })
       .select("*")
       .single();
-    if (classError) throw classError;
-    if (!newClass) throw new Error("Class creation failed - no data returned");
-    const { error: memberError } = await client
-      .from("class_members")
-      .insert({
-        class_id: newClass.id,
-        user_id: ownerUserId,
-        role: "owner",
-      });
-    if (memberError) throw memberError;
-    return newClass as ClassEntity;
+    if (error) throw error;
+    if (!newGroup) throw new Error("Group creation failed - no data returned");
+    // Add creator as owner
+    await supabaseAdmin.from("group_members").insert({
+      group_id: newGroup.id,
+      user_id: userId,
+      role: "owner",
+    });
+    return newGroup as GroupEntity;
   }
-  static async findByJoinCode(joinCode: string): Promise<ClassEntity | null> {
-    const client: SupabaseClient = supabaseAdmin;
+
+  static async findGroupByJoinCode(joinCode: string): Promise<GroupEntity | null> {
     const upperCode = joinCode.toUpperCase().trim();
-    const { data, error } = await client
-      .from("classes")
+    const { data, error } = await supabaseAdmin
+      .from("groups")
       .select("*")
       .eq("join_code", upperCode)
       .maybeSingle();
     if (error) throw error;
-    return data as ClassEntity | null;
+    return data as GroupEntity | null;
   }
-  static async findById(classId: string): Promise<ClassEntity | null> {
-    const client: SupabaseClient = supabaseAdmin;
-    const { data, error } = await client
-      .from("classes")
-      .select("*")
-      .eq("id", classId)
-      .maybeSingle();
-    if (error) throw error;
-    return data as ClassEntity | null;
-  }
-  static async getUserClasses(userId: string): Promise<ClassEntity[]> {
-    const client: SupabaseClient = supabaseAdmin;
-    const { data, error } = await client
-      .from("class_members")
-      .select("class_id, classes (*)")
-      .eq("user_id", userId);
-    if (error) throw error;
-    return (data || [])
-      .map((row: any) => row.classes as ClassEntity)
-      .filter(Boolean);
-  }
-  static async isMember(classId: string, userId: string): Promise<boolean> {
-    const client: SupabaseClient = supabaseAdmin;
-    const { data, error } = await client
-      .from("class_members")
+
+  static async isMember(groupId: string, userId: string): Promise<boolean> {
+    const { data, error } = await supabaseAdmin
+      .from("group_members")
       .select("id")
-      .eq("class_id", classId)
+      .eq("group_id", groupId)
       .eq("user_id", userId)
       .maybeSingle();
     if (error) throw error;
     return Boolean(data);
   }
+
   static async addMember(
+    groupId: string,
+    userId: string,
+    role: "owner" | "admin" | "member" = "member",
+  ): Promise<GroupMemberEntity> {
+    const { data, error } = await supabaseAdmin
+      .from("group_members")
+      .upsert(
+        { group_id: groupId, user_id: userId, role },
+        { onConflict: "group_id,user_id" },
+      )
+      .select()
+      .single();
+    if (error) throw error;
+    return data as GroupMemberEntity;
+  }
+
+  static async addClassMember(
     classId: string,
     userId: string,
     role: "owner" | "admin" | "member" = "member",
   ): Promise<ClassMemberEntity> {
-    const client: SupabaseClient = supabaseAdmin;
-    const { data, error } = await client
+    const { data, error } = await supabaseAdmin
       .from("class_members")
       .upsert(
         { class_id: classId, user_id: userId, role },
@@ -105,14 +108,231 @@ export class ClassRepository {
     if (error) throw error;
     return data as ClassMemberEntity;
   }
-  static async getMembers(classId: string): Promise<ClassMemberEntity[]> {
-    const client: SupabaseClient = supabaseAdmin;
-    const { data, error } = await client
+
+  static async getMembers(groupId: string): Promise<GroupMemberEntity[]> {
+    const { data, error } = await supabaseAdmin
+      .from("group_members")
+      .select("*, profiles:user_id (display_name, username, avatar_path)")
+      .eq("group_id", groupId)
+      .order("joined_at", { ascending: true });
+    if (error) throw error;
+    return data as GroupMemberEntity[];
+  }
+
+  static async getClassMembers(classId: string): Promise<ClassMemberEntity[]> {
+    const { data, error } = await supabaseAdmin
       .from("class_members")
-      .select("*, profiles:user_id (*)")
+      .select("*, profiles:user_id (display_name, username, avatar_path)")
       .eq("class_id", classId)
       .order("joined_at", { ascending: true });
     if (error) throw error;
-    return data as ClassMemberEntity[];
+    return (data || []) as ClassMemberEntity[];
+  }
+
+  static async removeMember(
+    groupId: string,
+    userId: string,
+    adminId: string,
+  ): Promise<boolean> {
+    // Check if admin
+    const isAdmin = await supabaseAdmin
+      .from("group_members")
+      .select("role")
+      .eq("group_id", groupId)
+      .eq("user_id", adminId)
+      .single();
+    if (isAdmin.data?.role !== 'admin' && adminId !== userId) {
+      return false;
+    }
+    const { error } = await supabaseAdmin
+      .from("group_members")
+      .delete()
+      .eq("group_id", groupId)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return true;
+  }
+
+  static async getUserGroups(userId: string): Promise<GroupEntity[]> {
+    const { data, error } = await supabaseAdmin
+      .from("group_members")
+      .select("groups (*)")
+      .eq("user_id", userId);
+    if (error) throw error;
+    return (data || [])
+      .map((row: any) => row.groups as GroupEntity)
+      .filter(Boolean);
+  }
+
+  // --- Class (Entity) operations ---
+
+  static async createClassWithOwner(
+    name: string,
+    userId: string,
+    academicYear: number,
+    schoolName?: string | null,
+  ): Promise<ClassEntity> {
+    const { data: newClass, error } = await supabaseAdmin
+      .from("classes")
+      .insert({
+        name,
+        school_name: schoolName,
+        academic_year: academicYear,
+        join_code: `CLS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        created_by: userId,
+        status: "active",
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    if (!newClass) throw new Error("Class creation failed - no data returned");
+    // Add creator as owner member
+    await supabaseAdmin.from("class_members").insert({
+      class_id: newClass.id,
+      user_id: userId,
+      role: "owner",
+    });
+    return newClass as ClassEntity;
+  }
+
+  static async findByJoinCode(joinCode: string): Promise<ClassEntity | null> {
+    const upperCode = joinCode.toUpperCase().trim();
+    const { data, error } = await supabaseAdmin
+      .from("classes")
+      .select("*")
+      .eq("join_code", upperCode)
+      .maybeSingle();
+    if (error) throw error;
+    return data as ClassEntity | null;
+  }
+
+  static async findById(classId: string): Promise<ClassEntity | null> {
+    const { data, error } = await supabaseAdmin
+      .from("classes")
+      .select("*")
+      .eq("id", classId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as ClassEntity | null;
+  }
+
+  static async getUserClasses(userId: string): Promise<ClassEntity[]> {
+    const { data, error } = await supabaseAdmin
+      .from("classes")
+      .select("*")
+      .eq("created_by", userId);
+    if (error) throw error;
+    return (data || []) as ClassEntity[];
+  }
+
+  // --- Group Invitations ---
+
+  static async createInvitation(
+    groupId: string,
+    inviterId: string,
+    email: string,
+  ): Promise<GroupInvitationEntity> {
+    const code = `INV-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const { data, error } = await supabaseAdmin
+      .from("group_invitations")
+      .insert({
+        group_id: groupId,
+        inviter_id: inviterId,
+        email,
+        code,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as GroupInvitationEntity;
+  }
+
+  static async consumeInvitation(
+    groupId: string,
+    code: string,
+    userId: string,
+  ): Promise<{ alreadyJoined: boolean; member: GroupMemberEntity }> {
+    // Check if code exists and not consumed
+    const { data: invitation, error } = await supabaseAdmin
+      .from("group_invitations")
+      .select("*")
+      .eq("group_id", groupId)
+      .eq("code", code)
+      .is("consumed_at", null)
+      .maybeSingle();
+    if (error || !invitation) {
+      throw new Error("Invalid or expired invitation code.");
+    }
+    // Check if user already a member
+    const isMember = await supabaseAdmin
+      .from("group_members")
+      .select("id")
+      .eq("group_id", groupId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (isMember.data) {
+      const { data: member } = await supabaseAdmin
+        .from("group_members")
+        .select("*, profiles:user_id (*)")
+        .eq("group_id", groupId)
+        .eq("user_id", userId)
+        .single();
+      return { alreadyJoined: true, member: member as GroupMemberEntity };
+    }
+    // Consume invitation and add member
+    await supabaseAdmin
+      .from("group_invitations")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", invitation.id);
+    const { data: upsertData, error: upsertError } = await supabaseAdmin
+      .from("group_members")
+      .upsert(
+        { group_id: groupId, user_id: userId, role: "member" },
+        { onConflict: "group_id,user_id" },
+      )
+      .select()
+      .single();
+    if (upsertError) throw upsertError;
+    return { alreadyJoined: false, member: upsertData as GroupMemberEntity };
+  }
+
+  // --- Bridge between classes and groups ---
+
+  static async linkClassToGroup(
+    classId: string,
+    groupId: string,
+  ): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from("class_group_bridge")
+      .insert({ class_id: classId, group_id: groupId });
+    if (error && error.code !== '23505') { // duplicate key is OK
+      throw error;
+    }
+    return true;
+  }
+
+  static async unlinkClassFromGroup(
+    classId: string,
+    groupId: string,
+  ): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from("class_group_bridge")
+      .delete().eq("class_id", classId).eq("group_id", groupId);
+    if (error) throw error;
+    return true;
+  }
+
+  static async getGroupsForClass(
+    classId: string,
+  ): Promise<GroupEntity[]> {
+    const { data, error } = await supabaseAdmin
+      .from("class_group_bridge")
+      .select("groups (*)")
+      .eq("class_id", classId);
+    if (error) throw error;
+    return (data || [])
+      .map((row: any) => row.groups as GroupEntity)
+      .filter(Boolean);
   }
 }

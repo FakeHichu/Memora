@@ -11,7 +11,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
     password,
     options: {
       data: { display_name: displayName },
-      emailRedirectTo: 'http:
+      emailRedirectTo: 'http://localhost'
     },
   });
   return { data, error };
