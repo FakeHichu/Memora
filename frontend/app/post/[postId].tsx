@@ -6,8 +6,10 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,11 +20,12 @@ import { useToast } from '@/components/ui/Toast';
 import { IconButton } from '@/components/ui/IconButton';
 import { Icon } from '@/components/ui/Icons';
 import { Avatar } from '@/components/ui/Avatar';
-import { BorderedInput } from '@/components/ui/BorderedInput';
 import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { useClass } from '@/hooks/useClass';
+
 export default function PostDetailScreen() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const { colors, mode } = useAppTheme();
@@ -33,6 +36,8 @@ export default function PostDetailScreen() {
   const [comments, setComments] = useState<Array<{ id: string; content: string; authorName: string; userReaction?: string }>>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [showFullPhoto, setShowFullPhoto] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -53,15 +58,16 @@ export default function PostDetailScreen() {
             .eq('id', postId)
             .single();
           if (!error && isActive) {
-            const userId = supabase.auth.getSession?.()?.data?.session?.user?.id;
-            const formattedComments = data?.comments
-              ?.map((c: any) => ({
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id ?? null;
+            if (isActive) setCurrentUserId(userId);
+            const formattedComments =
+              data?.comments?.map((c: any) => ({
                 id: c.id,
                 content: c.content,
                 authorName:
                   c.profiles?.display_name || c.profiles?.username || 'Classmate',
-              }))
-              : [];
+              })) || [];
             const formattedReactions = data?.reactions
               ?.map((r: any) => ({
                 reaction_type: r.reaction_type,
@@ -189,7 +195,10 @@ export default function PostDetailScreen() {
           {
             id: Date.now().toString(),
             content: newComment.trim(),
-            authorName: sessionData.session.user.display_name || 'You',
+            authorName:
+              (sessionData?.session?.user?.user_metadata?.full_name as string) ||
+              sessionData?.session?.user?.email?.split('@')[0] ||
+              'You',
           },
         ]);
         setNewComment('');
@@ -219,8 +228,7 @@ export default function PostDetailScreen() {
     hour: 'numeric',
     minute: '2-digit',
   });
-  const userId = supabase?.auth?.getSession?.()?.data?.session?.user?.id;
-  const isAuthor = post?.user_id === userId;
+  const isAuthor = Boolean(post?.user_id && currentUserId && post.user_id === currentUserId);
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -248,7 +256,7 @@ export default function PostDetailScreen() {
             <IconButton
               icon="trash"
               onPress={handleDelete}
-              variant="danger"
+              variant="ghost"
               size="sm"
               accessibilityLabel="Delete memory"
             />
@@ -350,7 +358,7 @@ export default function PostDetailScreen() {
               {metadataRows(post) ? (
                 <View style={styles.metadataCard}>
                   <Text style={styles.metadataSectionTitle}>Details</Text>
-                  {metadataRows(post).map((row, index) => (
+                  {metadataRows(post)?.map((row) => (
                     <View key={row.label} style={styles.metadataRow}>
                       <Text style={styles.metadataLabel}>{row.label}</Text>
                       <Text style={styles.metadataValue}>{row.value}</Text>
@@ -381,11 +389,11 @@ export default function PostDetailScreen() {
               )}
               {isAuthor && (
                 <View style={styles.commentFormRow}>
-                  <BorderedInput
+                  <TextInput
                     placeholder="Add a comment..."
+                    placeholderTextColor={colors.textMuted}
                     value={newComment}
                     onChangeText={setNewComment}
-                    leftIcon="message"
                     style={styles.commentInput}
                   />
                   <Button
@@ -505,7 +513,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
             shadowRadius: 16,
             elevation: 4,
           }),
-    }),
+    },
     heroImage: {
       width: '100%',
       height: '100%',
@@ -712,10 +720,103 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
       borderTopWidth: 1,
       borderTopColor: colors.borderSoft,
       flexDirection: 'row',
+      alignItems: 'center',
       gap: spacing.sm,
     },
     commentInput: {
       flex: 1,
+      backgroundColor: colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      borderRadius: 12,
+      paddingHorizontal: spacing.md,
+      paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+      color: colors.textPrimary,
+      fontSize: 14,
+    },
+    emptyView: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.xl,
+    },
+    emptyText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+    authorTextBlock: {
+      gap: 2,
+    },
+    metadataCard: {
+      marginTop: spacing.md,
+      padding: spacing.md,
+      borderRadius: 16,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      gap: spacing.sm,
+    },
+    metadataSectionTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginBottom: 4,
+    },
+    metadataRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 4,
+    },
+    metadataLabel: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    metadataValue: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textPrimary,
+    },
+    relatedSection: {
+      marginTop: spacing.xl,
+      gap: spacing.sm,
+    },
+    relatedSectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    relatedScroll: {
+      gap: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    floatingBottomBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      backgroundColor: colors.background,
+      borderTopWidth: 1,
+      borderTopColor: colors.borderSoft,
+      alignItems: 'center',
+    },
+    mainActionButton: {
+      width: '100%',
+      maxWidth: 400,
+      height: 50,
+      borderRadius: 999,
+      backgroundColor: colors.accent,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    mainActionButtonText: {
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '700',
     },
   });
 }

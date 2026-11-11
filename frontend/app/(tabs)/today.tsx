@@ -77,9 +77,16 @@ export default function TodayScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.wordmark}>MEMORA</Text>
-            <Text style={styles.tagline}>YOUR MOMENTS. YOUR PEOPLE.</Text>
+          <View style={styles.brandTitleRow}>
+            <Image
+              source={require('@/assets/brand/logo-cat.png')}
+              style={styles.headerLogo}
+              resizeMode="cover"
+            />
+            <View>
+              <Text style={styles.wordmark}>MEMORA</Text>
+              <Text style={styles.tagline}>YOUR MOMENTS. YOUR PEOPLE.</Text>
+            </View>
           </View>
           <View style={styles.headerActions}>
             <Pressable style={styles.headerIconButton} onPress={() => setActiveNotice('notifications')} accessibilityRole="button" accessibilityLabel="Open notifications">
@@ -242,6 +249,8 @@ function createStyles(colors: ThemeColors) {
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg },
   header: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brandTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#0E0D17', borderWidth: 1, borderColor: 'rgba(128, 82, 200, 0.4)' },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headerIconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 20, backgroundColor: colors.glass },
   headerIcon: { color: colors.text, fontSize: 18, lineHeight: 22 },

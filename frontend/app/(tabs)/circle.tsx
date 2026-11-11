@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -11,7 +12,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -24,10 +27,14 @@ import {
   hasPostedToday,
   type LocalPhotoPost,
 } from '@/lib/photo-draft';
+import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
-import { useEffect } from 'react';
+
 export default function CircleScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
+  const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
   const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -73,16 +80,17 @@ export default function CircleScreen() {
   };
   const handleReact = async (postId: string, emoji: string) => {
     try {
+      if (!supabase) return;
       const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id ?? null;
-      
-      if (!userId) return;
-      
-      const response = await fetch(\`\${backendUrl}/api/reactions\`, {
+
+      if (!userId || !sessionData?.session) return;
+
+      const response = await fetch(`${backendUrl}/api/reactions`, {
         method: 'POST',
         headers: {
-          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -290,7 +298,7 @@ export default function CircleScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -473,4 +481,4 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 40,
   },
-});
+}); }

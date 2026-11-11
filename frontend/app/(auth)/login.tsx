@@ -2,6 +2,7 @@ import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -118,7 +119,11 @@ export default function LoginScreen() {
           {/* Brand Mark Pill */}
           <View style={styles.brandRow}>
             <View style={styles.brandMark}>
-              <Icon name="camera" size={24} color="#FFFFFF" />
+              <Image
+                source={require('@/assets/brand/logo-cat.png')}
+                style={styles.brandMarkImage}
+                resizeMode="cover"
+              />
             </View>
             <View>
               <Text style={styles.brandName}>MEMORA</Text>
@@ -314,7 +319,10 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.accent,
+      backgroundColor: '#0E0D17',
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: 'rgba(128, 82, 200, 0.4)',
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: `0 8px 24px ${isDark ? 'rgba(128, 82, 200, 0.4)' : 'rgba(128, 101, 143, 0.3)'}`,
@@ -326,6 +334,11 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
             shadowRadius: 10,
             elevation: 6,
           }),
+    },
+    brandMarkImage: {
+      width: 52,
+      height: 52,
+      borderRadius: 18,
     },
     brandName: {
       fontSize: 20,

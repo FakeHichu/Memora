@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import { clearLocalPhotoPosts, getLocalPhotoPosts } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -13,6 +15,8 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAuth } from '@/hooks/useAuth';
 import { SkeletonProfileHeader } from '@/components/ui/Skeleton';
 export default function ProfileScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { session, isLoading: isAuthLoading } = useAuth();
   const [photoCount, setPhotoCount] = useState(0);
   const [localProfile, setLocalProfile] = useState<{ name: string; handle: string; email: string }>(
@@ -22,18 +26,22 @@ export default function ProfileScreen() {
       email: '',
     },
   );
-  const [supabaseProfile, setSupabaseProfile] = useState(null);
+  const [supabaseProfile, setSupabaseProfile] = useState<{
+    display_name?: string;
+    email?: string;
+    username?: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
       async function fetchProfile() {
-        if (!supabase || isAuthLoading) return;
+        if (!supabase || isAuthLoading || !session?.user?.id) return;
         try {
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', session?.user?.id)
+            .eq('id', session.user.id)
             .single();
           if (!error && isActive) {
             setSupabaseProfile(data);
@@ -200,7 +208,7 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -253,4 +261,4 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: spacing.huge,
   },
-});
+}); }

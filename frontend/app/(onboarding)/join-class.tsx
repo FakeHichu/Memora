@@ -41,7 +41,7 @@ export default function JoinClassScreen() {
         return;
       }
       const cleanCode = code.trim().toUpperCase();
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000',
+      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
       const response = await fetch(`${backendUrl}/api/classes/join`, {
         method: 'POST',
         headers: {

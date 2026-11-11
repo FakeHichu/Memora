@@ -38,12 +38,12 @@ export default function DiscoverScreen() {
   useEffect(() => {
     let isActive = true;
     async function fetchPosts() {
-      if (!supabase || !session?.session?.user?.id) {
+      if (!supabase || !session?.user?.id) {
         if (isActive) setPosts([]);
         return;
       }
 
-      const userId = session.session.user.id;
+      const userId = session.user.id;
       let classIds: string[] = [];
 
       // Get all classes the user is a member of
@@ -128,32 +128,22 @@ export default function DiscoverScreen() {
 
     fetchPosts();
 
+    if (!supabase) return;
+
     // Listen for auth changes
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
+      () => {
         if (!isActive) return;
         setIsLoading(true);
         fetchPosts();
       }
     );
 
-    // Listen for class membership changes
-    const { data: classListener } = supabase
-      .from('class_members')
-      .on('*', (_event: any, newRow: any) => {
-        if (!isActive) return;
-        setIsLoading(true);
-        fetchPosts();
-      })
-      .eq('user_id', session?.session?.user?.id || '')
-      .subscribe();
-
     return () => {
       isActive = false;
       listener.subscription.unsubscribe();
-      if (classListener) classListener.unsubscribe();
     };
-  }, [session, activeClass, supabase, normalizedQuery]);
+  }, [session, activeClass, normalizedQuery]);
 
   const filteredPosts = posts.filter((post) =>
     `${post.caption} ${post.location} ${post.authorName}`.toLowerCase().includes(normalizedQuery)
@@ -163,9 +153,16 @@ export default function DiscoverScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.wordmark}>MEMORA</Text>
-            <Text style={styles.title}>Find your people.</Text>
+          <View style={styles.brandTitleRow}>
+            <Image
+              source={require('@/assets/brand/logo-cat.png')}
+              style={styles.headerLogo}
+              resizeMode="cover"
+            />
+            <View>
+              <Text style={styles.wordmark}>MEMORA</Text>
+              <Text style={styles.title}>Find your people.</Text>
+            </View>
           </View>
           <Text style={styles.headerMark}>DISCOVER</Text>
         </View>
@@ -259,6 +256,8 @@ function createStyles(colors: ThemeColors) {
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg },
   header: { minHeight: 74, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brandTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#0E0D17', borderWidth: 1, borderColor: 'rgba(128, 82, 200, 0.4)' },
   wordmark: { color: colors.primaryDark, fontSize: 11, fontWeight: '800', letterSpacing: 2 },
   title: { ...typography.title, color: colors.text, marginTop: spacing.xs },
   headerMark: { color: colors.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1.4 },
@@ -272,6 +271,7 @@ function createStyles(colors: ThemeColors) {
   sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.xs },
   eyebrow: { color: colors.primaryDark, fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
   sectionTitle: { ...typography.subheading, color: colors.text, marginTop: 2 },
+  sampleTag: { color: colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   sectionArrow: { color: colors.primary, fontSize: 22 },
   topicRail: { gap: spacing.md, paddingRight: spacing.lg },
   topicCard: { width: 188, height: 166, justifyContent: 'space-between', overflow: 'hidden', padding: spacing.md, borderRadius: radius.lg },
@@ -283,6 +283,7 @@ function createStyles(colors: ThemeColors) {
   peopleRail: { gap: spacing.lg, paddingRight: spacing.lg },
   noResults: { paddingVertical: spacing.lg, color: colors.muted, fontSize: 13 },
   loadingState: { paddingVertical: spacing.xxl, alignItems: 'center', paddingHorizontal: spacing.lg },
+  feedPosts: { gap: spacing.lg },
   feature: { height: 270, overflow: 'hidden', borderRadius: radius.lg, backgroundColor: colors.surface },
   featureImage: { width: '100%', height: '100%' },
   featureShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,9,15,0.46)' },

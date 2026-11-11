@@ -2,7 +2,9 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, layout } from '@/constants/theme';
+import { spacing, layout } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
 import { MemoryCard } from '@/components/ui/MemoryCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -19,6 +21,8 @@ type MemorySection = {
   data: LocalPhotoPost[];
 };
 export default function MemoriesScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -187,7 +191,7 @@ export default function MemoriesScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -224,4 +228,4 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: spacing.huge,
   },
-});
+}); }

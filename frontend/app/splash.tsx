@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Dimensions, Image } from 'react-native';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -49,7 +49,11 @@ export default function SplashScreen() {
       <View style={styles.content}>
         {/* Memora Logo */}
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>MEMORA</Text>
+          <Image
+            source={require('@/assets/brand/logo-cat.png')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
         </View>
         {/* Application Name */}
         <Text style={styles.appName}>Memora</Text>
@@ -80,19 +84,21 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   logoContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(128, 82, 200, 0.2)',
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#0E0D17',
+    borderWidth: 1.5,
+    borderColor: 'rgba(128, 82, 200, 0.4)',
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  logoText: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#8052C8',
-    letterSpacing: -0.5,
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
   },
   appName: {
     fontSize: 28,

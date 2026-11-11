@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import {
   getLocalPhotoPosts,
   addRecentSearch,
@@ -31,10 +33,12 @@ function HighlightedText({
   text,
   query,
   style,
+  accentColor,
 }: {
   text: string;
   query: string;
   style?: object;
+  accentColor: string;
 }) {
   if (!query.trim() || !text) {
     return <Text style={style}>{text}</Text>;
@@ -45,23 +49,23 @@ function HighlightedText({
   if (idx === -1) {
     return <Text style={style}>{text}</Text>;
   }
+  const matchStyle = {
+    backgroundColor: 'rgba(122, 159, 216, 0.25)',
+    color: accentColor,
+    fontWeight: '700' as const,
+    borderRadius: 2,
+  };
   return (
     <Text style={style}>
       {text.slice(0, idx)}
-      <Text style={highlightStyle.match}>{text.slice(idx, idx + query.length)}</Text>
+      <Text style={matchStyle}>{text.slice(idx, idx + query.length)}</Text>
       {text.slice(idx + query.length)}
     </Text>
   );
 }
-const highlightStyle = {
-  match: {
-    backgroundColor: 'rgba(122, 159, 216, 0.25)',
-    color: colors.accent,
-    fontWeight: '700' as const,
-    borderRadius: 2,
-  },
-};
 export default function SearchScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -275,6 +279,7 @@ export default function SearchScreen() {
                       }
                       query={debouncedQuery}
                       style={styles.resultCaption}
+                      accentColor={colors.accent}
                     />
                   )}
                 </View>
@@ -351,7 +356,7 @@ export default function SearchScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -457,4 +462,4 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: spacing.huge,
   },
-});
+}); }

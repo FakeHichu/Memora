@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, spacing, typography, layout, borders } from '@/constants/theme';
+import { radius, spacing, typography, layout, borders } from '@/constants/theme';
+import type { ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import {
   getCollections,
   createCollection,
@@ -35,6 +37,8 @@ const COLLECTION_COLORS = [
   '#8A9AB8',
 ];
 export default function CollectionsScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { showToast } = useToast();
   const [collections, setCollections] = useState<LocalCollection[]>([]);
   const [collectionCounts, setCollectionCounts] = useState<Record<string, number>>({});
@@ -302,190 +306,192 @@ export default function CollectionsScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.maxContentWidth,
-    alignSelf: 'center',
-    paddingBottom: spacing.xxxl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-  },
-  headerTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  titleEmoji: { fontSize: 22 },
-  title: {
-    ...typography.serif.title2,
-    color: colors.textPrimary,
-  },
-  createBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.accentSubtle,
-    borderRadius: radius.round,
-    borderWidth: borders.hairline,
-    borderColor: colors.accent,
-  },
-  createBtnText: {
-    ...typography.sans.caption,
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  grid: {
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  gridItem: {
-    width: '47%',
-  },
-  collectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    borderTopWidth: 3,
-    minHeight: 140,
-    justifyContent: 'space-between',
-  },
-  collectionCardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  collectionEmoji: {
-    fontSize: 28,
-  },
-  collectionActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  miniAction: {
-    padding: 2,
-  },
-  miniActionText: {
-    fontSize: 14,
-  },
-  collectionName: {
-    ...typography.sans.headline,
-    color: colors.textPrimary,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  collectionDesc: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    marginBottom: spacing.sm,
-  },
-  collectionCount: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-    marginTop: 'auto' as unknown as number,
-  },
-  createCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundElevated,
-    borderStyle: 'dashed',
-    borderTopWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-  },
-  createCardIcon: {
-    fontSize: 32,
-    color: colors.textMuted,
-    fontWeight: '300',
-  },
-  createCardText: {
-    ...typography.sans.callout,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  emptyState: {
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.xxxl,
-  },
-  bottomSpacer: {
-    height: 40,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(8, 8, 12, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: colors.surfaceModal,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderEmphasized,
-    gap: spacing.sm,
-  },
-  modalTitle: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  modalFieldLabel: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  modalInput: {
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    color: colors.textPrimary,
-    ...typography.sans.body,
-  },
-  modalInputMulti: {
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  colorRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    flexWrap: 'wrap',
-    marginBottom: spacing.sm,
-  },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.round,
-  },
-  colorSwatchSelected: {
-    borderWidth: borders.medium,
-    borderColor: colors.textPrimary,
-    transform: [{ scale: 1.15 }],
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      width: '100%',
+      maxWidth: layout.maxContentWidth,
+      alignSelf: 'center',
+      paddingBottom: spacing.xxxl,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.lg,
+    },
+    headerTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    titleEmoji: { fontSize: 22 },
+    title: {
+      ...typography.serif.title2,
+      color: colors.textPrimary,
+    },
+    createBtn: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      backgroundColor: colors.accentSubtle,
+      borderRadius: radius.round,
+      borderWidth: borders.hairline,
+      borderColor: colors.accent,
+    },
+    createBtnText: {
+      ...typography.sans.caption,
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    grid: {
+      paddingHorizontal: spacing.lg,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    gridItem: {
+      width: '47%',
+    },
+    collectionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSubtle,
+      borderTopWidth: 3,
+      minHeight: 140,
+      justifyContent: 'space-between',
+    },
+    collectionCardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing.sm,
+    },
+    collectionEmoji: {
+      fontSize: 28,
+    },
+    collectionActions: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    miniAction: {
+      padding: 2,
+    },
+    miniActionText: {
+      fontSize: 14,
+    },
+    collectionName: {
+      ...typography.sans.headline,
+      color: colors.textPrimary,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
+    },
+    collectionDesc: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      marginBottom: spacing.sm,
+    },
+    collectionCount: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      letterSpacing: 0.5,
+      marginTop: 'auto' as unknown as number,
+    },
+    createCard: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.backgroundElevated,
+      borderStyle: 'dashed',
+      borderTopWidth: borders.hairline,
+      borderColor: colors.borderDefault,
+    },
+    createCardIcon: {
+      fontSize: 32,
+      color: colors.textMuted,
+      fontWeight: '300',
+    },
+    createCardText: {
+      ...typography.sans.callout,
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+    },
+    emptyState: {
+      marginHorizontal: spacing.lg,
+      paddingVertical: spacing.xxxl,
+    },
+    bottomSpacer: {
+      height: 40,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(8, 8, 12, 0.8)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xl,
+    },
+    modalContent: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: colors.surfaceModal,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderEmphasized,
+      gap: spacing.sm,
+    },
+    modalTitle: {
+      ...typography.serif.title3,
+      color: colors.textPrimary,
+      marginBottom: spacing.sm,
+    },
+    modalFieldLabel: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    modalInput: {
+      backgroundColor: colors.backgroundElevated,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderDefault,
+      borderRadius: radius.sm,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      color: colors.textPrimary,
+      ...typography.sans.body,
+    },
+    modalInputMulti: {
+      minHeight: 60,
+      textAlignVertical: 'top',
+    },
+    colorRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      flexWrap: 'wrap',
+      marginBottom: spacing.sm,
+    },
+    colorSwatch: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.round,
+    },
+    colorSwatchSelected: {
+      borderWidth: borders.medium,
+      borderColor: colors.textPrimary,
+      transform: [{ scale: 1.15 }],
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: spacing.md,
+      marginTop: spacing.sm,
+    },
+  });
+}

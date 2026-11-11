@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
@@ -108,7 +108,11 @@ export default function SplashScreen() {
             ]}
           >
             <View style={styles.logoBadge}>
-              <Icon name="camera" size={38} color="#FFFFFF" />
+              <Image
+                source={require('@/assets/brand/logo-cat.png')}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
             </View>
           </Animated.View>
           <Text style={styles.appName}>Memora</Text>
@@ -166,19 +170,25 @@ function createStyles(colors: ThemeColors) {
       elevation: 8,
     },
     logoBadge: {
-      width: 88,
-      height: 88,
+      width: 92,
+      height: 92,
       borderRadius: 28,
-      backgroundColor: colors.accent,
+      backgroundColor: '#0E0D17',
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1.5,
       borderColor: colors.accentLight,
+      overflow: 'hidden',
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: `0 12px 32px ${colors.accentGlow || 'rgba(128, 82, 200, 0.3)'}`,
           } as any)
         : {}),
+    },
+    logoImage: {
+      width: 92,
+      height: 92,
+      borderRadius: 28,
     },
     appName: {
       fontSize: 32,

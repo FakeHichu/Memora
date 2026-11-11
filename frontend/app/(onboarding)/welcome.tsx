@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
@@ -25,7 +25,11 @@ export default function WelcomeScreen() {
       >
         <View style={styles.brandRow}>
           <View style={styles.brandMark}>
-            <Icon name="heart" size={17} color={colors.accentLight} />
+            <Image
+              source={require('@/assets/brand/logo-cat.png')}
+              style={styles.brandMarkImage}
+              resizeMode="cover"
+            />
           </View>
           <Text style={styles.brandName}>MEMORA</Text>
           <View style={styles.privatePill}>
@@ -169,14 +173,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   brandMark: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(184, 79, 125, 0.14)',
-    borderWidth: borders.thin,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0E0D17',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(128, 82, 200, 0.4)',
+  },
+  brandMarkImage: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.md,
   },
   brandName: {
     ...typography.sans.caption,

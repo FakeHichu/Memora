@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -22,18 +23,21 @@ import {
 } from '@/lib/photo-draft';
 import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
-import { useEffect } from 'react';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
   const [prompt] = useState(() => getPromptDraft());
   const [caption, setCaption] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { activeClass } = useClass();
+
   const retake = () => {
     clearPhotoDraft();
     router.replace('/camera');
   };
+
   const postPhoto = async () => {
     if (!photoUri) {
       setErrorMessage('Take a photo before posting.');
@@ -42,130 +46,64 @@ export default function CameraPreviewScreen() {
     setErrorMessage(null);
     setIsSaving(true);
     try {
+      // 1. If user is authenticated and part of a class, sync to backend
+      if (supabase && activeClass?.id) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData?.session?.user?.id ?? null;
+          const classId = activeClass.id;
+
+          if (userId && sessionData?.session) {
+            let photoPath = photoUri;
+            try {
+              const fileName = `${userId}/${Date.now()}.jpg`;
+              const { error: uploadError } = await supabase.storage
+                .from('class-photos')
+                .upload(fileName, await fetch(photoUri).then((res) => res.blob()), {
+                  cacheControl: '3600',
+                  contentType: 'image/jpeg',
+                });
+              if (!uploadError) {
+                const { data: publicUrlData } = supabase.storage
+                  .from('class-photos')
+                  .getPublicUrl(fileName);
+                photoPath = publicUrlData.publicUrl;
+              }
+            } catch (uploadErr) {
+              console.warn('Storage upload failed, using local path:', uploadErr);
+            }
+
+            const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+            await fetch(`${backendUrl}/api/daily-posts`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${sessionData.session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                classId,
+                userId,
+                photoPath,
+                caption: caption.trim(),
+              }),
+            });
+          }
+        } catch (syncErr) {
+          console.warn('Backend sync failed, continuing locally:', syncErr);
+        }
+      }
+
+      // 2. Publish locally & clear draft
       await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
-      setIsSaving(false);
-    }
-  };
-  
-  const handleSave = async () => {
-    if (!photoUri) {
-      setErrorMessage('Take a photo before posting.');
-      return;
-    }
-    setErrorMessage(null);
-    setIsSaving(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const classId = activeClass?.id ?? null;
-      const userId = sessionData?.session?.user?.id ?? null;
-      
-      if (!userId) {
-        setErrorMessage('User not authenticated. Please sign in.');
-        setIsSaving(false);
-        return;
-      }
-      
-      if (!classId) {
-        setErrorMessage('Please select a class first. Join or create a class to post daily memories.');
-        setIsSaving(false);
-        return;
-      }
-      
-      // Upload photo to Supabase Storage
-      let photoPath = photoUri;
-      try {
-        const fileName = `${userId}/${Date.now()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from('class-photos')
-          .upload(fileName, await fetch(photoUri).then(res => res.blob()), {
-            cacheControl: '3600',
-            contentType: 'image/jpeg',
-          });
-        if (uploadError) throw uploadError;
-        const { data: publicUrlData } = supabase.storage
-          .from('class-photos')
-          .getPublicUrl(fileName);
-        photoPath = publicUrlData.publicUrl;
-      } catch (uploadErr) {
-        // If upload fails, use local path as fallback
-        console.warn('Storage upload failed, using local path:', uploadErr);
-      }
-      
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-      const response = await fetch(\`\${backendUrl}/api/daily-posts\`, {
-        method: 'POST',
-        headers: {
-          Authorization: \`Bearer \${sessionData.session.access_token}\`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          classId,
-          userId,
-          photoPath,
-          caption: caption.trim(),
-        }),
-      });
-      
-      if (response.status === 409) {
-        setErrorMessage('You have already posted a photo today. Daily limit reached.');
-        setIsSaving(false);
-        return;
-      }
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Could not save memory to server.');
-        setIsSaving(false);
-        await publishLocalPhoto(
-          photoUri,
-          caption.trim(),
-          undefined,
-          category,
-          title.trim() || undefined,
-          tags,
-          location.trim() || undefined,
-        );
-        showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
-        router.replace('/(tabs)/home');
-        return;
-      }
-      
-      await publishLocalPhoto(
-        photoUri,
-        caption.trim(),
-        undefined,
-        category,
-        title.trim() || undefined,
-        tags,
-        location.trim() || undefined,
-      );
-      showToast({ message: '📸 Memory saved!', variant: 'success', duration: 2000 });
-      router.replace('/(tabs)/home');
-    } catch (err) {
-      await publishLocalPhoto(
-        photoUri,
-        caption.trim(),
-        undefined,
-        category,
-        title.trim() || undefined,
-        tags,
-        location.trim() || undefined,
-      );
-      showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
-      router.replace('/(tabs)/home');
-    } finally {
-      setIsSaving(false);
-    }
-  };
       clearPhotoDraft();
       router.replace('/(tabs)/home');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
+    } finally {
       setIsSaving(false);
     }
   };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />

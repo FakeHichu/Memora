@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -123,7 +124,11 @@ export default function SettingsScreen() {
         <ProfileSection title="About">
           <View style={styles.appInfo}>
             <View style={styles.appIcon}>
-              <Text style={styles.appIconText}>M</Text>
+              <Image
+                source={require('@/assets/brand/logo-cat.png')}
+                style={styles.appIconImage}
+                resizeMode="cover"
+              />
             </View>
             <View style={styles.appTextContainer}>
               <Text style={styles.appName}>Memora</Text>
@@ -308,11 +313,17 @@ function createStyles(colors: ThemeColors) {
       width: 56,
       height: 56,
       borderRadius: radius.lg,
-      backgroundColor: colors.chromeDark,
-      borderWidth: borders.thin,
-      borderColor: colors.chrome,
+      backgroundColor: '#0E0D17',
+      borderWidth: 1.5,
+      borderColor: 'rgba(128, 82, 200, 0.4)',
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    appIconImage: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
     },
     appIconText: {
       ...typography.serif.title3,

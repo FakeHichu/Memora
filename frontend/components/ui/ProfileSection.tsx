@@ -1,7 +1,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon } from '@/components/ui/Icons';
+
 type ProfileSectionProps = {
   title: string;
   children: React.ReactNode;
@@ -11,7 +13,11 @@ type ProfileSectionProps = {
     onPress: () => void;
   };
 };
+
 export function ProfileSection({ title, children, style, action }: ProfileSectionProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={[styles.section, style]}>
       <View style={styles.header}>
@@ -26,6 +32,7 @@ export function ProfileSection({ title, children, style, action }: ProfileSectio
     </View>
   );
 }
+
 type ProfileRowProps = {
   label: string;
   value: string;
@@ -34,6 +41,7 @@ type ProfileRowProps = {
   style?: ViewStyle;
   destructive?: boolean;
 };
+
 export function ProfileRow({
   label,
   value,
@@ -42,6 +50,9 @@ export function ProfileRow({
   style,
   destructive = false,
 }: ProfileRowProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -65,89 +76,98 @@ export function ProfileRow({
     </Pressable>
   );
 }
+
 type ProfileDividerProps = {
   style?: ViewStyle;
 };
+
 export function ProfileDivider({ style }: ProfileDividerProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return <View style={[styles.divider, style]} />;
 }
-const styles = StyleSheet.create({
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  title: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-  },
-  action: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  actionLabel: {
-    ...typography.sans.caption,
-    color: colors.accent,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  content: {
-    gap: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    minHeight: 48,
-  },
-  rowInteractive: {
-    backgroundColor: 'transparent',
-  },
-  rowPressed: {
-    backgroundColor: colors.backgroundElevated,
-  },
-  rowDestructive: {},
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    flex: 1,
-  },
-  textContainer: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-  },
-  rowLabel: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  rowLabelDestructive: {
-    color: colors.error,
-  },
-  rowValue: {
-    ...typography.sans.body,
-    color: colors.textPrimary,
-    marginTop: 1,
-  },
-  rowValueDestructive: {
-    color: colors.error,
-  },
-  divider: {
-    height: borders.hairline,
-    backgroundColor: colors.borderSoft,
-    marginVertical: spacing.sm,
-  },
-});
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSubtle,
+      marginBottom: spacing.lg,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+    },
+    title: {
+      ...typography.serif.title3,
+      color: colors.textPrimary,
+    },
+    action: {
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+    },
+    actionLabel: {
+      ...typography.sans.caption,
+      color: colors.accent,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    content: {
+      gap: spacing.sm,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.sm,
+      minHeight: 48,
+    },
+    rowInteractive: {
+      backgroundColor: 'transparent',
+    },
+    rowPressed: {
+      backgroundColor: colors.backgroundElevated,
+    },
+    rowDestructive: {},
+    rowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      flex: 1,
+    },
+    textContainer: {
+      flex: 1,
+      minWidth: 0,
+      justifyContent: 'center',
+    },
+    rowLabel: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    rowLabelDestructive: {
+      color: colors.error,
+    },
+    rowValue: {
+      ...typography.sans.body,
+      color: colors.textPrimary,
+      marginTop: 1,
+    },
+    rowValueDestructive: {
+      color: colors.error,
+    },
+    divider: {
+      height: borders.hairline,
+      backgroundColor: colors.borderSoft,
+      marginVertical: spacing.sm,
+    },
+  });
+}

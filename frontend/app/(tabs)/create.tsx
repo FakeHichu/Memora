@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -15,7 +16,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
 import { Icon } from '@/components/ui/Icons';
 import { Button } from '@/components/ui/Button';
@@ -23,10 +26,17 @@ import { Card } from '@/components/ui/Card';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { TagBadge } from '@/components/ui/TagBadge';
 import { useToast } from '@/components/ui/Toast';
+import { supabase } from '@/lib/supabase/client';
+import { useClass } from '@/hooks/useClass';
+
 const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
 type CreateStep = 'landing' | 'details';
+
 export default function CreateScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { showToast } = useToast();
+  const { activeClass } = useClass();
   const [step, setStep] = useState<CreateStep>('landing');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
@@ -140,11 +150,14 @@ export default function CreateScreen() {
     setIsSaving(true);
     setErrorMessage(null);
     try {
+      if (!supabase) {
+        throw new Error('Supabase is not configured.');
+      }
       const { data: sessionData } = await supabase.auth.getSession();
       const classId = activeClass?.id ?? null;
       const userId = sessionData?.session?.user?.id ?? null;
-      
-      if (!userId) {
+
+      if (!userId || !sessionData?.session) {
         setErrorMessage('User not authenticated. Please sign in.');
         setIsSaving(false);
         return;
@@ -444,7 +457,7 @@ export default function CreateScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -653,4 +666,4 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.md,
   },
-});
+}); }

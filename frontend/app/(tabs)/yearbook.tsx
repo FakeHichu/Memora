@@ -39,9 +39,16 @@ export default function YearbookScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.wordmark}>MEMORA</Text>
-            <Text style={styles.headerTitle}>Yearbook</Text>
+          <View style={styles.brandTitleRow}>
+            <Image
+              source={require('@/assets/brand/logo-cat.png')}
+              style={styles.headerLogo}
+              resizeMode="cover"
+            />
+            <View>
+              <Text style={styles.wordmark}>MEMORA</Text>
+              <Text style={styles.headerTitle}>Yearbook</Text>
+            </View>
           </View>
           <Text style={styles.headerGlyph}>✳</Text>
         </View>
@@ -149,6 +156,8 @@ function createStyles(colors: ThemeColors) {
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg },
   header: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brandTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#0E0D17', borderWidth: 1, borderColor: 'rgba(128, 82, 200, 0.4)' },
   wordmark: { color: colors.primaryDark, fontSize: 9, fontWeight: '800', letterSpacing: 1.8 },
   headerTitle: { ...typography.heading, color: colors.text, marginTop: 2 },
   headerGlyph: { color: colors.primary, fontSize: 28 },

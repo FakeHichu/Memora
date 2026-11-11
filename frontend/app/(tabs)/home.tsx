@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -115,16 +116,17 @@ export default function HomeScreen() {
   };
   const handleReact = async (postId: string, emoji: string) => {
     try {
+      if (!supabase) return;
       const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id ?? null;
-      
-      if (!userId) return;
-      
-      const response = await fetch(\`\${backendUrl}/api/reactions\`, {
+
+      if (!userId || !sessionData?.session) return;
+
+      const response = await fetch(`${backendUrl}/api/reactions`, {
         method: 'POST',
         headers: {
-          Authorization: \`Bearer \${sessionData.session.access_token}\`,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

@@ -1,7 +1,9 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography, borders } from '@/constants/theme';
+import { radius, spacing, typography, borders, type ThemeColors } from '@/constants/theme';
+import { useAppTheme } from '@/providers/ThemeProvider';
 import { Button } from './Button';
+
 type ConfirmDialogProps = {
   visible: boolean;
   title: string;
@@ -12,6 +14,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
   onCancel: () => void;
 };
+
 export function ConfirmDialog({
   visible,
   title,
@@ -22,6 +25,9 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+
   return (
     <Modal
       visible={visible}
@@ -53,45 +59,48 @@ export function ConfirmDialog({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(8, 8, 12, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: colors.surfaceModal,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderEmphasized,
-    gap: spacing.md,
-  },
-  title: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  message: {
-    ...typography.sans.body,
-    color: colors.textSecondary,
-    lineHeight: 24,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  button: {
-    flex: 1,
-  },
-  destructiveButton: {
-    flex: 1,
-    backgroundColor: colors.errorSoft,
-    borderColor: colors.error,
-  } as const,
-});
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xl,
+    },
+    dialog: {
+      width: '100%',
+      maxWidth: 380,
+      backgroundColor: colors.surfaceModal,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderEmphasized,
+      gap: spacing.md,
+    },
+    title: {
+      ...typography.serif.title3,
+      color: colors.textPrimary,
+      marginBottom: spacing.xs,
+    },
+    message: {
+      ...typography.sans.body,
+      color: colors.textSecondary,
+      lineHeight: 24,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      marginTop: spacing.sm,
+    },
+    button: {
+      flex: 1,
+    },
+    destructiveButton: {
+      flex: 1,
+      backgroundColor: colors.errorSoft,
+      borderColor: colors.error,
+    } as const,
+  });
+}
