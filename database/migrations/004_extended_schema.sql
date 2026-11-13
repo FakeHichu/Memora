@@ -102,7 +102,7 @@ create table if not exists public.time_capsules (
   creator_id uuid not null references auth.users(id),
   title text not null,
   description text,
-  created_at timestamz not null default now(),
+  created_at timestamptz not null default now(),
   unlock_date timestamptz not null,
   is_group_capsule boolean not null default false,
   participant_ids uuid[] not null default '{}',
@@ -173,7 +173,7 @@ create table if not exists public.yearbook_members (
 create table if not exists public.class_group_bridge (
   class_id uuid not null references public.classes(id) on delete cascade,
   group_id uuid not null references public.groups(id) on delete cascade,
-  primary (class_id, group_id)
+  primary key (class_id, group_id)
 );
 
 -- Create indexes

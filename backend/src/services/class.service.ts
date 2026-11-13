@@ -102,7 +102,8 @@ export class ClassService {
     if (classEntity.status === 'archived') {
       throw new Error("This class has been archived and cannot be joined.");
     }
-    const isAlreadyMember = await ClassRepository.isMember(
+    // Use the correct method for checking class membership
+    const isAlreadyMember = await ClassRepository.isClassMember(
       classEntity.id,
       userId,
     );
@@ -129,7 +130,8 @@ export class ClassService {
     classId: string,
     userId: string,
   ): Promise<ClassEntity> {
-    const isMember = await ClassRepository.isMember(classId, userId);
+    // Use the correct method for checking class membership
+    const isMember = await ClassRepository.isClassMember(classId, userId);
     if (!isMember) {
       throw new Error("You do not have access to this private class.");
     }
@@ -144,7 +146,8 @@ export class ClassService {
     classId: string,
     userId: string,
   ): Promise<ClassMemberEntity[]> {
-    const isMember = await ClassRepository.isMember(classId, userId);
+    // Use the correct method for checking class membership
+    const isMember = await ClassRepository.isClassMember(classId, userId);
     if (!isMember) {
       throw new Error("You do not have access to view members of this class.");
     }

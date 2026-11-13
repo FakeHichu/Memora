@@ -76,6 +76,17 @@ export class ClassRepository {
     return Boolean(data);
   }
 
+  static async isClassMember(classId: string, userId: string): Promise<boolean> {
+    const { data, error } = await supabaseAdmin
+      .from("class_members")
+      .select("id")
+      .eq("class_id", classId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return Boolean(data);
+  }
+
   static async addMember(
     groupId: string,
     userId: string,
@@ -113,7 +124,7 @@ export class ClassRepository {
   static async getMembers(groupId: string): Promise<GroupMemberEntity[]> {
     const { data, error } = await supabaseAdmin
       .from("group_members")
-      .select("*, profiles:user_id (display_name, username, avatar_path)")
+      .select("*")
       .eq("group_id", groupId)
       .order("joined_at", { ascending: true });
     if (error) throw error;
@@ -123,7 +134,7 @@ export class ClassRepository {
   static async getClassMembers(classId: string): Promise<ClassMemberEntity[]> {
     const { data, error } = await supabaseAdmin
       .from("class_members")
-      .select("*, profiles:user_id (display_name, username, avatar_path)")
+      .select("*")
       .eq("class_id", classId)
       .order("joined_at", { ascending: true });
     if (error) throw error;
@@ -173,26 +184,19 @@ export class ClassRepository {
     academicYear: number,
     schoolName?: string | null,
   ): Promise<ClassEntity> {
+    // Use the atomic database RPC function to ensure class and owner membership
+    // are created together, preventing orphaned classes
     const { data: newClass, error } = await supabaseAdmin
-      .from("classes")
-      .insert({
-        name,
-        school_name: schoolName,
-        academic_year: academicYear,
-        join_code: `CLS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        created_by: userId,
-        status: "active",
-      })
-      .select("*")
-      .single();
+      .rpc("create_class_with_owner", {
+        class_name: name,
+        class_school_name: schoolName || null,
+        class_academic_year: academicYear,
+        owner_user_id: userId,
+      });
+    
     if (error) throw error;
     if (!newClass) throw new Error("Class creation failed - no data returned");
-    // Add creator as owner member
-    await supabaseAdmin.from("class_members").insert({
-      class_id: newClass.id,
-      user_id: userId,
-      role: "owner",
-    });
+    
     return newClass as ClassEntity;
   }
 
@@ -218,12 +222,17 @@ export class ClassRepository {
   }
 
   static async getUserClasses(userId: string): Promise<ClassEntity[]> {
+    // Retrieve ALL classes the user is a member of (not just ones they created)
     const { data, error } = await supabaseAdmin
-      .from("classes")
-      .select("*")
-      .eq("created_by", userId);
+      .from("class_members")
+      .select("classes (*)")
+      .eq("user_id", userId);
+    
     if (error) throw error;
-    return (data || []) as ClassEntity[];
+    
+    return (data || [])
+      .map((row: any) => row.classes as ClassEntity)
+      .filter(Boolean);
   }
 
   // --- Group Invitations ---
@@ -275,7 +284,7 @@ export class ClassRepository {
     if (isMember.data) {
       const { data: member } = await supabaseAdmin
         .from("group_members")
-        .select("*, profiles:user_id (*)")
+        .select("*")
         .eq("group_id", groupId)
         .eq("user_id", userId)
         .single();

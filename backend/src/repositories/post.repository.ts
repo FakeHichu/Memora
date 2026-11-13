@@ -55,7 +55,7 @@ export class PostRepository {
     const { data, error } = await client
       .from("daily_posts")
       .select(
-        "*, reactions (*), profiles:user_id (display_name, username, avatar_path), comments (*)",
+        "*, reactions (*), comments (*)",
       )
       .eq("class_id", classId)
       .eq("post_date", postDate)
@@ -141,7 +141,7 @@ export class PostRepository {
     const { data, error } = await client
       .from("comments")
       .select(
-        "*, profiles:user_id (display_name, username, avatar_path), comments (*)",
+        "*, comments (*)",
       )
       .eq("post_id", postId)
       .order("created_at", { ascending: true });

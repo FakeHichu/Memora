@@ -33,13 +33,14 @@ import { useClass } from '@/hooks/useClass';
 export default function CircleScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const { classes, activeClass, isLoading: isClassLoading, selectClass } = useClass();
+  const { classes, activeClass, isLoading: isClassLoading, selectClass, refreshClasses } = useClass();
   const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
   const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
   const loadPosts = useCallback(() => {
     let isActive = true;
     getLocalPhotoPosts()
@@ -59,7 +60,14 @@ export default function CircleScreen() {
       isActive = false;
     };
   }, []);
-  useFocusEffect(loadPosts);
+  
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh classes whenever this screen gains focus
+      refreshClasses();
+      loadPosts();
+    }, [refreshClasses, loadPosts])
+  );
   const userPostedToday = hasPostedToday(sharedPosts);
   const handleCopyCode = () => {
     if (activeClass?.join_code) {
@@ -164,7 +172,12 @@ export default function CircleScreen() {
         {activeClass && (
           <>
             <View style={styles.classCard}>
-              <View style={styles.classHeader}>
+              <Pressable
+                onPress={() => router.push(`/class/${activeClass.id}`)}
+                style={styles.classHeader}
+                accessibilityRole="button"
+                accessibilityLabel="View class details"
+              >
                 <View style={styles.classAvatar}>
                   <Text style={styles.classAvatarText}>
                     {activeClass.name.slice(0, 2).toUpperCase()}
@@ -179,7 +192,10 @@ export default function CircleScreen() {
                 </View>
                 {/* Invite code badge & button */}
                 <Pressable
-                  onPress={handleCopyCode}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCopyCode();
+                  }}
                   style={styles.codeButton}
                   accessibilityRole="button"
                   accessibilityLabel="Copy class invite code"
@@ -188,7 +204,7 @@ export default function CircleScreen() {
                   <Text style={styles.codeValue}>{activeClass.join_code}</Text>
                   <Text style={styles.copyHint}>{copiedCode ? '✓ Copied' : 'Tap to copy'}</Text>
                 </Pressable>
-              </View>
+              </Pressable>
               {/* Class Switcher if multiple classes */}
               {classes.length > 1 && (
                 <ScrollView

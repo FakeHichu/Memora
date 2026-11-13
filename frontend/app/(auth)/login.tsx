@@ -264,6 +264,20 @@ export default function LoginScreen() {
               </View>
             )}
           </View>
+
+          {/* Footer - Sign Up Link */}
+          {hasSupabaseConfig && (
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Don't have an account?</Text>
+              <Link href="/(auth)/register" asChild>
+                <Pressable disabled={isSubmitting}>
+                  <Text style={[styles.signupLink, isSubmitting && styles.linkDisabled]}>
+                    Sign up
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

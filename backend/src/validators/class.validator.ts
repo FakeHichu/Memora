@@ -7,7 +7,7 @@ export const createClassSchema = z.object({
 export const joinClassSchema = z.object({
   joinCode: z
     .string()
-    .min(4)
-    .max(16)
+    .min(8, "Join code must be exactly 8 characters")
+    .max(8, "Join code must be exactly 8 characters")
     .transform((val) => val.toUpperCase().trim()),
 });
