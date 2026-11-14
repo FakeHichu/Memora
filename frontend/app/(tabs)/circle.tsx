@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -6,6 +5,7 @@ import {
   Clipboard,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,6 +22,7 @@ import { MemoryCard } from '@/components/ui/MemoryCard';
 import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Skeleton, SkeletonMemoryCard } from '@/components/ui/Skeleton';
+import { Icon } from '@/components/ui/Icons';
 import {
   getLocalPhotoPosts,
   hasPostedToday,
@@ -29,46 +30,87 @@ import {
 } from '@/lib/photo-draft';
 import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
+import { getBackendUrl } from '@/lib/photo-upload';
 
 export default function CircleScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const { classes, activeClass, isLoading: isClassLoading, selectClass, refreshClasses } = useClass();
-  const [sharedPosts, setSharedPosts] = useState<LocalPhotoPost[]>([]);
+  const [sharedPosts, setSharedPosts] = useState<(LocalPhotoPost & { authorName?: string })[]>([]);
   const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
-  const loadPosts = useCallback(() => {
-    let isActive = true;
-    getLocalPhotoPosts()
-      .then((savedPosts) => {
-        if (isActive) {
-          setSharedPosts(savedPosts);
-          setIsLoading(false);
+  const [userPostedToday, setUserPostedToday] = useState(false);
+
+  const loadPosts = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      if (activeClass?.id && supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          const backendUrl = getBackendUrl();
+          const response = await fetch(`${backendUrl}/api/classes/${activeClass.id}/feed/today`, {
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+            },
+          });
+
+          if (response.ok) {
+            const feedData = await response.json();
+            setUserPostedToday(Boolean(feedData.userPostedToday));
+            const serverPosts = (feedData.posts || []).map((p: any) => ({
+              id: p.id,
+              uri: p.photoUrl || p.photo_path,
+              caption: p.caption || '',
+              prompt: p.prompt_text || undefined,
+              authorName: p.authorName || 'Classmate',
+              category: 'General' as const,
+              createdAt: p.created_at || new Date().toISOString(),
+              reactions: p.reactionsMap || {},
+              userReaction: p.userReaction || null,
+            }));
+            setSharedPosts(serverPosts);
+            setIsLoading(false);
+            return;
+          }
         }
-      })
-      .catch(() => {
-        if (isActive) {
-          setSharedPosts([]);
-          setIsLoading(false);
-        }
-      });
-    return () => {
-      isActive = false;
-    };
-  }, []);
-  
+      }
+
+      // Fallback: local posts
+      const savedPosts = await getLocalPhotoPosts();
+      setSharedPosts(savedPosts);
+      setUserPostedToday(hasPostedToday(savedPosts));
+    } catch {
+      try {
+        const savedPosts = await getLocalPhotoPosts();
+        setSharedPosts(savedPosts);
+        setUserPostedToday(hasPostedToday(savedPosts));
+      } catch {
+        setSharedPosts([]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeClass?.id]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshClasses();
+    await loadPosts();
+    setIsRefreshing(false);
+  };
+
   useFocusEffect(
     useCallback(() => {
-      // Refresh classes whenever this screen gains focus
       refreshClasses();
       loadPosts();
     }, [refreshClasses, loadPosts])
   );
-  const userPostedToday = hasPostedToday(sharedPosts);
+
   const handleCopyCode = () => {
     if (activeClass?.join_code) {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -86,61 +128,72 @@ export default function CircleScreen() {
       }
     }
   };
+
   const handleReact = async (postId: string, emoji: string) => {
     try {
       if (!supabase) return;
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const backendUrl = getBackendUrl();
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id ?? null;
 
       if (!userId || !sessionData?.session) return;
 
-      const response = await fetch(`${backendUrl}/api/reactions`, {
+      const response = await fetch(`${backendUrl}/api/posts/${postId}/reactions`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          postId,
           reactionType: emoji,
         }),
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         setErrorMessage(errorData.message || 'Failed to save reaction.');
         return;
       }
-      
+
       const result = await response.json();
-      
-      // Update local state - find the post and update its reactions
+
       setSharedPosts((prev) =>
         prev.map((p) => {
           if (p.id !== postId) return p;
           return {
             ...p,
-            reactions: result.reactionsMap,
+            reactions: result.reactionsMap || p.reactions,
             userReaction: result.userReaction,
           };
         })
       );
-      
-      setReactionsMap(result.reactionsMap);
-      setUserReactions(result.userReactions);
-    } catch (err) {
+
+      if (result.reactionsMap) setReactionsMap(result.reactionsMap);
+      if (result.userReactions) setUserReactions(result.userReactions);
+    } catch {
       setErrorMessage('Failed to save reaction.');
     }
   };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
+          />
+        }
+      >
         <AppHeader
           title="Circle"
-          subtitle={activeClass ? activeClass.name : 'Shared class memories'}
+          subtitle={activeClass ? `You are in ${activeClass.name}` : 'Shared class memories'}
         />
+
         {/* Loading state */}
         {(isClassLoading || isLoading) && (
           <View style={{ gap: spacing.md }}>
@@ -148,6 +201,7 @@ export default function CircleScreen() {
             <SkeletonMemoryCard aspectRatio={4 / 3} variant="timeline" />
           </View>
         )}
+
         {/* If no class joined */}
         {!isClassLoading && !isLoading && !activeClass && (
           <View style={styles.noClassContainer}>
@@ -168,10 +222,31 @@ export default function CircleScreen() {
             />
           </View>
         )}
+
         {/* Active Class Info Card */}
         {activeClass && (
           <>
-            <View style={styles.classCard}>
+            {/* Prominent Active Circle Identification Banner */}
+            <View style={styles.activeCircleBanner}>
+              <View style={styles.activeBannerTop}>
+                <View style={styles.activeIndicatorRow}>
+                  <View style={styles.activeDotPulse} />
+                  <Text style={styles.activeIndicatorText}>CURRENT CIRCLE</Text>
+                </View>
+                {activeClass.join_code && (
+                  <Pressable
+                    onPress={handleCopyCode}
+                    style={styles.codePill}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copy invite code"
+                  >
+                    <Icon name="share" size={12} color={colors.accent} />
+                    <Text style={styles.codePillText}>{activeClass.join_code}</Text>
+                    <Text style={styles.codeCopyHint}>{copiedCode ? '✓' : 'Copy'}</Text>
+                  </Pressable>
+                )}
+              </View>
+
               <Pressable
                 onPress={() => router.push(`/class/${activeClass.id}`)}
                 style={styles.classHeader}
@@ -190,49 +265,40 @@ export default function CircleScreen() {
                   </Text>
                   <Text style={styles.classYear}>Class of {activeClass.academic_year}</Text>
                 </View>
-                {/* Invite code badge & button */}
-                <Pressable
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleCopyCode();
-                  }}
-                  style={styles.codeButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Copy class invite code"
-                >
-                  <Text style={styles.codeLabel}>INVITE CODE</Text>
-                  <Text style={styles.codeValue}>{activeClass.join_code}</Text>
-                  <Text style={styles.copyHint}>{copiedCode ? '✓ Copied' : 'Tap to copy'}</Text>
-                </Pressable>
               </Pressable>
+
               {/* Class Switcher if multiple classes */}
               {classes.length > 1 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.classSwitcher}
-                >
-                  {classes.map((cls) => (
-                    <Pressable
-                      key={cls.id}
-                      onPress={() => selectClass(cls.id)}
-                      style={[
-                        styles.classPill,
-                        cls.id === activeClass.id && styles.classPillActive,
-                      ]}
-                    >
-                      <Text
+                <View style={styles.switcherSection}>
+                  <Text style={styles.switcherLabel}>SWITCH CIRCLE:</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.classSwitcher}
+                  >
+                    {classes.map((cls) => (
+                      <Pressable
+                        key={cls.id}
+                        onPress={() => selectClass(cls.id)}
                         style={[
-                          styles.classPillText,
-                          cls.id === activeClass.id && styles.classPillTextActive,
+                          styles.classPill,
+                          cls.id === activeClass.id && styles.classPillActive,
                         ]}
                       >
-                        {cls.name}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
+                        <Text
+                          style={[
+                            styles.classPillText,
+                            cls.id === activeClass.id && styles.classPillTextActive,
+                          ]}
+                        >
+                          {cls.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
               )}
+
               <View style={styles.classStats}>
                 <View style={styles.stat}>
                   <Text style={styles.statValue}>{activeClass.member_count || 1}</Text>
@@ -250,26 +316,46 @@ export default function CircleScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Quick Upload Action inside this Circle */}
+            <View style={styles.uploadCtaCard}>
+              <View style={styles.uploadCtaInfo}>
+                <Text style={styles.uploadCtaTitle}>
+                  {userPostedToday ? "Post another memory" : "Post today's photo"}
+                </Text>
+                <Text style={styles.uploadCtaSubtitle}>
+                  Visible to everyone in {activeClass.name}
+                </Text>
+              </View>
+              <Button
+                title={userPostedToday ? "Add Photo" : "Upload Photo"}
+                variant="accent"
+                size="md"
+                onPress={() => router.push('/(tabs)/create')}
+              />
+            </View>
+
             {/* Today's Circle Feed */}
             <SectionHeader
-              title="Today in Your Circle"
+              title={`Memories in ${activeClass.name}`}
               subtitle={
                 userPostedToday
-                  ? 'All memories revealed for today'
+                  ? `${sharedPosts.length} shared memory${sharedPosts.length === 1 ? '' : 'ies'} revealed`
                   : 'Post your photo to unblur classmates'
               }
             />
+
             {isLoading ? (
               <View style={styles.loadingState}>
                 <Text style={styles.loadingText}>Loading circle memories…</Text>
               </View>
             ) : sharedPosts.length === 0 ? (
               <EmptyState
-                title="No memories posted today yet"
-                message="Be the first one in your class to post today's memory!"
+                title={`No memories posted in ${activeClass.name} yet`}
+                message="Be the first one in your class to upload a photo and start today's memory feed!"
                 variant="prompt"
                 action={{
-                  label: 'Post daily photo',
+                  label: 'Post photo to this circle',
                   onPress: () => router.push('/(tabs)/create'),
                   variant: 'accent',
                 }}
@@ -281,6 +367,7 @@ export default function CircleScreen() {
                   <MemoryCard
                     key={post.id}
                     memory={post}
+                    authorName={post.authorName}
                     density="timeline"
                     aspectRatio={4 / 3}
                     onPress={() => router.push(`/post/${post.id}`)}
@@ -292,16 +379,17 @@ export default function CircleScreen() {
                 ))}
               </View>
             )}
+
             {/* Class Actions */}
             <View style={styles.classActionsRow}>
               <Button
-                title="Join another class"
+                title="Join another circle"
                 variant="secondary"
                 size="sm"
                 onPress={() => router.push('/(onboarding)/join-class')}
               />
               <Button
-                title="Create a class"
+                title="Create a circle"
                 variant="secondary"
                 size="sm"
                 onPress={() => router.push('/(onboarding)/create-class')}
@@ -314,187 +402,239 @@ export default function CircleScreen() {
     </SafeAreaView>
   );
 }
-function createStyles(colors: ThemeColors) { return StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.maxContentWidth,
-    alignSelf: 'center',
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-  },
-  noClassContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-  },
-  orRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.lg,
-    gap: spacing.md,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.borderSoft,
-  },
-  orText: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    fontWeight: '700',
-  },
-  createButton: {
-    width: '100%',
-  },
-  classCard: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.xxl,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  classHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  classAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.xl,
-    backgroundColor: colors.accentSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  classAvatarText: {
-    ...typography.serif.title,
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  classInfo: {
-    flex: 1,
-  },
-  className: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-  },
-  classSchool: {
-    ...typography.sans.subheadline,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  classYear: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  codeButton: {
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderDefault,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    alignItems: 'center',
-  },
-  codeLabel: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.6,
-  },
-  codeValue: {
-    ...typography.mono.body,
-    fontWeight: '700',
-    color: colors.accent,
-    marginVertical: 1,
-  },
-  copyHint: {
-    ...typography.sans.caption2,
-    color: colors.textMuted,
-    fontSize: 9,
-  },
-  classSwitcher: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  classPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  classPillActive: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-  },
-  classPillText: {
-    ...typography.sans.caption,
-    color: colors.textSecondary,
-  },
-  classPillTextActive: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  classStats: {
-    flexDirection: 'row',
-    paddingTop: spacing.md,
-    borderTopWidth: borders.hairline,
-    borderTopColor: colors.borderSoft,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: borders.hairline,
-    height: 28,
-    backgroundColor: colors.borderSoft,
-  },
-  statValue: {
-    ...typography.serif.title3,
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  statLabel: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  feedColumn: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  loadingState: {
-    paddingVertical: spacing.xxl,
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  loadingText: {
-    ...typography.sans.body,
-    color: colors.textMuted,
-  },
-  emptyState: {
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.xxl,
-  },
-  classActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
-  },
-  bottomSpacer: {
-    height: 40,
-  },
-}); }
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      width: '100%',
+      maxWidth: layout.maxContentWidth,
+      alignSelf: 'center',
+      paddingBottom: spacing.xxxl + layout.tabBarHeight,
+    },
+    noClassContainer: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.xl,
+    },
+    activeCircleBanner: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+      padding: spacing.lg,
+      backgroundColor: colors.surface,
+      borderRadius: radius.xxl,
+      borderWidth: 1.5,
+      borderColor: colors.accent,
+      ...(Platform.OS === 'web'
+        ? { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }
+        : {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 3,
+          }),
+    },
+    activeBannerTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+      paddingBottom: spacing.sm,
+      borderBottomWidth: borders.hairline,
+      borderBottomColor: colors.borderSoft,
+    },
+    activeIndicatorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    activeDotPulse: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.success,
+    },
+    activeIndicatorText: {
+      ...typography.mono.micro,
+      color: colors.accent,
+      fontWeight: '800',
+      letterSpacing: 1.2,
+    },
+    codePill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.accentSubtle,
+      borderWidth: borders.hairline,
+      borderColor: colors.accent,
+      borderRadius: radius.round,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 4,
+    },
+    codePillText: {
+      ...typography.mono.caption,
+      fontWeight: '700',
+      color: colors.accent,
+    },
+    codeCopyHint: {
+      ...typography.sans.caption2,
+      color: colors.textMuted,
+      fontSize: 10,
+    },
+    classHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginBottom: spacing.md,
+    },
+    classAvatar: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.xl,
+      backgroundColor: colors.accentSubtle,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    classAvatarText: {
+      ...typography.serif.title,
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    classInfo: {
+      flex: 1,
+    },
+    className: {
+      ...typography.serif.title2,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    classSchool: {
+      ...typography.sans.subheadline,
+      color: colors.textSecondary,
+      marginTop: 1,
+    },
+    classYear: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      marginTop: 1,
+    },
+    switcherSection: {
+      marginBottom: spacing.md,
+      paddingTop: spacing.xs,
+    },
+    switcherLabel: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      marginBottom: 6,
+      letterSpacing: 0.8,
+    },
+    classSwitcher: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      paddingVertical: 2,
+    },
+    classPill: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.round,
+      backgroundColor: colors.backgroundElevated,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderSubtle,
+    },
+    classPillActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    classPillText: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    classPillTextActive: {
+      color: colors.textInverse,
+      fontWeight: '700',
+    },
+    classStats: {
+      flexDirection: 'row',
+      paddingTop: spacing.md,
+      borderTopWidth: borders.hairline,
+      borderTopColor: colors.borderSoft,
+    },
+    stat: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statDivider: {
+      width: borders.hairline,
+      height: 28,
+      backgroundColor: colors.borderSoft,
+    },
+    statValue: {
+      ...typography.serif.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    statLabel: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+      marginTop: 1,
+    },
+    uploadCtaCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+      padding: spacing.md,
+      backgroundColor: colors.accentSubtle,
+      borderRadius: radius.xl,
+      borderWidth: borders.hairline,
+      borderColor: colors.accent,
+    },
+    uploadCtaInfo: {
+      flex: 1,
+      marginRight: spacing.md,
+    },
+    uploadCtaTitle: {
+      ...typography.sans.headline,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    uploadCtaSubtitle: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    feedColumn: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.lg,
+      marginBottom: spacing.xl,
+    },
+    loadingState: {
+      paddingVertical: spacing.xxl,
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    loadingText: {
+      ...typography.sans.body,
+      color: colors.textMuted,
+    },
+    emptyState: {
+      marginHorizontal: spacing.lg,
+      paddingVertical: spacing.xxl,
+    },
+    classActionsRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.md,
+    },
+    bottomSpacer: {
+      height: 40,
+    },
+  });
+}

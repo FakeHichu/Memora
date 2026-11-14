@@ -66,14 +66,23 @@ export class ClassRepository {
   }
 
   static async isMember(groupId: string, userId: string): Promise<boolean> {
-    const { data, error } = await supabaseAdmin
+    // Check both class_members and group_members to support both classes and groups
+    const { data: classData, error: classErr } = await supabaseAdmin
+      .from("class_members")
+      .select("id")
+      .eq("class_id", groupId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!classErr && classData) return true;
+
+    const { data: groupData, error: groupErr } = await supabaseAdmin
       .from("group_members")
       .select("id")
       .eq("group_id", groupId)
       .eq("user_id", userId)
       .maybeSingle();
-    if (error) throw error;
-    return Boolean(data);
+    if (groupErr && !classData) throw groupErr;
+    return Boolean(groupData);
   }
 
   static async isClassMember(classId: string, userId: string): Promise<boolean> {

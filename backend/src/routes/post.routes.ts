@@ -3,6 +3,7 @@ import { PostController } from "../controllers/post.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 const router = Router();
 router.use(requireAuth);
+router.post("/upload", PostController.uploadPhoto as unknown as RequestHandler);
 router.post("/", PostController.createPost as unknown as RequestHandler);
 router.patch(
   "/:postId",

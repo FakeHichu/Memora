@@ -28,6 +28,7 @@ import { TagBadge } from '@/components/ui/TagBadge';
 import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
+import { postMemoryToCircle } from '@/lib/photo-upload';
 
 const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
 type CreateStep = 'landing' | 'details';
@@ -150,76 +151,35 @@ export default function CreateScreen() {
     setIsSaving(true);
     setErrorMessage(null);
     try {
-      if (!supabase) {
-        throw new Error('Supabase is not configured.');
-      }
-      const { data: sessionData } = await supabase.auth.getSession();
-      const classId = activeClass?.id ?? null;
-      const userId = sessionData?.session?.user?.id ?? null;
-
-      if (!userId || !sessionData?.session) {
-        setErrorMessage('User not authenticated. Please sign in.');
-        setIsSaving(false);
-        return;
-      }
-      
-      if (!classId) {
-        setErrorMessage('Please select a class first. Join or create a class to post daily memories.');
-        setIsSaving(false);
-        return;
-      }
-      
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-      const response = await fetch(`${backendUrl}/api/daily-posts`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          classId,
-          userId,
-          photoPath: photoUri,
-          caption: caption.trim(),
-        }),
-      });
-      
-      if (response.status === 409) {
-        setErrorMessage('You have already posted a photo today. Daily limit reached.');
-        setIsSaving(false);
-        return;
-      }
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Could not save memory to server.');
-        setIsSaving(false);
-        await publishLocalPhoto(
+      if (activeClass?.id && supabase) {
+        const result = await postMemoryToCircle(
+          activeClass.id,
           photoUri,
           caption.trim(),
-          undefined,
-          category,
-          title.trim() || undefined,
-          tags,
-          location.trim() || undefined,
+          {
+            category,
+            title: title.trim() || undefined,
+            tags,
+            location: location.trim() || undefined,
+          },
         );
-        showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
-        router.replace('/(tabs)/home');
+
+        if (!result.ok) {
+          setErrorMessage(result.message || 'Could not post memory to circle.');
+          setIsSaving(false);
+          return;
+        }
+
+        showToast({
+          message: `📸 Memory shared in ${activeClass.name}!`,
+          variant: 'success',
+          duration: 2500,
+        });
+        router.replace('/(tabs)/circle');
         return;
       }
-      
-      await publishLocalPhoto(
-        photoUri,
-        caption.trim(),
-        undefined,
-        category,
-        title.trim() || undefined,
-        tags,
-        location.trim() || undefined,
-      );
-      showToast({ message: '📸 Memory saved!', variant: 'success', duration: 2000 });
-      router.replace('/(tabs)/home');
-    } catch (err) {
+
+      // If no active circle or running offline
       await publishLocalPhoto(
         photoUri,
         caption.trim(),
@@ -230,7 +190,9 @@ export default function CreateScreen() {
         location.trim() || undefined,
       );
       showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/circle');
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Could not save memory.');
     } finally {
       setIsSaving(false);
     }
@@ -328,6 +290,34 @@ export default function CreateScreen() {
               <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
             )}
           </View>
+
+          {/* Active Circle Destination Badge */}
+          {activeClass ? (
+            <View style={styles.circleDestinationBadge}>
+              <View style={styles.circleBadgeIcon}>
+                <Icon name="users" size={18} color={colors.accent} />
+              </View>
+              <View style={styles.circleBadgeInfo}>
+                <Text style={styles.circleBadgeLabel}>SHARING TO CIRCLE</Text>
+                <Text style={styles.circleBadgeName}>{activeClass.name}</Text>
+              </View>
+              <View style={styles.circleBadgeStatus}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>Members only</Text>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => router.push('/(onboarding)/join-class')}
+              style={styles.noCircleWarning}
+            >
+              <Icon name="users" size={18} color={colors.accent} />
+              <Text style={styles.noCircleWarningText}>
+                No circle joined yet. Tap to enter an invite code.
+              </Text>
+            </Pressable>
+          )}
+
           <Card style={styles.detailsCard} padding="lg">
             {/* Title */}
             <View style={styles.field}>
@@ -567,6 +557,73 @@ function createStyles(colors: ThemeColors) { return StyleSheet.create({
   },
   detailsCard: {
     gap: spacing.md,
+  },
+  circleDestinationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  circleBadgeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.accentSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleBadgeInfo: {
+    flex: 1,
+  },
+  circleBadgeLabel: {
+    ...typography.mono.micro,
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  circleBadgeName: {
+    ...typography.sans.headline,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  circleBadgeStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.accentSubtle,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  statusText: {
+    ...typography.mono.micro,
+    color: colors.accent,
+    fontSize: 10,
+  },
+  noCircleWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.accentSubtle,
+    borderWidth: borders.hairline,
+    borderColor: colors.accent,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  noCircleWarningText: {
+    ...typography.sans.footnote,
+    color: colors.textPrimary,
+    flex: 1,
   },
   field: {
     gap: spacing.xs,

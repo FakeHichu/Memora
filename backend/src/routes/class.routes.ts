@@ -19,4 +19,8 @@ router.get(
   "/:classId/feed/today",
   PostController.getTodayFeed as unknown as RequestHandler,
 );
+router.get(
+  "/:classId/feed",
+  PostController.getClassFeed as unknown as RequestHandler,
+);
 export const classRoutes = router;

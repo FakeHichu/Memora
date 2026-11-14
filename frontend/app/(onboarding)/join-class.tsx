@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -11,6 +11,7 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
 import { useClass } from '@/hooks/useClass';
+import { getBackendUrl } from '@/lib/photo-upload';
 
 export default function JoinClassScreen() {
   const { colors: themeColors } = useAppTheme();
@@ -44,7 +45,7 @@ export default function JoinClassScreen() {
         return;
       }
       const cleanCode = code.trim().toUpperCase();
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/classes/join`, {
         method: 'POST',
         headers: {
@@ -64,6 +65,11 @@ export default function JoinClassScreen() {
       setAlreadyJoined(result.alreadyJoined);
       setJoinSuccess(true);
       
+      // Select the joined circle as the active circle
+      if (result.class?.id) {
+        await AsyncStorage.setItem('memora.active_class_id.v1', result.class.id);
+      }
+
       // Refresh the classes list to show the new class
       await refreshClasses();
     } catch (error) {

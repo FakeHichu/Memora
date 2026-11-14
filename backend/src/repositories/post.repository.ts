@@ -55,12 +55,29 @@ export class PostRepository {
     const { data, error } = await client
       .from("daily_posts")
       .select(
-        "*, reactions (*), comments (*)",
+        "*, reactions (*)",
       )
       .eq("class_id", classId)
       .eq("post_date", postDate)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []) as DailyPostEntity[];
+  }
+  static async getClassPosts(
+    classId: string,
+    limit: number = 50,
+  ): Promise<DailyPostEntity[]> {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from("daily_posts")
+      .select(
+        "*, reactions (*)",
+      )
+      .eq("class_id", classId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
     if (error) throw error;
     return (data || []) as DailyPostEntity[];
   }
@@ -138,15 +155,17 @@ export class PostRepository {
     postId: string,
   ): Promise<CommentEntity[]> {
     const client = getSupabaseClient();
-    const { data, error } = await client
-      .from("comments")
-      .select(
-        "*, comments (*)",
-      )
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
-    if (error) throw error;
-    return (data || []) as CommentEntity[];
+    try {
+      const { data, error } = await client
+        .from("comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+      if (error) return [];
+      return (data || []) as CommentEntity[];
+    } catch {
+      return [];
+    }
   }
   static async updateComment(
     commentId: string,

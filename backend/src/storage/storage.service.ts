@@ -15,6 +15,21 @@ export class StorageService {
       path: data.path,
     };
   }
+  static async uploadPhoto(
+    filePath: string,
+    buffer: Buffer | Uint8Array,
+    contentType: string = "image/jpeg",
+  ): Promise<string> {
+    const client = getSupabaseClient();
+    const { data, error } = await client.storage
+      .from(this.BUCKET_NAME)
+      .upload(filePath, buffer, {
+        contentType,
+        upsert: true,
+      });
+    if (error) throw error;
+    return data.path;
+  }
   static async createSignedDownloadUrl(
     filePath: string,
     expiresInSeconds: number = 3600,

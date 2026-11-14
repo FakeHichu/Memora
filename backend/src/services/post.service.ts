@@ -1,6 +1,7 @@
 import { ClassRepository } from "../repositories/class.repository.js";
 import { PostRepository } from "../repositories/post.repository.js";
 import { StorageService } from "../storage/storage.service.js";
+import { getSupabaseClient } from "../lib/supabase.js";
 import type { DailyPostEntity, ReactionEntity, CommentEntity, CommentReactionEntity } from "../types/index.js";
 export class PostService {
   static async createDailyPost(
@@ -70,17 +71,63 @@ export class PostService {
       todayDate,
     );
     const userPostedToday = Boolean(userTodayPost);
-    const rawPosts = await PostRepository.getClassPostsForDate(
+    let rawPosts = await PostRepository.getClassPostsForDate(
       classId,
       todayDate,
     );
+
+    // If no posts today yet, also include recent posts for the class feed
+    if (rawPosts.length === 0) {
+      rawPosts = await PostRepository.getClassPosts(classId, 30);
+    }
+
+    const client = getSupabaseClient();
+    const userIds = Array.from(new Set(rawPosts.map((p: any) => p.user_id)));
+    const profileMap = new Map<string, any>();
+    if (userIds.length > 0) {
+      try {
+        const { data: profiles } = await client
+          .from("profiles")
+          .select("id, username, display_name, avatar_path")
+          .in("id", userIds);
+        if (profiles) {
+          for (const pr of profiles) {
+            profileMap.set(pr.id, pr);
+          }
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    // Safely query comments if table exists
+    const postIds = rawPosts.map((p: any) => p.id);
+    const commentsByPostId = new Map<string, any[]>();
+    if (postIds.length > 0) {
+      try {
+        const { data: commentsData } = await client
+          .from("comments")
+          .select("id, post_id, user_id, content, created_at")
+          .in("post_id", postIds);
+        if (commentsData) {
+          for (const c of commentsData) {
+            const list = commentsByPostId.get(c.post_id) || [];
+            list.push(c);
+            commentsByPostId.set(c.post_id, list);
+          }
+        }
+      } catch {
+        // Comments table may not exist yet, fallback to empty
+      }
+    }
+
     const formatted = await Promise.all(
       rawPosts.map(async (post: any) => {
         let photoUrl: string | undefined;
         try {
           photoUrl = await StorageService.createSignedDownloadUrl(
             post.photo_path,
-            3600,
+            86400, // 24 hours
           );
         } catch {
           photoUrl = post.photo_path;
@@ -95,22 +142,28 @@ export class PostService {
             userReaction = r.reaction_type;
           }
         }
-        const authorProfile = post.profiles;
+        const authorProfile = profileMap.get(post.user_id) || post.profiles;
         const authorName =
           authorProfile?.display_name || authorProfile?.username || "Classmate";
+        const authorAvatar = authorProfile?.avatar_path || null;
+
         // Get comments for this post
-        const comments = post.comments
-          ? post.comments.map((c: any) => ({
-              id: c.id,
-              content: c.content,
-              authorName:
-                c.profiles?.display_name || c.profiles?.username || "Classmate",
-            }))
-          : [];
+        const postComments = commentsByPostId.get(post.id) || post.comments || [];
+        const comments = postComments.map((c: any) => {
+          const commenterProfile = profileMap.get(c.user_id) || c.profiles;
+          return {
+            id: c.id,
+            content: c.content,
+            authorName:
+              commenterProfile?.display_name || commenterProfile?.username || "Classmate",
+          };
+        });
+
         return {
           ...post,
           photoUrl,
           authorName,
+          authorAvatar,
           reactionsMap,
           userReaction,
           comments,
@@ -121,6 +174,25 @@ export class PostService {
       userPostedToday,
       posts: formatted,
     };
+  }
+
+  static async getClassFeed(
+    classId: string,
+    userId: string,
+  ): Promise<{
+    userPostedToday: boolean;
+    posts: Array<
+      DailyPostEntity & {
+        photoUrl?: string;
+        authorName?: string;
+        authorAvatar?: string | null;
+        reactionsMap?: Record<string, number>;
+        userReaction?: string | null;
+        comments?: Array<{ id: string; content: string; authorName: string }>;
+      }
+    >;
+  }> {
+    return this.getTodayFeed(classId, userId);
   }
   static async updateCaption(
     postId: string,

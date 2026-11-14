@@ -1,5 +1,7 @@
 import type { Response, NextFunction } from "express";
 import { PostService } from "../services/post.service.js";
+import { StorageService } from "../storage/storage.service.js";
+import { ClassRepository } from "../repositories/class.repository.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 import {
   createPostSchema,
@@ -7,6 +9,50 @@ import {
 } from "../validators/post.validator.js";
 import { reactionSchema } from "../validators/reaction.validator.js";
 export class PostController {
+  static async uploadPhoto(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { classId, base64, contentType } = req.body;
+      if (!classId || !base64) {
+        return res.status(400).json({
+          ok: false,
+          message: "classId and base64 image data are required",
+        });
+      }
+      const isMember = await ClassRepository.isMember(classId, req.userId);
+      if (!isMember) {
+        return res.status(403).json({
+          ok: false,
+          message: "You must be a member of this class to upload photos",
+        });
+      }
+      const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      const filePath = `${classId}/${req.userId}/${Date.now()}.jpg`;
+      const uploadedPath = await StorageService.uploadPhoto(
+        filePath,
+        buffer,
+        contentType || "image/jpeg",
+      );
+      let downloadUrl = uploadedPath;
+      try {
+        downloadUrl = await StorageService.createSignedDownloadUrl(uploadedPath, 86400 * 7);
+      } catch {
+        // fallback
+      }
+      return res.status(201).json({
+        ok: true,
+        photoPath: uploadedPath,
+        downloadUrl,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createPost(
     req: AuthenticatedRequest,
     res: Response,
@@ -47,6 +93,19 @@ export class PostController {
     try {
       const classId = Array.isArray(req.params.classId) ? req.params.classId[0] : req.params.classId;
       const feed = await PostService.getTodayFeed(classId, req.userId);
+      return res.json({ ok: true, ...feed });
+    } catch (err) {
+      next(err);
+    }
+  }
+  static async getClassFeed(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const classId = Array.isArray(req.params.classId) ? req.params.classId[0] : req.params.classId;
+      const feed = await PostService.getClassFeed(classId, req.userId);
       return res.json({ ok: true, ...feed });
     } catch (err) {
       next(err);

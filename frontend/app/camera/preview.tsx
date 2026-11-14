@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
+import { postMemoryToCircle } from '@/lib/photo-upload';
 
 export default function CameraPreviewScreen() {
   const [photoUri] = useState(() => getPhotoDraft());
@@ -46,57 +47,24 @@ export default function CameraPreviewScreen() {
     setErrorMessage(null);
     setIsSaving(true);
     try {
-      // 1. If user is authenticated and part of a class, sync to backend
-      if (supabase && activeClass?.id) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const userId = sessionData?.session?.user?.id ?? null;
-          const classId = activeClass.id;
-
-          if (userId && sessionData?.session) {
-            let photoPath = photoUri;
-            try {
-              const fileName = `${userId}/${Date.now()}.jpg`;
-              const { error: uploadError } = await supabase.storage
-                .from('class-photos')
-                .upload(fileName, await fetch(photoUri).then((res) => res.blob()), {
-                  cacheControl: '3600',
-                  contentType: 'image/jpeg',
-                });
-              if (!uploadError) {
-                const { data: publicUrlData } = supabase.storage
-                  .from('class-photos')
-                  .getPublicUrl(fileName);
-                photoPath = publicUrlData.publicUrl;
-              }
-            } catch (uploadErr) {
-              console.warn('Storage upload failed, using local path:', uploadErr);
-            }
-
-            const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-            await fetch(`${backendUrl}/api/daily-posts`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${sessionData.session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                classId,
-                userId,
-                photoPath,
-                caption: caption.trim(),
-              }),
-            });
-          }
-        } catch (syncErr) {
-          console.warn('Backend sync failed, continuing locally:', syncErr);
+      if (activeClass?.id && supabase) {
+        const result = await postMemoryToCircle(
+          activeClass.id,
+          photoUri,
+          caption.trim(),
+          { prompt: prompt || undefined },
+        );
+        if (!result.ok) {
+          setErrorMessage(result.message || 'Could not post photo to circle.');
+          setIsSaving(false);
+          return;
         }
+      } else {
+        await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
       }
 
-      // 2. Publish locally & clear draft
-      await publishLocalPhoto(photoUri, caption.trim(), prompt || undefined);
       clearPhotoDraft();
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/circle');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not save your photo.');
     } finally {
@@ -133,6 +101,13 @@ export default function CameraPreviewScreen() {
           ) : (
             <View style={[styles.photo, styles.emptyPhoto]}>
               <Text style={styles.emptyText}>No photo captured</Text>
+            </View>
+          )}
+          {activeClass && (
+            <View style={styles.circleIndicator}>
+              <Text style={styles.circleIndicatorText}>
+                Posting inside: <Text style={{ fontWeight: '700', color: colors.accent }}>{activeClass.name}</Text>
+              </Text>
             </View>
           )}
           <View style={styles.promptRow}>
@@ -222,6 +197,19 @@ const styles = StyleSheet.create({
   emptyText: {
     ...typography.body,
     color: colors.textMuted,
+  },
+  circleIndicator: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: borders.hairline,
+    borderColor: colors.borderChrome,
+    alignSelf: 'flex-start',
+  },
+  circleIndicatorText: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   promptRow: {
     flexDirection: 'row',

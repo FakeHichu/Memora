@@ -1,15 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { ClassRecord } from '@/types/database';
+import { getBackendUrl } from '@/lib/photo-upload';
+
 const CLASSES_STORAGE_KEY = 'memora.classes.v1';
 const ACTIVE_CLASS_KEY = 'memora.active_class_id.v1';
+
 export function useClass() {
   const [classes, setClasses] = useState<ClassRecord[]>([]);
   const [activeClass, setActiveClass] = useState<ClassRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const loadClasses = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -23,37 +26,66 @@ export function useClass() {
         } catch {
         }
       }
+
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
-          const { data: memberRows, error: memberErr } = await supabase
-            .from('class_members')
-            .select('class_id, classes (*)')
-            .eq('user_id', sessionData.session.user.id);
-          if (!memberErr && memberRows) {
-            const fetched = memberRows
-              .map((row: any) => row.classes as ClassRecord)
-              .filter(Boolean);
-            if (fetched.length > 0) {
-              localClasses = fetched;
-              await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
+          const backendUrl = getBackendUrl();
+          // Try fetching from backend API first (uses service role, guaranteed to return all user's classes)
+          try {
+            const apiRes = await fetch(`${backendUrl}/api/classes`, {
+              headers: {
+                Authorization: `Bearer ${sessionData.session.access_token}`,
+              },
+            });
+            if (apiRes.ok) {
+              const apiData = await apiRes.json();
+              if (Array.isArray(apiData.classes) && apiData.classes.length > 0) {
+                localClasses = apiData.classes;
+                await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
+              }
+            }
+          } catch {
+            // Backend call failed, fall back to direct Supabase query
+          }
+
+          // Also check Supabase directly if localClasses is still empty
+          if (localClasses.length === 0) {
+            const { data: memberRows, error: memberErr } = await supabase
+              .from('class_members')
+              .select('class_id, classes (*)')
+              .eq('user_id', sessionData.session.user.id);
+            if (!memberErr && memberRows) {
+              const fetched = memberRows
+                .map((row: any) => row.classes as ClassRecord)
+                .filter(Boolean);
+              if (fetched.length > 0) {
+                localClasses = fetched;
+                await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
+              }
             }
           }
         }
       }
+
       setClasses(localClasses);
       const savedActiveId = await AsyncStorage.getItem(ACTIVE_CLASS_KEY);
       const matched = localClasses.find((c) => c.id === savedActiveId) || localClasses[0] || null;
       setActiveClass(matched);
+      if (matched && matched.id !== savedActiveId) {
+        await AsyncStorage.setItem(ACTIVE_CLASS_KEY, matched.id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load classes');
     } finally {
       setIsLoading(false);
     }
   }, []);
+
   useEffect(() => {
     loadClasses();
-  }, []);
+  }, [loadClasses]);
+
   const selectClass = async (classId: string) => {
     const matched = classes.find((c) => c.id === classId);
     if (matched) {
@@ -61,7 +93,8 @@ export function useClass() {
       await AsyncStorage.setItem(ACTIVE_CLASS_KEY, classId);
     }
   };
-  const joinClass = async (joinCode: string): Promise<{ success: boolean; message: string }> => {
+
+  const joinClass = async (joinCode: string): Promise<{ success: boolean; message: string; class?: ClassRecord }> => {
     const cleanCode = joinCode.trim().toUpperCase();
     if (!cleanCode) {
       return { success: false, message: 'Please enter a valid join code.' };
@@ -70,7 +103,7 @@ export function useClass() {
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
-          const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+          const backendUrl = getBackendUrl();
           const response = await fetch(`${backendUrl}/api/classes/join`, {
             method: 'POST',
             headers: {
@@ -83,8 +116,12 @@ export function useClass() {
           if (!response.ok) {
             return { success: false, message: result.message || 'Could not join class.' };
           }
+          if (result.class?.id) {
+            await AsyncStorage.setItem(ACTIVE_CLASS_KEY, result.class.id);
+            setActiveClass(result.class);
+          }
           await loadClasses();
-          return { success: true, message: 'Successfully joined class!' };
+          return { success: true, message: 'Successfully joined class!', class: result.class };
         }
       }
       const mockClass: ClassRecord = {
@@ -104,7 +141,7 @@ export function useClass() {
       setActiveClass(mockClass);
       await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(updated));
       await AsyncStorage.setItem(ACTIVE_CLASS_KEY, mockClass.id);
-      return { success: true, message: 'Joined class locally!' };
+      return { success: true, message: 'Joined class locally!', class: mockClass };
     } catch (err) {
       return {
         success: false,
@@ -112,6 +149,7 @@ export function useClass() {
       };
     }
   };
+
   const createClassLocally = async (
     name: string,
     schoolName?: string,
@@ -138,6 +176,7 @@ export function useClass() {
     await AsyncStorage.setItem(ACTIVE_CLASS_KEY, newClass.id);
     return newClass;
   };
+
   const createClass = async (
     name: string,
     schoolName?: string,
@@ -147,8 +186,9 @@ export function useClass() {
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData?.session) {
+          const backendUrl = getBackendUrl();
           const response = await fetch(
-            `${Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000'}/api/classes`,
+            `${backendUrl}/api/classes`,
             {
               method: 'POST',
               headers: {
@@ -165,6 +205,10 @@ export function useClass() {
           const result = await response.json();
           if (!response.ok) {
             return { success: false, message: result.message || 'Could not create class.' };
+          }
+          if (result.class?.id) {
+            await AsyncStorage.setItem(ACTIVE_CLASS_KEY, result.class.id);
+            setActiveClass(result.class);
           }
           await loadClasses();
           return {
@@ -183,6 +227,7 @@ export function useClass() {
       };
     }
   };
+
   return {
     classes,
     activeClass,

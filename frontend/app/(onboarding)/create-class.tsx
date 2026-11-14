@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, Pressable, Alert, Platform, Clipboard, Animated, Image } from 'react-native';
@@ -12,6 +12,7 @@ import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
 import { IconButton } from '@/components/ui/IconButton';
+import { getBackendUrl } from '@/lib/photo-upload';
 
 export default function CreateClassScreen() {
   const { colors: themeColors } = useAppTheme();
@@ -64,7 +65,7 @@ export default function CreateClassScreen() {
         setIsSubmitting(false);
         return;
       }
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/classes`, {
         method: 'POST',
         headers: {
@@ -80,6 +81,9 @@ export default function CreateClassScreen() {
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message ?? 'Could not create class.');
+      }
+      if (result.class?.id) {
+        await AsyncStorage.setItem('memora.active_class_id.v1', result.class.id);
       }
       setJoinCode(result.class.join_code);
       setShowSuccess(true);
@@ -117,7 +121,7 @@ export default function CreateClassScreen() {
   };
 
   const handleGoHome = () => {
-    router.replace('/(tabs)/home');
+    router.replace('/(tabs)/circle');
   };
 
   if (showSuccess && joinCode) {
