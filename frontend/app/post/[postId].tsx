@@ -80,10 +80,23 @@ export default function PostDetailScreen() {
               reactionsMap[r.reaction_type] = (reactionsMap[r.reaction_type] || 0) + 1;
               if (r.user_id === userId) userReaction = r.reaction_type;
             }
+            let resolvedPhotoUrl = data.photo_path;
+            if (data.photo_path && !data.photo_path.startsWith('http') && !data.photo_path.startsWith('data:')) {
+              try {
+                const { data: signed } = await supabase.storage
+                  .from('class-photos')
+                  .createSignedUrl(data.photo_path, 86400 * 7);
+                if (signed?.signedUrl) {
+                  resolvedPhotoUrl = signed.signedUrl;
+                }
+              } catch {
+                // fallback
+              }
+            }
             if (isActive) {
               setPost({
                 ...data,
-                photoUrl: data.photo_path,
+                photoUrl: resolvedPhotoUrl,
                 reactionsMap,
                 userReaction,
               });

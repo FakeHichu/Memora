@@ -1,17 +1,23 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Clipboard,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { radius, spacing, typography, layout, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
@@ -23,6 +29,7 @@ import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Skeleton, SkeletonMemoryCard } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icons';
+import { useToast } from '@/components/ui/Toast';
 import {
   getLocalPhotoPosts,
   hasPostedToday,
@@ -30,11 +37,12 @@ import {
 } from '@/lib/photo-draft';
 import { supabase } from '@/lib/supabase/client';
 import { useClass } from '@/hooks/useClass';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, postMemoryToCircle } from '@/lib/photo-upload';
 
 export default function CircleScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
+  const { showToast } = useToast();
   const { classes, activeClass, isLoading: isClassLoading, selectClass, refreshClasses } = useClass();
   const [sharedPosts, setSharedPosts] = useState<(LocalPhotoPost & { authorName?: string })[]>([]);
   const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
@@ -44,6 +52,13 @@ export default function CircleScreen() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [userPostedToday, setUserPostedToday] = useState(false);
+
+  // In-circle upload states
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [selectedPhotoUri, setSelectedPhotoUri] = useState<string | null>(null);
+  const [uploadCaption, setUploadCaption] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const loadPosts = useCallback(async () => {
     setIsLoading(true);
@@ -129,6 +144,90 @@ export default function CircleScreen() {
     }
   };
 
+  // Direct In-Circle Camera capture
+  const handleTakePhoto = async () => {
+    try {
+      setUploadError(null);
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Camera permission is required to capture photos.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.9,
+        allowsEditing: false,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        setSelectedPhotoUri(result.assets[0].uri);
+        setUploadCaption('');
+        setUploadModalVisible(true);
+      }
+    } catch {
+      Alert.alert('Camera error', 'Could not access the camera.');
+    }
+  };
+
+  // Direct In-Circle Gallery selection
+  const handleChooseFromLibrary = async () => {
+    try {
+      setUploadError(null);
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Photo library permission is required to select photos.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.9,
+        allowsEditing: false,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        setSelectedPhotoUri(result.assets[0].uri);
+        setUploadCaption('');
+        setUploadModalVisible(true);
+      }
+    } catch {
+      Alert.alert('Gallery error', 'Could not open photo library.');
+    }
+  };
+
+  // Upload to this circle alone
+  const handleUploadSubmit = async () => {
+    if (!selectedPhotoUri || !activeClass?.id) return;
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const result = await postMemoryToCircle(
+        activeClass.id,
+        selectedPhotoUri,
+        uploadCaption.trim(),
+      );
+
+      if (!result.ok) {
+        setUploadError(result.message || 'Failed to upload photo to circle.');
+        setIsUploading(false);
+        return;
+      }
+
+      setUploadModalVisible(false);
+      setSelectedPhotoUri(null);
+      setUploadCaption('');
+      showToast({
+        message: `📸 Photo uploaded to ${activeClass.name}!`,
+        variant: 'success',
+        duration: 3000,
+      });
+
+      // Refresh the feed immediately so the newly uploaded photo appears in the circle
+      await loadPosts();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleReact = async (postId: string, emoji: string) => {
     try {
       if (!supabase) return;
@@ -207,7 +306,7 @@ export default function CircleScreen() {
           <View style={styles.noClassContainer}>
             <EmptyState
               title="No Circle Joined Yet"
-              message="Join an existing class using an invite code, or create a brand new private group for your classmates or friends."
+              message="Join an existing circle using an invite code, or create a brand new private group for your classmates or friends."
               variant="users"
               action={{
                 label: 'Enter Invite Code',
@@ -307,41 +406,60 @@ export default function CircleScreen() {
                 <View style={styles.statDivider} />
                 <View style={styles.stat}>
                   <Text style={styles.statValue}>{sharedPosts.length}</Text>
-                  <Text style={styles.statLabel}>Memories</Text>
+                  <Text style={styles.statLabel}>Circle Photos</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.stat}>
-                  <Text style={styles.statValue}>{userPostedToday ? '🔥 Active' : 'Pending'}</Text>
-                  <Text style={styles.statLabel}>Today's Status</Text>
+                  <Text style={styles.statValue}>{userPostedToday ? '🔥 Active' : 'Ready'}</Text>
+                  <Text style={styles.statLabel}>Your Status</Text>
                 </View>
               </View>
             </View>
 
-            {/* Quick Upload Action inside this Circle */}
-            <View style={styles.uploadCtaCard}>
-              <View style={styles.uploadCtaInfo}>
-                <Text style={styles.uploadCtaTitle}>
-                  {userPostedToday ? "Post another memory" : "Post today's photo"}
-                </Text>
-                <Text style={styles.uploadCtaSubtitle}>
-                  Visible to everyone in {activeClass.name}
-                </Text>
+            {/* In-Circle Upload Card: Directly upload inside this circle */}
+            <View style={styles.circleUploadCard}>
+              <View style={styles.circleUploadHeader}>
+                <View style={styles.circleUploadIcon}>
+                  <Icon name="camera" size={22} color={colors.accent} />
+                </View>
+                <View style={styles.circleUploadInfo}>
+                  <Text style={styles.circleUploadTitle}>Upload to {activeClass.name}</Text>
+                  <Text style={styles.circleUploadSubtitle}>
+                    Photos are shared only with members in this circle
+                  </Text>
+                </View>
               </View>
-              <Button
-                title={userPostedToday ? "Add Photo" : "Upload Photo"}
-                variant="accent"
-                size="md"
-                onPress={() => router.push('/(tabs)/create')}
-              />
+              <View style={styles.circleUploadBtnRow}>
+                <Pressable
+                  onPress={handleTakePhoto}
+                  style={styles.circleUploadBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Take a photo with camera"
+                >
+                  <Icon name="camera" size={18} color={colors.accent} />
+                  <Text style={styles.circleUploadBtnText}>Take Photo</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleChooseFromLibrary}
+                  style={[styles.circleUploadBtn, styles.circleUploadBtnPrimary]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Choose photo from gallery"
+                >
+                  <Icon name="picture" size={18} color="#FFFFFF" />
+                  <Text style={[styles.circleUploadBtnText, styles.circleUploadBtnTextPrimary]}>
+                    From Gallery
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
-            {/* Today's Circle Feed */}
+            {/* Circle Memories Feed */}
             <SectionHeader
               title={`Memories in ${activeClass.name}`}
               subtitle={
-                userPostedToday
-                  ? `${sharedPosts.length} shared memory${sharedPosts.length === 1 ? '' : 'ies'} revealed`
-                  : 'Post your photo to unblur classmates'
+                sharedPosts.length > 0
+                  ? `${sharedPosts.length} photo${sharedPosts.length === 1 ? '' : 's'} shared by circle members`
+                  : 'No photos uploaded yet in this circle'
               }
             />
 
@@ -351,13 +469,17 @@ export default function CircleScreen() {
               </View>
             ) : sharedPosts.length === 0 ? (
               <EmptyState
-                title={`No memories posted in ${activeClass.name} yet`}
-                message="Be the first one in your class to upload a photo and start today's memory feed!"
+                title={`No photos in ${activeClass.name} yet`}
+                message="Be the first one in your circle to upload a photo! It will be instantly visible to all members."
                 variant="prompt"
                 action={{
-                  label: 'Post photo to this circle',
-                  onPress: () => router.push('/(tabs)/create'),
+                  label: 'Take first photo',
+                  onPress: handleTakePhoto,
                   variant: 'accent',
+                }}
+                secondaryAction={{
+                  label: 'Choose from gallery',
+                  onPress: handleChooseFromLibrary,
                 }}
                 style={styles.emptyState}
               />
@@ -374,7 +496,7 @@ export default function CircleScreen() {
                     showMemoryId={true}
                     showReactions={true}
                     onReact={(emoji) => handleReact(post.id, emoji)}
-                    isBlurred={!userPostedToday}
+                    isBlurred={false}
                   />
                 ))}
               </View>
@@ -399,6 +521,97 @@ export default function CircleScreen() {
         )}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* In-Circle Upload Modal */}
+      <Modal
+        visible={uploadModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          if (!isUploading) setUploadModalVisible(false);
+        }}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Upload to Circle</Text>
+                <Text style={styles.modalSubtitle}>
+                  Sharing inside: <Text style={{ color: colors.accent, fontWeight: '700' }}>{activeClass?.name}</Text>
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => !isUploading && setUploadModalVisible(false)}
+                style={styles.modalCloseBtn}
+                disabled={isUploading}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </Pressable>
+            </View>
+
+            {/* Photo Preview */}
+            {selectedPhotoUri && (
+              <View style={styles.modalPreviewContainer}>
+                <Image
+                  source={{ uri: selectedPhotoUri }}
+                  style={styles.modalPreviewImage}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+
+            {/* Caption Input */}
+            <View style={styles.modalInputWrap}>
+              <TextInput
+                value={uploadCaption}
+                onChangeText={setUploadCaption}
+                placeholder="Write a caption for your circle members..."
+                placeholderTextColor={colors.textMuted}
+                style={styles.modalTextInput}
+                multiline
+                maxLength={280}
+                editable={!isUploading}
+              />
+            </View>
+
+            {uploadError && (
+              <Text style={styles.modalErrorText}>{uploadError}</Text>
+            )}
+
+            {/* Actions */}
+            <View style={styles.modalActions}>
+              <Button
+                title="Change Photo"
+                variant="secondary"
+                onPress={handleChooseFromLibrary}
+                disabled={isUploading}
+                style={{ flex: 1 }}
+              />
+              <Pressable
+                onPress={handleUploadSubmit}
+                disabled={isUploading}
+                style={[styles.modalSubmitBtn, isUploading && styles.modalSubmitBtnDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel="Upload photo to circle"
+              >
+                {isUploading ? (
+                  <View style={styles.uploadingRow}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.modalSubmitText}>Uploading…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.modalSubmitText}>Share to Circle</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -421,7 +634,7 @@ function createStyles(colors: ThemeColors) {
     },
     activeCircleBanner: {
       marginHorizontal: spacing.lg,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.md,
       padding: spacing.lg,
       backgroundColor: colors.surface,
       borderRadius: radius.xxl,
@@ -582,31 +795,80 @@ function createStyles(colors: ThemeColors) {
       color: colors.textMuted,
       marginTop: 1,
     },
-    uploadCtaCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+    circleUploadCard: {
       marginHorizontal: spacing.lg,
       marginBottom: spacing.xl,
       padding: spacing.md,
-      backgroundColor: colors.accentSubtle,
+      backgroundColor: colors.surface,
       borderRadius: radius.xl,
-      borderWidth: borders.hairline,
+      borderWidth: 1.5,
       borderColor: colors.accent,
+      gap: spacing.md,
+      ...(Platform.OS === 'web'
+        ? { boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)' }
+        : {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 2,
+          }),
     },
-    uploadCtaInfo: {
+    circleUploadHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    circleUploadIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.lg,
+      backgroundColor: colors.accentSubtle,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    circleUploadInfo: {
       flex: 1,
-      marginRight: spacing.md,
     },
-    uploadCtaTitle: {
+    circleUploadTitle: {
       ...typography.sans.headline,
       color: colors.textPrimary,
       fontWeight: '700',
     },
-    uploadCtaSubtitle: {
+    circleUploadSubtitle: {
       ...typography.sans.caption,
       color: colors.textSecondary,
       marginTop: 2,
+    },
+    circleUploadBtnRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    circleUploadBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.sm,
+      backgroundColor: colors.backgroundElevated,
+      borderRadius: radius.md,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderDefault,
+    },
+    circleUploadBtnPrimary: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    circleUploadBtnText: {
+      ...typography.sans.bodyStrong,
+      color: colors.textPrimary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    circleUploadBtnTextPrimary: {
+      color: '#FFFFFF',
     },
     feedColumn: {
       paddingHorizontal: spacing.lg,
@@ -635,6 +897,106 @@ function createStyles(colors: ThemeColors) {
     },
     bottomSpacer: {
       height: 40,
+    },
+    // Modal Styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: radius.xxl,
+      borderTopRightRadius: radius.xxl,
+      padding: spacing.xl,
+      gap: spacing.md,
+      maxHeight: '90%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    modalTitle: {
+      ...typography.serif.title2,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    modalSubtitle: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    modalCloseBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.backgroundElevated,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalCloseText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    modalPreviewContainer: {
+      width: '100%',
+      aspectRatio: 4 / 3,
+      maxHeight: 280,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      backgroundColor: colors.backgroundSecondary,
+      borderWidth: borders.hairline,
+      borderColor: colors.borderDefault,
+    },
+    modalPreviewImage: {
+      width: '100%',
+      height: '100%',
+    },
+    modalInputWrap: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      padding: spacing.md,
+    },
+    modalTextInput: {
+      color: colors.textPrimary,
+      fontSize: 15,
+      minHeight: 50,
+      textAlignVertical: 'top',
+    },
+    modalErrorText: {
+      ...typography.sans.caption,
+      color: colors.error,
+      textAlign: 'center',
+    },
+    modalActions: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      marginTop: spacing.xs,
+    },
+    modalSubmitBtn: {
+      flex: 1.5,
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.md,
+    },
+    modalSubmitBtnDisabled: {
+      opacity: 0.6,
+    },
+    modalSubmitText: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      fontSize: 16,
+    },
+    uploadingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
     },
   });
 }

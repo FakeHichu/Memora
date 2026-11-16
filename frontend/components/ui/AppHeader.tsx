@@ -43,9 +43,8 @@ export function AppHeader({
           <View style={styles.profileBlock}>
             {avatar}
             <View style={styles.greetingBlock}>
-              <Text style={styles.greetingText}>{greeting},</Text>
-              <Text style={styles.userNameText} numberOfLines={1}>
-                {userName || 'Memory Keeper'}
+              <Text style={styles.greetingText}>
+                {greeting}, <Text style={styles.userNameText}>{userName || 'Memory Keeper'}</Text>
               </Text>
             </View>
           </View>
@@ -189,10 +188,10 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
       justifyContent: 'center',
     },
     greetingText: {
-      fontSize: 13,
+      fontSize: 16,
       fontWeight: '500',
       color: colors.textSecondary,
-      marginBottom: 2,
+      lineHeight: 22,
     },
     userNameText: {
       fontSize: 16,

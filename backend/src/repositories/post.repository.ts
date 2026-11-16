@@ -119,6 +119,25 @@ export class PostRepository {
     if (error) throw error;
     return data as DailyPostEntity;
   }
+  static async updatePostPhoto(
+    postId: string,
+    photoPath: string,
+    caption?: string | null,
+  ): Promise<DailyPostEntity> {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from("daily_posts")
+      .update({
+        photo_path: photoPath,
+        caption: caption || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", postId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as DailyPostEntity;
+  }
   static async softDelete(postId: string): Promise<void> {
     const client = getSupabaseClient();
     const { error } = await client

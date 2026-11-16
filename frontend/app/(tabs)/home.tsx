@@ -1,8 +1,9 @@
 import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase/client';
 import { radius, spacing, typography, layout, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
@@ -28,7 +29,12 @@ import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
 import { useCommandPalette } from '@/components/ui/CommandPalette';
 import { Avatar } from '@/components/ui/Avatar';
 import { SearchBar } from '@/components/ui/SearchBar';
+import { useCircle } from '@/hooks/useCircle';
+import { CircleStatusModal } from '@/components/ui/CircleStatusModal';
+import { CircleStatusBanner } from '@/components/ui/CircleStatusBanner';
 const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
+const CIRCLE_POPUP_SHOWN_KEY = 'memora.circle_popup_shown.v1';
+
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning';
@@ -58,6 +64,7 @@ function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
+  const { activeCircle, refreshCircles } = useCircle();
   const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
   const [favorites, setFavorites] = useState<LocalPhotoPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,8 +74,27 @@ export default function HomeScreen() {
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [profileName, setProfileName] = useState('Memory Keeper');
+  const [showCircleModal, setShowCircleModal] = useState(false);
   const { open: openCommandPalette } = useCommandPalette();
   const todayPrompt = getTodayPrompt();
+
+  // Check and show circle popup on first load
+  useEffect(() => {
+    let isActive = true;
+    const checkCirclePopup = async () => {
+      if (activeCircle) {
+        const hasShown = await AsyncStorage.getItem(CIRCLE_POPUP_SHOWN_KEY);
+        if (!hasShown && isActive) {
+          setShowCircleModal(true);
+          await AsyncStorage.setItem(CIRCLE_POPUP_SHOWN_KEY, 'true');
+        }
+      }
+    };
+    checkCirclePopup();
+    return () => {
+      isActive = false;
+    };
+  }, [activeCircle]);
   React.useEffect(() => {
     let isActive = true;
     getLocalProfile()
@@ -102,7 +128,12 @@ export default function HomeScreen() {
       isActive = false;
     };
   }, []);
-  useFocusEffect(loadPosts);
+  useFocusEffect(
+    useCallback(() => {
+      loadPosts();
+      refreshCircles();
+    }, [loadPosts, refreshCircles])
+  );
   const activePosts = posts.filter((p) => !p.isArchived);
   const postedToday = hasPostedToday(activePosts);
   const todayMemory = getTodayPost(activePosts);
@@ -218,6 +249,17 @@ export default function HomeScreen() {
             onClear={() => setSearchQuery('')}
           />
         </View>
+
+        {/* Circle Status Banner */}
+        {activeCircle && (
+          <View style={styles.circleStatusContainer}>
+            <CircleStatusBanner
+              circle={activeCircle}
+              onPress={() => router.push('/(tabs)/circle')}
+            />
+          </View>
+        )}
+
         {/* Category Pill Filters */}
         <View style={styles.filterSection}>
           <FilterChips
@@ -401,6 +443,14 @@ export default function HomeScreen() {
         </View>
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Circle Status Modal - Shows on first login */}
+      <CircleStatusModal
+        visible={showCircleModal}
+        circle={activeCircle}
+        onClose={() => setShowCircleModal(false)}
+        onViewCircle={() => router.push('/(tabs)/circle')}
+      />
     </SafeAreaView>
   );
 }
@@ -440,6 +490,9 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     },
     searchContainer: {
       marginBottom: spacing.sm,
+    },
+    circleStatusContainer: {
+      marginBottom: spacing.md,
     },
     filterSection: {
       marginBottom: spacing.md,

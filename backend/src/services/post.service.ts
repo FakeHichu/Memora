@@ -19,8 +19,6 @@ export class PostService {
       (err as unknown as { status: number }).status = 403;
       throw err;
     }
-    // Use UTC midnight slice to avoid timezone-dependent "today" date
-    // This ensures a user in any timezone sees "today" consistently
     const todayDate = new Date().toISOString().slice(0, 10).split('T')[0];
     const existing = await PostRepository.findUserPostForDate(
       classId,
@@ -28,11 +26,12 @@ export class PostService {
       todayDate,
     );
     if (existing) {
-      const err = new Error(
-        "One photo per day rule: You have already posted for today.",
+      // Update today's post with new photo and caption
+      return PostRepository.updatePostPhoto(
+        existing.id,
+        photoPath,
+        caption,
       );
-      (err as unknown as { status: number }).status = 409;
-      throw err;
     }
     return PostRepository.createDailyPost(
       classId,
@@ -71,15 +70,8 @@ export class PostService {
       todayDate,
     );
     const userPostedToday = Boolean(userTodayPost);
-    let rawPosts = await PostRepository.getClassPostsForDate(
-      classId,
-      todayDate,
-    );
-
-    // If no posts today yet, also include recent posts for the class feed
-    if (rawPosts.length === 0) {
-      rawPosts = await PostRepository.getClassPosts(classId, 30);
-    }
+    // Retrieve all circle posts so members can view all memories shared in this circle
+    const rawPosts = await PostRepository.getClassPosts(classId, 50);
 
     const client = getSupabaseClient();
     const userIds = Array.from(new Set(rawPosts.map((p: any) => p.user_id)));
