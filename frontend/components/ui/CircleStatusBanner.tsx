@@ -38,7 +38,7 @@ export function CircleStatusBanner({ circle, onPress, compact = false }: CircleS
         <View style={styles.labelRow}>
           <Text style={styles.label}>ACTIVE CIRCLE</Text>
           <View style={styles.lockBadge}>
-            <Icon name="lock" size={10} color={colors.textMuted} />
+            <Icon name="padlock" size={10} color={colors.textMuted} />
             <Text style={styles.lockText}>Private</Text>
           </View>
         </View>
@@ -55,7 +55,7 @@ export function CircleStatusBanner({ circle, onPress, compact = false }: CircleS
       {/* Arrow */}
       {onPress && (
         <View style={styles.rightSection}>
-          <Icon name="arrow-right" size={20} color={colors.textMuted} />
+          <Icon name="chevron-right" size={20} color={colors.textMuted} />
         </View>
       )}
     </Pressable>

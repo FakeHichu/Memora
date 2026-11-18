@@ -63,7 +63,7 @@ export function CircleStatusModal({
           {/* Info */}
           <View style={styles.infoBox}>
             <View style={styles.infoRow}>
-              <Icon name="lock" size={16} color={colors.textSecondary} />
+              <Icon name="padlock" size={16} color={colors.textSecondary} />
               <Text style={styles.infoText}>
                 Photos uploaded in this circle are private and only visible to circle members
               </Text>
@@ -92,7 +92,7 @@ export function CircleStatusModal({
                 accessibilityLabel="View Circle"
               >
                 <Text style={styles.buttonTextPrimary}>View Circle</Text>
-                <Icon name="arrow-right" size={16} color="#FFFFFF" />
+                <Icon name="chevron-right" size={16} color="#FFFFFF" />
               </Pressable>
             )}
           </View>

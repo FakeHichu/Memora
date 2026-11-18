@@ -16,16 +16,17 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
-import { hasSupabaseConfig } from '@/lib/supabase/client';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { useAppTheme } from '@/providers/ThemeProvider';
 export default function LoginScreen() {
   const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors, mode);
-  const { rememberMe, setRememberMe, signInWithEmail } = useAuth();
+  const { rememberMe, setRememberMe, signInWithEmail, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -79,7 +80,39 @@ export default function LoginScreen() {
         setIsSubmitting(false);
         return;
       }
-      if (data?.session) {
+      if (data?.session && data?.user) {
+        // Ensure profile exists (create if missing)
+        if (supabase) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', data.user.id)
+              .maybeSingle();
+            
+            if (!profile) {
+              // Profile doesn't exist, create it
+              const username = data.user.email?.split('@')[0] || 'user';
+              const displayName = data.user.user_metadata?.full_name || 
+                                data.user.user_metadata?.display_name || 
+                                username;
+              
+              await supabase.from('profiles').insert({
+                id: data.user.id,
+                username: username.toLowerCase(),
+                display_name: displayName,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+              
+              console.log('Profile created for existing user');
+            }
+          } catch (profileError) {
+            console.warn('Profile check/creation failed:', profileError);
+            // Continue anyway - profile will be created later if needed
+          }
+        }
+        
         console.log('Login successful, navigating to welcome');
         router.replace('/(onboarding)/welcome');
       } else {
@@ -99,6 +132,74 @@ export default function LoginScreen() {
   };
   const continueLocally = () => router.replace('/(onboarding)/welcome');
   const toggleTheme = () => setMode(mode === 'dark' ? 'light' : 'dark');
+
+  const handleGoogleSignIn = async () => {
+    setErrorMessage(null);
+    setIsGoogleLoading(true);
+
+    try {
+      const { data, error } = await signInWithGoogle();
+
+      if (error) {
+        if (error.message.includes('cancel')) {
+          console.log('Google sign-in cancelled');
+          // Don't show error for cancellation
+        } else {
+          console.error('Google sign-in error:', error);
+          setErrorMessage(error.message || 'Google sign-in failed. Please try again.');
+        }
+        setIsGoogleLoading(false);
+        return;
+      }
+
+      if (data?.session && data?.user) {
+        // Ensure profile exists
+        if (supabase) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', data.user.id)
+              .maybeSingle();
+
+            if (!profile) {
+              // Create profile for OAuth user
+              const username = data.user.email?.split('@')[0] || 'user';
+              const displayName =
+                data.user.user_metadata?.full_name ||
+                data.user.user_metadata?.name ||
+                data.user.user_metadata?.display_name ||
+                username;
+
+              await supabase.from('profiles').insert({
+                id: data.user.id,
+                username: username.toLowerCase(),
+                display_name: displayName,
+                avatar_url: data.user.user_metadata?.avatar_url || null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+
+              console.log('Profile created for OAuth user');
+            }
+          } catch (profileError) {
+            console.warn('Profile check/creation failed:', profileError);
+          }
+        }
+
+        console.log('Google sign-in successful');
+        router.replace('/(onboarding)/welcome');
+      } else {
+        setErrorMessage('Unable to complete Google sign-in. Please try again.');
+        setIsGoogleLoading(false);
+      }
+    } catch (err) {
+      console.error('Google sign-in exception:', err);
+      setErrorMessage('An unexpected error occurred during Google sign-in.');
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
@@ -224,10 +325,10 @@ export default function LoginScreen() {
                 {/* Primary Button */}
                 <Pressable
                   onPress={handleLogin}
-                  disabled={isSubmitting || !email.trim() || !password}
+                  disabled={isSubmitting || isGoogleLoading || !email.trim() || !password}
                   style={({ pressed }) => [
                     styles.primaryButton,
-                    (isSubmitting || !email.trim() || !password) && styles.buttonDisabled,
+                    (isSubmitting || isGoogleLoading || !email.trim() || !password) && styles.buttonDisabled,
                     pressed && styles.buttonPressed,
                   ]}
                   accessibilityRole="button"
@@ -238,9 +339,39 @@ export default function LoginScreen() {
                     <Text style={styles.primaryButtonText}>Sign in</Text>
                   )}
                 </Pressable>
+
+                {/* Divider */}
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                {/* Google Sign-In Button */}
+                <Pressable
+                  onPress={handleGoogleSignIn}
+                  disabled={isSubmitting || isGoogleLoading}
+                  style={({ pressed }) => [
+                    styles.googleButton,
+                    (isSubmitting || isGoogleLoading) && styles.buttonDisabled,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign in with Google"
+                >
+                  {isGoogleLoading ? (
+                    <ActivityIndicator color={colors.textPrimary} size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.googleIcon}>G</Text>
+                      <Text style={styles.googleButtonText}>Continue with Google</Text>
+                    </>
+                  )}
+                </Pressable>
+
                 <Link href="/(auth)/forgot-password" asChild>
-                  <Pressable disabled={isSubmitting} style={styles.forgotPassLink}>
-                    <Text style={[styles.link, isSubmitting && styles.linkDisabled]}>
+                  <Pressable disabled={isSubmitting || isGoogleLoading} style={styles.forgotPassLink}>
+                    <Text style={[styles.link, (isSubmitting || isGoogleLoading) && styles.linkDisabled]}>
                       Forgot password?
                     </Text>
                   </Pressable>
@@ -270,8 +401,8 @@ export default function LoginScreen() {
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>Don't have an account?</Text>
               <Link href="/(auth)/register" asChild>
-                <Pressable disabled={isSubmitting}>
-                  <Text style={[styles.signupLink, isSubmitting && styles.linkDisabled]}>
+                <Pressable disabled={isSubmitting || isGoogleLoading}>
+                  <Text style={[styles.signupLink, (isSubmitting || isGoogleLoading) && styles.linkDisabled]}>
                     Sign up
                   </Text>
                 </Pressable>
@@ -518,6 +649,44 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     buttonPressed: {
       opacity: 0.85,
       transform: [{ scale: 0.98 }],
+    },
+    divider: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginVertical: 4,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.borderSoft,
+    },
+    dividerText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+    googleButton: {
+      backgroundColor: colors.surfaceOverlay,
+      borderRadius: 999,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+    },
+    googleIcon: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    googleButtonText: {
+      color: colors.textPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+      letterSpacing: -0.2,
     },
     forgotPassLink: {
       alignSelf: 'center',

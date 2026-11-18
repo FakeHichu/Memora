@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,6 +17,7 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterScreen() {
   const { colors, mode } = useAppTheme();
@@ -115,7 +116,7 @@ export default function RegisterScreen() {
     return true;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     // Validate all fields
     const isFullNameValid = validateFullName(fullName);
     const isUsernameValid = validateUsername(username);
@@ -127,16 +128,118 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Show temporary message
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      if (!supabase) {
+        Alert.alert(
+          'Service Unavailable',
+          'Authentication service is not configured. Please check your setup.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // 1. Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            username: username.trim(),
+          },
+        },
+      });
+
+      if (authError) {
+        console.error('Signup error:', authError);
+        
+        // Handle specific error cases
+        if (authError.message.includes('already registered')) {
+          Alert.alert(
+            'Email Already Registered',
+            'This email is already registered. Please sign in or use a different email.',
+            [{ text: 'OK' }]
+          );
+        } else if (authError.message.includes('Password')) {
+          Alert.alert(
+            'Password Error',
+            authError.message,
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert(
+            'Registration Failed',
+            authError.message || 'Unable to create account. Please try again.',
+            [{ text: 'OK' }]
+          );
+        }
+        return;
+      }
+
+      if (!authData.user) {
+        Alert.alert(
+          'Registration Failed',
+          'Unable to create account. Please try again.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // 2. Create profile in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          username: username.trim().toLowerCase(),
+          display_name: fullName.trim(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Don't show error to user - auth was successful
+        // Profile will be created on next login if needed
+      }
+
+      // 3. Check if email confirmation is required
+      if (authData.session) {
+        // Auto-signed in (email confirmation not required)
+        Alert.alert(
+          'Welcome to Memora! 🎉',
+          `Hi ${fullName}! Your account has been created successfully.`,
+          [
+            {
+              text: 'Get Started',
+              onPress: () => router.replace('/(tabs)/home'),
+            },
+          ]
+        );
+      } else {
+        // Email confirmation required
+        Alert.alert(
+          'Check Your Email 📧',
+          `We've sent a confirmation email to ${email}. Please click the link in the email to verify your account, then sign in.`,
+          [
+            {
+              text: 'Go to Sign In',
+              onPress: () => router.replace('/(auth)/login'),
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Unexpected registration error:', error);
       Alert.alert(
-        'Coming Soon',
-        'Account creation will be available soon. Authentication will be integrated in the next phase.',
+        'Error',
+        'An unexpected error occurred. Please try again.',
         [{ text: 'OK' }]
       );
-    }, 500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
