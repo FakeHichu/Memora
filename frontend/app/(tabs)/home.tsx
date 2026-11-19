@@ -1,486 +1,482 @@
 import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState, useEffect } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase/client';
-import { radius, spacing, typography, layout, shadows } from '@/constants/theme';
+import { radius, spacing, typography, layout, shadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import {
   getLocalPhotoPosts,
-  getTodayPost,
   getFavoritePosts,
   hasPostedToday,
-  setPhotoDraft,
-  getLocalProfile,
-  computeCurrentStreak,
   type LocalPhotoPost,
 } from '@/lib/photo-draft';
-import { defaultPrompts } from '@/constants/prompts';
-import { MemoryCard } from '@/components/ui/MemoryCard';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { FilterChips } from '@/components/ui/FilterChips';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { AppHeader } from '@/components/ui/AppHeader';
-import { Button } from '@/components/ui/Button';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { SkeletonMemoryCard, Skeleton } from '@/components/ui/Skeleton';
-import { useCommandPalette } from '@/components/ui/CommandPalette';
 import { Avatar } from '@/components/ui/Avatar';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { useCircle } from '@/hooks/useCircle';
-import { CircleStatusModal } from '@/components/ui/CircleStatusModal';
-import { CircleStatusBanner } from '@/components/ui/CircleStatusBanner';
-const HOME_FILTERS = ['All', 'People', 'Places', 'Events'];
-const CIRCLE_POPUP_SHOWN_KEY = 'memora.circle_popup_shown.v1';
+import { useUnifiedCircle } from '@/contexts/CircleContext';
+import { CircleHomeSection } from '@/components/circle/CircleHomeSection';
+import { getBackendUrl } from '@/lib/photo-upload';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return 'Good morning! ☀️';
+  if (hour < 17) return 'Good afternoon! 👋';
+  return 'Good evening! 🌙';
 }
-function getTodayPrompt(): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
-  );
-  return defaultPrompts[dayOfYear % defaultPrompts.length];
+
+/** Loads circle feed from the CORRECT endpoint: /api/classes/:id/feed */
+async function loadCircleFeed(circleId: string, token: string): Promise<LocalPhotoPost[]> {
+  try {
+    const backendUrl = getBackendUrl();
+    const response = await fetch(`${backendUrl}/api/classes/${circleId}/feed`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.posts || []).map((p: any): LocalPhotoPost => ({
+      id: p.id,
+      uri: p.photoUrl || p.photo_path || '',
+      caption: p.caption || '',
+      authorName: p.authorName || 'Classmate',
+      authorAvatar: p.authorAvatar || null,
+      category: 'General' as const,
+      createdAt: p.created_at || new Date().toISOString(),
+      reactions: p.reactionsMap || {},
+      userReaction: p.userReaction ?? null,
+      commentCount: Array.isArray(p.comments) ? p.comments.length : (p.comment_count ?? 0),
+    }));
+  } catch {
+    return [];
+  }
 }
-function getOnThisDayMemories(posts: LocalPhotoPost[]): LocalPhotoPost[] {
-  const today = new Date();
-  const month = today.getMonth();
-  const day = today.getDate();
-  return posts.filter((post) => {
-    const postDate = new Date(post.createdAt);
-    return (
-      postDate.getMonth() === month &&
-      postDate.getDate() === day &&
-      postDate.getFullYear() !== today.getFullYear() &&
-      !post.isArchived
-    );
-  });
-}
+
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const { activeCircle, refreshCircles } = useCircle();
-  const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
-  const [favorites, setFavorites] = useState<LocalPhotoPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reactionsMap, setReactionsMap] = useState<Record<string, number>>({});
-  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [profileName, setProfileName] = useState('Memory Keeper');
-  const [showCircleModal, setShowCircleModal] = useState(false);
-  const { open: openCommandPalette } = useCommandPalette();
-  const todayPrompt = getTodayPrompt();
+  const { activeCircle, circles, selectCircle, refreshCircles } = useUnifiedCircle();
 
-  // Check and show circle popup on first load
-  useEffect(() => {
-    let isActive = true;
-    const checkCirclePopup = async () => {
-      if (activeCircle) {
-        const hasShown = await AsyncStorage.getItem(CIRCLE_POPUP_SHOWN_KEY);
-        if (!hasShown && isActive) {
-          setShowCircleModal(true);
-          await AsyncStorage.setItem(CIRCLE_POPUP_SHOWN_KEY, 'true');
+  const [circlePosts, setCirclePosts] = useState<LocalPhotoPost[]>([]);
+  const [localPosts, setLocalPosts] = useState<LocalPhotoPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [profileName, setProfileName] = useState('Memory Keeper');
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      // Load profile name from Supabase
+      if (supabase) {
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess?.session?.user) {
+          const user = sess.session.user;
+          const displayName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.display_name ||
+            user.email?.split('@')[0] ||
+            'Memory Keeper';
+          setProfileName(displayName);
+
+          // Load circle feed from CORRECT endpoint (classes, not circles)
+          if (activeCircle?.id) {
+            const posts = await loadCircleFeed(activeCircle.id, sess.session.access_token);
+            setCirclePosts(posts);
+          }
         }
       }
-    };
-    checkCirclePopup();
-    return () => {
-      isActive = false;
-    };
-  }, [activeCircle]);
-  React.useEffect(() => {
-    let isActive = true;
-    getLocalProfile()
-      .then((profile) => {
-        if (isActive) setProfileName(profile.name);
-      })
-      .catch(() => undefined);
-    return () => {
-      isActive = false;
-    };
-  }, []);
-  const loadPosts = useCallback(() => {
-    let isActive = true;
-    setIsLoading(true);
-    Promise.all([getLocalPhotoPosts(), getFavoritePosts()])
-      .then(([savedPosts, favPosts]) => {
-        if (isActive) {
-          setPosts(savedPosts);
-          setFavorites(favPosts);
-          setIsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setPosts([]);
-          setFavorites([]);
-          setIsLoading(false);
-        }
-      });
-    return () => {
-      isActive = false;
-    };
-  }, []);
+
+      // Always load local posts too
+      const local = await getLocalPhotoPosts();
+      setLocalPosts(local);
+    } catch (err) {
+      setErrorMessage('Failed to load memories');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeCircle?.id]);
+
   useFocusEffect(
     useCallback(() => {
-      loadPosts();
+      loadData();
       refreshCircles();
-    }, [loadPosts, refreshCircles])
+    }, [loadData, refreshCircles]),
   );
-  const activePosts = posts.filter((p) => !p.isArchived);
-  const postedToday = hasPostedToday(activePosts);
-  const todayMemory = getTodayPost(activePosts);
-  const onThisDayMemories = getOnThisDayMemories(posts);
-  const featuredMemory = onThisDayMemories[0] || activePosts[0];
-  const pinnedMemories = activePosts.filter((p) => p.isPinned);
-  const streak = computeCurrentStreak(posts);
-  const handleCaptureWithPrompt = () => {
-    setPhotoDraft('', todayPrompt);
-    router.push('/(tabs)/create');
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshCircles();
+    await loadData();
+    setIsRefreshing(false);
   };
-  const handleReact = async (postId: string, emoji: string) => {
+
+  // Merge deduplicated posts (circle posts take precedence)
+  const allPostsMap = new Map<string, LocalPhotoPost>();
+  localPosts.filter((p) => !p.isArchived).forEach((p) => allPostsMap.set(p.id, p));
+  circlePosts.forEach((p) => allPostsMap.set(p.id, p));
+  const allPosts = Array.from(allPostsMap.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
+  const recentPosts = allPosts.slice(0, 6);
+  const postedToday = hasPostedToday(localPosts);
+
+  const handleReact = async (postId: string, reactionType: string) => {
+    if (!supabase) return;
     try {
-      if (!supabase) return;
-      const backendUrl = Constants.expoConfig?.extra?.backendUrl ?? 'http://localhost:4000';
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id ?? null;
-
-      if (!userId || !sessionData?.session) return;
-
-      const response = await fetch(`${backendUrl}/api/reactions`, {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess?.session) return;
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/posts/${postId}/reactions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
+          Authorization: `Bearer ${sess.session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          postId,
-          reactionType: emoji,
-        }),
+        body: JSON.stringify({ reactionType }),
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Failed to save reaction.');
-        return;
+      if (res.ok) {
+        const result = await res.json();
+        setCirclePosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? { ...p, reactions: result.reactionsMap || p.reactions, userReaction: result.userReaction }
+              : p,
+          ),
+        );
       }
-      
-      const result = await response.json();
-      
-      // Update local state - find the post and update its reactions
-      setPosts((prev =>
-        prev.map((p) => {
-          if (p.id !== postId) return p;
-          return {
-            ...p,
-            reactions: result.reactionsMap,
-            userReaction: result.userReaction,
-          };
-        })
-      ));
-      
-      setReactionsMap(result.reactionsMap);
-      setUserReactions(result.userReactions);
-    } catch (err) {
-      setErrorMessage('Failed to save reaction.');
+    } catch {
+      // silent
     }
   };
-  const matchesSearch = (post: LocalPhotoPost): boolean => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return true;
-    const caption = (post.caption || '').toLowerCase();
-    const title = (post.title || '').toLowerCase();
-    const location = (post.location || '').toLowerCase();
-    const tags = (post.tags || []).join(' ').toLowerCase();
-    const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
-    return (
-      caption.includes(query) ||
-      title.includes(query) ||
-      location.includes(query) ||
-      tags.includes(query) ||
-      dateStr.includes(query)
-    );
-  };
-  const filteredPosts = activePosts.filter((post) => {
-    const matchesFilter = selectedFilter === 'All' || post.category === selectedFilter;
-    return matchesFilter && matchesSearch(post);
-  });
-  const recentPosts = filteredPosts.filter((p) => !p.isPinned).slice(0, 8);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
-      <View pointerEvents="none" style={styles.ambientBackdrop}>
-        <View style={[styles.ambientGlow, styles.ambientGlowPrimary]} />
-        <View style={[styles.ambientGlow, styles.ambientGlowSecondary]} />
-      </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Modern App Header matching reference Screen 1 */}
-        <AppHeader
-          greeting={getGreeting()}
-          userName={profileName}
-          title="Let's revisit your best memories!"
-          avatar={<Avatar name={profileName} size={46} ring />}
-          actions={[
-            {
-              icon: 'star',
-              onPress: () => router.push('/favorites'),
-              accessibilityLabel: 'Favorites',
-            },
-            {
-              icon: 'cog',
-              onPress: openCommandPalette,
-              accessibilityLabel: 'Settings and commands',
-            },
-          ]}
-        />
-        {/* Pill Search Bar with Embedded Right Search Button */}
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search memories, places, people…"
-            onClear={() => setSearchQuery('')}
+      <BackgroundPattern opacity={0.025} />
+
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
           />
+        }
+      >
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
+            <Text style={styles.subtitle}>Your class memories, all in one place.</Text>
+          </View>
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
+          >
+            <Avatar name={profileName} size={42} ring />
+          </Pressable>
         </View>
 
-        {/* Circle Status Banner */}
-        {activeCircle && (
-          <View style={styles.circleStatusContainer}>
-            <CircleStatusBanner
-              circle={activeCircle}
-              onPress={() => router.push('/(tabs)/circle')}
-            />
-          </View>
+        {/* ── Active Circle Card ── */}
+        {activeCircle ? (
+          <CircleHomeSection
+            circle={activeCircle}
+            onShareMemory={() => router.push('/(tabs)/circle')}
+          />
+        ) : (
+          !isLoading && (
+            <Pressable
+              style={styles.noCircleCard}
+              onPress={() => router.push('/(onboarding)/join-class')}
+              accessibilityRole="button"
+            >
+              <Icon name="users" size={20} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.noCircleTitle}>Join a Circle</Text>
+                <Text style={styles.noCircleSubtitle}>Connect with your classmates</Text>
+              </View>
+              <Icon name="chevron-right" size={16} color={colors.textMuted} />
+            </Pressable>
+          )
         )}
 
-        {/* Category Pill Filters */}
-        <View style={styles.filterSection}>
-          <FilterChips
-            filters={HOME_FILTERS}
-            selectedFilter={selectedFilter}
-            onFilterChange={setSelectedFilter}
-          />
-        </View>
-        {/* Stats Row */}
-        {!isLoading && activePosts.length > 0 && (
-          <View style={styles.statsRow}>
-            <Pressable
-              style={styles.statItem}
-              onPress={() => router.push('/(tabs)/memories')}
-              accessibilityRole="button"
-              accessibilityLabel={`${activePosts.length} total memories`}
+        {/* ── Circle Switcher ── */}
+        {circles.length > 1 && (
+          <View style={styles.switcherSection}>
+            <Text style={styles.switcherLabel}>SWITCH CIRCLE</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.switcherScroll}
             >
-              <Text style={styles.statValue}>{activePosts.length}</Text>
-              <Text style={styles.statLabel}>Memories</Text>
-            </Pressable>
-            <View style={styles.statDivider} />
-            <Pressable
-              style={styles.statItem}
-              onPress={() => router.push('/favorites')}
-              accessibilityRole="button"
-              accessibilityLabel={`${favorites.length} favorites`}
-            >
-              <Text style={styles.statValue}>{favorites.length}</Text>
-              <Text style={styles.statLabel}>Favorites</Text>
-            </Pressable>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{streak > 0 ? `${streak}🔥` : '0'}</Text>
-              <Text style={styles.statLabel}>Streak</Text>
-            </View>
-          </View>
-        )}
-        {/* Most Popular / Featured Memory Hero Section (matching reference image Screen 1) */}
-        {featuredMemory && (
-          <View style={styles.heroSection}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionHeaderTitle}>Most popular memories</Text>
-              <Pressable onPress={() => router.push('/favorites')}>
-                <Text style={styles.sectionHeaderAction}>See all</Text>
-              </Pressable>
-            </View>
-            <MemoryCard
-              memory={featuredMemory}
-              density="editorial"
-              aspectRatio={16 / 11}
-              onPress={() => router.push(`/post/${featuredMemory.id}`)}
-              showMemoryId={true}
-              showReactions={true}
-              onReact={(emoji) => handleReact(featuredMemory.id, emoji)}
-            />
-          </View>
-        )}
-        {/* Daily Prompt Hero Card */}
-        <View style={styles.promptHeroCard}>
-          <View style={styles.promptHeader}>
-            <View style={styles.promptTag}>
-              <View style={[styles.promptDot, postedToday && styles.promptDotCompleted]} />
-              <Text style={styles.promptTagText}>TODAY'S PROMPT</Text>
-            </View>
-            <Text style={styles.streakBadge}>
-              {postedToday ? 'Today complete' : 'Your daily moment'}
-            </Text>
-          </View>
-          <Text style={styles.promptQuestion}>"{todayPrompt}"</Text>
-          {isLoading ? (
-            <View style={styles.promptActionWrapper}>
-              <Skeleton width="100%" height={44} borderRadius={radius.round} />
-            </View>
-          ) : postedToday && todayMemory ? (
-            <View style={styles.todayMemoryWrapper}>
-              <Text style={styles.todayMemoryLabel}>YOUR MOMENT TODAY</Text>
-              <MemoryCard
-                memory={todayMemory}
-                density="editorial"
-                aspectRatio={16 / 9}
-                onPress={() => router.push(`/post/${todayMemory.id}`)}
-                showMetadata={true}
-                showReactions={true}
-                onReact={(emoji) => handleReact(todayMemory.id, emoji)}
-              />
-            </View>
-          ) : (
-            <View style={styles.promptActionWrapper}>
-              <Text style={styles.promptSubtext}>
-                Take or upload one photo today to keep your daily streak alive.
-              </Text>
-              <Button
-                title="Capture Today's Photo"
-                variant="accent"
-                onPress={handleCaptureWithPrompt}
-                style={styles.promptButton}
-              />
-            </View>
-          )}
-        </View>
-        {/* Pinned Memories Section */}
-        {pinnedMemories.length > 0 && (
-          <View style={styles.sectionBlock}>
-            <SectionHeader title="Pinned" subtitle={`${pinnedMemories.length} pinned`} />
-            <View style={styles.memoriesFeed}>
-              {pinnedMemories.slice(0, 3).map((post) => (
-                <MemoryCard
-                  key={post.id}
-                  memory={post}
-                  density="timeline"
-                  aspectRatio={4 / 3}
-                  onPress={() => router.push(`/post/${post.id}`)}
-                  showMemoryId={true}
-                  showReactions={true}
-                  onReact={(emoji) => handleReact(post.id, emoji)}
-                />
+              {circles.map((c) => (
+                <Pressable
+                  key={c.id}
+                  onPress={() => selectCircle(c.id)}
+                  style={[
+                    styles.switcherPill,
+                    c.id === activeCircle?.id && styles.switcherPillActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.switcherPillText,
+                      c.id === activeCircle?.id && styles.switcherPillTextActive,
+                    ]}
+                  >
+                    {c.name}
+                  </Text>
+                </Pressable>
               ))}
-            </View>
+            </ScrollView>
           </View>
         )}
-        {/* Recent Memories Feed */}
+
+        {/* ── Recent Memories ── */}
         <View style={styles.sectionBlock}>
-          <SectionHeader
-            title="Recent Memories"
-            subtitle={
-              activePosts.length > 0
-                ? `${activePosts.length} ${activePosts.length === 1 ? 'memory' : 'memories'}`
-                : undefined
-            }
-            action={
-              activePosts.length > 6
-                ? { label: 'See all', onPress: () => router.push('/(tabs)/memories') }
-                : undefined
-            }
-          />
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Memories</Text>
+            {allPosts.length > 6 && (
+              <Pressable onPress={() => router.push('/(tabs)/circle')}>
+                <Text style={styles.sectionAction}>See all →</Text>
+              </Pressable>
+            )}
+          </View>
+
           {isLoading ? (
-            <View style={styles.memoriesFeed}>
+            <View style={styles.feedGrid}>
               {[0, 1, 2].map((i) => (
-                <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
+                <Skeleton key={i} width="100%" height={200} borderRadius={radius.xl} />
               ))}
             </View>
           ) : recentPosts.length === 0 ? (
             <EmptyState
-              title={
-                selectedFilter === 'All' ? 'Start with one moment' : `No ${selectedFilter} memories`
-              }
-              message="Photos you take will appear here, organized by time and category."
+              title="No Memories Yet!"
+              message="Start sharing photos with your circle."
               variant="camera"
               action={{
-                label: 'Create a memory',
-                onPress: () => router.push('/(tabs)/create'),
+                label: 'Upload Memory',
+                onPress: () => router.push('/(tabs)/circle'),
                 variant: 'accent',
               }}
               style={styles.emptyState}
             />
           ) : (
-            <View style={styles.memoriesFeed}>
+            <View style={styles.feedGrid}>
               {recentPosts.map((post) => (
-                <MemoryCard
+                <MemoryFeedCard
                   key={post.id}
-                  memory={post}
-                  density="editorial"
-                  aspectRatio={4 / 5}
+                  post={post}
+                  colors={colors}
                   onPress={() => router.push(`/post/${post.id}`)}
-                  showMemoryId={true}
-                  showReactions={true}
-                  showTags={true}
                   onReact={(emoji) => handleReact(post.id, emoji)}
                 />
               ))}
-              {activePosts.length > 8 && (
-                <Button
-                  title={`See all ${activePosts.length} memories`}
-                  variant="secondary"
-                  onPress={() => router.push('/(tabs)/memories')}
-                  fullWidth
-                />
-              )}
             </View>
           )}
         </View>
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
 
-      {/* Circle Status Modal - Shows on first login */}
-      <CircleStatusModal
-        visible={showCircleModal}
-        circle={activeCircle}
-        onClose={() => setShowCircleModal(false)}
-        onViewCircle={() => router.push('/(tabs)/circle')}
-      />
+        {errorMessage && (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+// ── Inline memory card for home feed ──────────────────────────────────────
+interface MemoryFeedCardProps {
+  post: LocalPhotoPost;
+  colors: ReturnType<typeof useAppTheme>['colors'];
+  onPress: () => void;
+  onReact: (emoji: string) => void;
+}
+
+function MemoryFeedCard({ post, colors, onPress, onReact }: MemoryFeedCardProps) {
+  const timeAgo = getTimeAgo(post.createdAt);
+  const totalReactions = Object.values(post.reactions || {}).reduce((s, v) => s + (v as number), 0);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles2.card, { backgroundColor: colors.card, borderColor: colors.borderSoft }]}
+      accessibilityRole="button"
+    >
+      {/* Author row */}
+      <View style={styles2.authorRow}>
+        <Avatar name={post.authorName || 'Classmate'} size={32} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles2.authorName, { color: colors.textPrimary }]}>
+            {post.authorName || 'Classmate'}
+          </Text>
+          <Text style={[styles2.timeAgo, { color: colors.textMuted }]}>{timeAgo}</Text>
+        </View>
+        <Pressable
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="More options"
+        >
+          <Text style={{ color: colors.textMuted, fontSize: 18, lineHeight: 18 }}>⋯</Text>
+        </Pressable>
+      </View>
+
+      {/* Caption */}
+      {post.caption ? (
+        <Text style={[styles2.caption, { color: colors.textPrimary }]} numberOfLines={2}>
+          {post.caption}
+        </Text>
+      ) : null}
+
+      {/* Photo */}
+      {post.uri ? (
+        <View style={styles2.imageWrapper}>
+          <Image source={{ uri: post.uri }} style={styles2.image} resizeMode="cover" />
+        </View>
+      ) : null}
+
+      {/* Reaction / comment row */}
+      <View style={styles2.actionsRow}>
+        <View style={styles2.reactionsGroup}>
+          {['❤️', '😂', '🔥'].map((emoji) => (
+            <Pressable
+              key={emoji}
+              onPress={() => onReact(emoji === '❤️' ? 'heart' : emoji === '😂' ? 'laugh' : 'fire')}
+              style={styles2.reactionBtn}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            >
+              <Text style={{ fontSize: 18 }}>{emoji}</Text>
+            </Pressable>
+          ))}
+          {totalReactions > 0 && (
+            <Text style={[styles2.reactionCount, { color: colors.textSecondary }]}>
+              {totalReactions}
+            </Text>
+          )}
+        </View>
+        <View style={styles2.actionsRight}>
+          <Pressable onPress={onPress} style={styles2.commentBtn}>
+            <Text style={{ fontSize: 15 }}>💬</Text>
+            {(post.commentCount ?? 0) > 0 && (
+              <Text style={[styles2.reactionCount, { color: colors.textSecondary }]}>
+                {post.commentCount}
+              </Text>
+            )}
+          </Pressable>
+          <Pressable style={styles2.commentBtn}>
+            <Text style={{ fontSize: 15 }}>🔗</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function getTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+// Icon component shim (Icon from ui/Icons may not support all names; use Text as fallback)
+function Icon({ name, size, color }: { name: string; size: number; color: string }) {
+  const map: Record<string, string> = {
+    users: '👥',
+    'chevron-right': '›',
+    camera: '📷',
+  };
+  const icon = map[name] ?? '•';
+  if (name === 'chevron-right') {
+    return <Text style={{ fontSize: size, color, lineHeight: size + 2, fontWeight: '600' }}>{icon}</Text>;
+  }
+  return <Text style={{ fontSize: size - 2, lineHeight: size + 2 }}>{icon}</Text>;
+}
+
+const styles2 = StyleSheet.create({
+  card: {
+    borderRadius: radius.xl,
+    borderWidth: borders.thin,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 10px rgba(0,0,0,0.10)' }
+      : shadows.sm),
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  authorName: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  timeAgo: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  caption: {
+    fontSize: 15,
+    lineHeight: 22,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  imageWrapper: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  reactionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  reactionBtn: {
+    padding: 2,
+  },
+  reactionCount: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  actionsRight: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  commentBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+});
+
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
-    },
-    ambientBackdrop: {
-      ...StyleSheet.absoluteFill,
-      overflow: 'hidden',
-    },
-    ambientGlow: {
-      position: 'absolute',
-      width: 220,
-      height: 220,
-      borderRadius: radius.round,
-    },
-    ambientGlowPrimary: {
-      top: 90,
-      right: -150,
-      backgroundColor: colors.accentSoft,
-    },
-    ambientGlowSecondary: {
-      top: 360,
-      left: -180,
-      width: 230,
-      height: 230,
-      backgroundColor: colors.accentSoft,
     },
     content: {
       width: '100%',
@@ -488,161 +484,117 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
       alignSelf: 'center',
       paddingBottom: 110,
     },
-    searchContainer: {
-      marginBottom: spacing.sm,
-    },
-    circleStatusContainer: {
-      marginBottom: spacing.md,
-    },
-    filterSection: {
-      marginBottom: spacing.md,
-    },
-    heroSection: {
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
       paddingHorizontal: spacing.lg,
-      marginBottom: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.md,
     },
-    sectionHeaderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-    },
-    sectionHeaderTitle: {
-      fontSize: 20,
-      fontWeight: '800',
-      color: colors.textPrimary,
-      letterSpacing: -0.3,
-    },
-    sectionHeaderAction: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.accent,
-    },
-    statsRow: {
-      flexDirection: 'row',
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.xl,
-      backgroundColor: colors.card,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      paddingVertical: spacing.md,
-      alignItems: 'center',
-      ...(Platform.OS === 'web'
-        ? ({ boxShadow: '0 4px 16px rgba(48, 36, 61, 0.05)' } as any)
-        : shadows.sm),
-    },
-    statItem: {
+    headerLeft: {
       flex: 1,
-      alignItems: 'center',
-      gap: 3,
-      paddingVertical: spacing.xs,
     },
-    statValue: {
-      ...typography.serif.title3,
+    greeting: {
+      ...typography.sans.title3,
       color: colors.textPrimary,
       fontWeight: '700',
     },
-    statLabel: {
-      fontSize: 11,
+    subtitle: {
+      ...typography.sans.footnote,
       color: colors.textMuted,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      fontWeight: '600',
+      marginTop: 2,
     },
-    statDivider: {
-      width: 1,
-      height: 28,
-      backgroundColor: colors.borderSoft,
-    },
-    promptHeroCard: {
+    noCircleCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
       marginHorizontal: spacing.lg,
       marginBottom: spacing.xl,
-      padding: spacing.xl,
+      padding: spacing.md,
       backgroundColor: colors.card,
-      borderRadius: 26,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      ...(Platform.OS === 'web'
-        ? ({ boxShadow: '0 8px 24px rgba(48, 36, 61, 0.06)' } as any)
-        : shadows.md),
+      borderRadius: radius.xl,
+      borderWidth: borders.thin,
+      borderColor: colors.accent,
     },
-    promptHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: spacing.sm,
+    noCircleTitle: {
+      ...typography.sans.headline,
+      color: colors.textPrimary,
+      fontWeight: '700',
     },
-    promptTag: {
+    noCircleSubtitle: {
+      ...typography.sans.caption,
+      color: colors.textMuted,
+    },
+    switcherSection: {
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+    switcherLabel: {
+      ...typography.mono.micro,
+      color: colors.textMuted,
+      marginBottom: spacing.xs,
+      fontSize: 9,
+    },
+    switcherScroll: {
       flexDirection: 'row',
-      alignItems: 'center',
       gap: spacing.xs,
     },
-    promptDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.warning,
+    switcherPill: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.round,
+      backgroundColor: colors.surface,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
     },
-    promptDotCompleted: {
-      backgroundColor: colors.success,
+    switcherPillActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
     },
-    promptTagText: {
-      fontSize: 11,
-      color: colors.accent,
-      letterSpacing: 0.8,
-      fontWeight: '800',
-    },
-    streakBadge: {
-      fontSize: 12,
+    switcherPillText: {
+      ...typography.sans.caption,
       color: colors.textSecondary,
       fontWeight: '600',
-      backgroundColor: colors.surfaceOverlay,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 3,
-      borderRadius: radius.round,
     },
-    promptQuestion: {
-      ...typography.serif.title2,
-      color: colors.textPrimary,
-      lineHeight: 30,
-      marginBottom: spacing.md,
-    },
-    promptSubtext: {
-      fontSize: 13,
-      color: colors.textMuted,
-      marginBottom: spacing.md,
-      lineHeight: 18,
-    },
-    promptActionWrapper: {
-      paddingTop: spacing.xs,
-    },
-    promptButton: {
-      width: '100%',
-    },
-    todayMemoryWrapper: {
-      marginTop: spacing.sm,
-      gap: spacing.xs,
-    },
-    todayMemoryLabel: {
-      fontSize: 11,
+    switcherPillTextActive: {
+      color: colors.textInverse,
       fontWeight: '700',
-      color: colors.textMuted,
-      letterSpacing: 0.8,
     },
     sectionBlock: {
       marginBottom: spacing.xl,
     },
-    memoriesFeed: {
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: spacing.lg,
-      gap: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    sectionTitle: {
+      ...typography.sans.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+      fontSize: 18,
+    },
+    sectionAction: {
+      ...typography.sans.footnote,
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    feedGrid: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.md,
     },
     emptyState: {
       marginHorizontal: spacing.lg,
       paddingVertical: spacing.xxl,
     },
-    bottomSpacer: {
-      height: 20,
+    errorText: {
+      ...typography.sans.footnote,
+      color: colors.error,
+      textAlign: 'center',
+      marginTop: spacing.md,
     },
   });
 }

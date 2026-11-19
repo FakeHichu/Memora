@@ -47,13 +47,14 @@ export interface UploadResult {
  * Uploads a photo to the circle's storage bucket.
  * Follows RLS path requirement: ${classId}/${userId}/${timestamp}.jpg
  * Falls back to backend upload endpoint if direct client storage upload is rejected.
+ * Returns null if upload fails - caller must handle this and not create posts with invalid paths.
  */
 export async function uploadCirclePhoto(
   localUri: string,
   classId: string,
   userId: string,
   accessToken: string,
-): Promise<UploadResult> {
+): Promise<UploadResult | null> {
   // 1. Process image to standard size, compression, and base64
   const manipulated = await manipulateAsync(
     localUri,
@@ -95,30 +96,34 @@ export async function uploadCirclePhoto(
 
   // 3. Fallback: Upload via backend service role
   if (base64Data) {
-    const response = await fetch(`${backendUrl}/api/posts/upload`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        classId,
-        base64: base64Data,
-        contentType: 'image/jpeg',
-      }),
-    });
+    try {
+      const response = await fetch(`${backendUrl}/api/posts/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId,
+          base64: base64Data,
+          contentType: 'image/jpeg',
+        }),
+      });
 
-    if (response.ok) {
-      const resJson = await response.json();
-      return {
-        photoPath: resJson.photoPath || filePath,
-        downloadUrl: resJson.downloadUrl,
-      };
+      if (response.ok) {
+        const resJson = await response.json();
+        return {
+          photoPath: resJson.photoPath || filePath,
+          downloadUrl: resJson.downloadUrl,
+        };
+      }
+    } catch {
+      // Upload failed
     }
   }
 
-  // If both failed, use local path as last-ditch fallback
-  return { photoPath: manipulated.uri || localUri };
+  // SECURITY FIX: Return null instead of local path if both uploads failed
+  return null;
 }
 
 export interface PostMemoryOptions {
@@ -131,6 +136,7 @@ export interface PostMemoryOptions {
 
 /**
  * Full flow: Uploads image to circle storage and creates the post inside the circle
+ * SECURITY FIX: Does not create post if image upload fails
  */
 export async function postMemoryToCircle(
   classId: string,
@@ -157,6 +163,14 @@ export async function postMemoryToCircle(
     userId,
     session.access_token,
   );
+
+  // SECURITY FIX: If upload failed, stop here and don't create a post
+  if (!uploadResult || !uploadResult.photoPath) {
+    return {
+      ok: false,
+      message: 'Failed to upload photo. Please check your connection and try again.',
+    };
+  }
 
   const backendUrl = getBackendUrl();
 

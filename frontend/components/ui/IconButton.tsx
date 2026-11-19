@@ -148,7 +148,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
         ? ({
             boxShadow: `0 4px 14px ${isDark ? 'rgba(128, 82, 200, 0.4)' : 'rgba(128, 101, 143, 0.3)'}`,
           } as any)
-        : shadows.glowSm),
+        : shadows.sm),
     },
     variantGhost: {
       backgroundColor: 'transparent',

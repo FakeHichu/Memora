@@ -51,6 +51,7 @@ export function useCircle() {
             });
             if (apiRes.ok) {
               const apiData = await apiRes.json();
+              // FIX: Replace cache even if empty, to clear stale data
               if (Array.isArray(apiData.circles)) {
                 localCircles = apiData.circles;
                 await AsyncStorage.setItem(CIRCLES_CACHE_KEY, JSON.stringify(localCircles));
@@ -71,6 +72,9 @@ export function useCircle() {
       
       if (matched && matched.id !== savedActiveId) {
         await AsyncStorage.setItem(ACTIVE_CIRCLE_KEY, matched.id);
+      } else if (!matched && savedActiveId) {
+        // FIX: Clear stale active circle if no circles remain
+        await AsyncStorage.removeItem(ACTIVE_CIRCLE_KEY);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load circles');

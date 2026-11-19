@@ -40,7 +40,8 @@ export function useClass() {
             });
             if (apiRes.ok) {
               const apiData = await apiRes.json();
-              if (Array.isArray(apiData.classes) && apiData.classes.length > 0) {
+              // SECURITY FIX: Replace cache even if empty, to clear stale data
+              if (Array.isArray(apiData.classes)) {
                 localClasses = apiData.classes;
                 await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
               }
@@ -59,10 +60,9 @@ export function useClass() {
               const fetched = memberRows
                 .map((row: any) => row.classes as ClassRecord)
                 .filter(Boolean);
-              if (fetched.length > 0) {
-                localClasses = fetched;
-                await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
-              }
+              // SECURITY FIX: Update cache even when empty
+              localClasses = fetched;
+              await AsyncStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(localClasses));
             }
           }
         }
@@ -74,6 +74,9 @@ export function useClass() {
       setActiveClass(matched);
       if (matched && matched.id !== savedActiveId) {
         await AsyncStorage.setItem(ACTIVE_CLASS_KEY, matched.id);
+      } else if (!matched && savedActiveId) {
+        // Clear stale active class if no classes remain
+        await AsyncStorage.removeItem(ACTIVE_CLASS_KEY);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load classes');

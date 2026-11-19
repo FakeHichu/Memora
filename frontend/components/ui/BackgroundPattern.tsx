@@ -24,9 +24,9 @@ type BackgroundPatternProps = {
 export function BackgroundPattern({
   style,
   enabled = true,
-  opacity = backgroundPattern.defaultOpacity,
-  density = backgroundPattern.defaultDensity,
-  scale = backgroundPattern.defaultScale,
+  opacity = 0.025,
+  density = 0.4,
+  scale = 1,
   accentIntensity = 0,
 }: BackgroundPatternProps) {
   const { colors } = useAppTheme();

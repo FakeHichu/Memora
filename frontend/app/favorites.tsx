@@ -2,7 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { spacing, layout, breakpoints, shadows } from '@/constants/theme';
+import { spacing, layout, shadows } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { getFavoritePosts, toggleFavorite, type LocalPhotoPost } from '@/lib/photo-draft';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -69,10 +69,10 @@ export default function FavoritesScreen() {
     });
   }, [favorites, searchQuery]);
   const columns =
-    screenWidth >= breakpoints.desktop
-      ? layout.photoGridColumns.desktop
-      : screenWidth >= breakpoints.tablet
-        ? layout.photoGridColumns.tablet
+    screenWidth >= 1024
+      ? 4
+      : screenWidth >= 768
+        ? 3
         : 2;
   const horizontalPadding = spacing.lg * 2;
   const gridGap = 14;

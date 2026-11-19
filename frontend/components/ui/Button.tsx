@@ -1,5 +1,5 @@
 import { Insets, Pressable, StyleSheet, Text, ViewStyle, Platform } from 'react-native';
-import { radius, spacing, shadows, webShadows, borders } from '@/constants/theme';
+import { radius, spacing, shadows, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 type ButtonProps = {
   title: string;
@@ -46,7 +46,7 @@ export function Button({
     destructive: styles.variantDestructive,
     subtle: styles.variantSubtle,
   }[variant];
-  const pressedStyle = Platform.OS === 'web' ? webShadows.xs : shadows.xs;
+  const pressedStyle = shadows.xs;
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +60,7 @@ export function Button({
         sizeStyles,
         variantStyles,
         fullWidth && styles.fullWidth,
-        pressed && !disabled && { ...styles.pressed, ...pressedStyle },
+        pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
         style,
       ]}
@@ -85,7 +85,8 @@ export function Button({
   );
 }
 function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
-  const baseShadow = Platform.OS === 'web' ? webShadows.sm : shadows.sm;
+  const baseShadow = Platform.OS === 'web' ? { boxShadow: '0 2px 6px rgba(0,0,0,0.12)' } : shadows.sm;
+  const pressedShadow = shadows.xs;
   return StyleSheet.create({
     base: {
       borderRadius: radius.md,
@@ -134,7 +135,6 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     variantAccent: {
       backgroundColor: colors.accent,
       borderWidth: 0,
-      ...shadows.glowSm,
     },
     variantDestructive: {
       backgroundColor: colors.errorSoft,

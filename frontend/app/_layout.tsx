@@ -6,15 +6,19 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useAppTheme } from '@/providers/ThemeProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CommandPaletteProvider } from '@/components/ui/CommandPalette';
+import { CircleProvider } from '@/contexts/CircleContext';
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <ToastProvider>
-          <CommandPaletteProvider>
-            <RootNavigator />
-          </CommandPaletteProvider>
-        </ToastProvider>
+        <CircleProvider>
+          <ToastProvider>
+            <CommandPaletteProvider>
+              <RootNavigator />
+            </CommandPaletteProvider>
+          </ToastProvider>
+        </CircleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

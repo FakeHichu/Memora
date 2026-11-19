@@ -9,12 +9,15 @@ type AppThemeContextValue = {
 };
 const AppThemeContext = createContext<AppThemeContextValue | null>(null);
 export function ThemeProvider({ children }: React.PropsWithChildren) {
-  const [mode, setModeState] = useState<ThemeMode>('light');
+  // Default: Catppuccin Mocha (dark)
+  const [mode, setModeState] = useState<ThemeMode>('dark');
   useEffect(() => {
     let isActive = true;
     AsyncStorage.getItem(themeStorageKey)
       .then((storedMode) => {
+        // Only override if user has explicitly set a preference
         if (isActive && (storedMode === 'dark' || storedMode === 'light')) setModeState(storedMode);
+        // If nothing stored, stay on 'dark' (the default above)
       })
       .catch(() => undefined);
     return () => {

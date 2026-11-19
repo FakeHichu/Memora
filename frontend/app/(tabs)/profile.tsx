@@ -1,264 +1,395 @@
 import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, spacing, typography, layout, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
-import { clearLocalPhotoPosts, getLocalPhotoPosts } from '@/lib/photo-draft';
+import { getLocalPhotoPosts, clearLocalPhotoPosts } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
-import { AppHeader } from '@/components/ui/AppHeader';
 import { signOut } from '@/lib/supabase/auth';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAuth } from '@/hooks/useAuth';
-import { SkeletonProfileHeader } from '@/components/ui/Skeleton';
+import { Avatar } from '@/components/ui/Avatar';
+import { useUnifiedCircle } from '@/contexts/CircleContext';
+
 export default function ProfileScreen() {
-  const { colors } = useAppTheme();
+  const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors);
   const { session, isLoading: isAuthLoading } = useAuth();
+  const { circles } = useUnifiedCircle();
+
   const [photoCount, setPhotoCount] = useState(0);
-  const [localProfile, setLocalProfile] = useState<{ name: string; handle: string; email: string }>(
-    {
-      name: 'Memory Keeper',
-      handle: '@memora',
-      email: '',
-    },
-  );
+  const [reactionCount, setReactionCount] = useState(0);
   const [supabaseProfile, setSupabaseProfile] = useState<{
     display_name?: string;
     email?: string;
     username?: string;
+    bio?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-      async function fetchProfile() {
-        if (!supabase || isAuthLoading || !session?.user?.id) return;
+      async function fetchData() {
+        setIsLoading(true);
+        // Load local photos
         try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (!error && isActive) {
-            setSupabaseProfile(data);
+          const posts = await getLocalPhotoPosts();
+          if (isActive) {
+            setPhotoCount(posts.filter((p) => !p.isArchived).length);
+            const totalReactions = posts.reduce((sum, p) => {
+              return sum + Object.values(p.reactions || {}).reduce((s, v) => s + (v as number), 0);
+            }, 0);
+            setReactionCount(totalReactions);
           }
-        } catch {
-          /* keep local fallback */
+        } catch {}
+
+        // Load Supabase profile
+        if (supabase && session?.user?.id) {
+          try {
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (!error && data && isActive) {
+              setSupabaseProfile(data);
+            }
+          } catch {}
         }
-        finally {
-          if (isActive) setIsLoading(false);
-        }
+
+        if (isActive) setIsLoading(false);
       }
-      fetchProfile();
-      return () => {
-        isActive = false;
-      };
-    }, [session, supabase, isAuthLoading]),
+      fetchData();
+      return () => { isActive = false; };
+    }, [session, isAuthLoading]),
   );
+
   const isSignedIn = Boolean(session?.user);
   const displayName =
     supabaseProfile?.display_name ||
     (session?.user?.user_metadata?.full_name as string | undefined) ||
     session?.user?.email?.split('@')[0] ||
-    localProfile.name;
-  const displayEmail = supabaseProfile?.email || session?.user?.email || localProfile.email;
-  const confirmClearPhotos = () => {
-    if (Platform.OS === 'web') {
-      if (
-        typeof window !== 'undefined' &&
-        window.confirm('Delete all photos? This permanently removes the photos saved in this app.')
-      ) {
-        clearLocalPhotoPosts().then(() => setPhotoCount(0));
-      }
-      return;
-    }
-    Alert.alert('Delete all photos?', 'This permanently removes the photos saved in this app.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete photos',
-        style: 'destructive',
-        onPress: () => {
-          clearLocalPhotoPosts().then(() => setPhotoCount(0));
-        },
-      },
-    ]);
-  };
+    'Memory Keeper';
+  const displayEmail = session?.user?.email || '';
+  const username = supabaseProfile?.username || displayName.toLowerCase().replace(/\s+/g, '_');
+
   const handleSignOut = async () => {
     if (hasSupabaseConfig) {
       await signOut();
+      router.replace('/(auth)/login');
     }
   };
+
+  const confirmSignOut = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Sign out of Memora?')) handleSignOut();
+      return;
+    }
+    Alert.alert('Sign out?', 'You will be returned to the login screen.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: handleSignOut },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
+      <BackgroundPattern opacity={0.025} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader title="Profile" subtitle="Your account" />
-        {/* Loading Skeleton */}
-        {(isLoading || isAuthLoading) && (
-          <View style={styles.skeletonWrapper}>
-            <SkeletonProfileHeader />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+
+        {/* Profile Hero Card */}
+        <View style={styles.profileCard}>
+          {/* Avatar + Name */}
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarWrapper}>
+              <Avatar name={displayName} size={72} ring />
+            </View>
+            <View style={styles.nameSection}>
+              <Text style={styles.displayName}>{displayName}</Text>
+              <Text style={styles.username}>@{username}</Text>
+            </View>
           </View>
-        )}
+
+          {/* Stats row: Memories | Circles | Reactions */}
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{photoCount}</Text>
+              <Text style={styles.statLabel}>Memories</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{circles.length}</Text>
+              <Text style={styles.statLabel}>Circles</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{reactionCount}</Text>
+              <Text style={styles.statLabel}>Reactions</Text>
+            </View>
+          </View>
+
+          {/* Edit Profile button */}
+          <Pressable
+            style={styles.editProfileBtn}
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.editProfileBtnText}>Edit Profile</Text>
+          </Pressable>
+        </View>
+
         {/* Account Section */}
-        {!isLoading && !isAuthLoading && (
-          <>
-            <ProfileSection title="Account" style={styles.accountSection}>
-              <View style={styles.profileHeader}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {displayName ? displayName.charAt(0).toUpperCase() : 'M'}
-                  </Text>
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{displayName}</Text>
-                  <Text style={styles.profileStatus}>
-                    {isSignedIn ? (supabaseProfile ? 'Synced with account' : 'Signed in with email') : 'Using local storage only'}
-                  </Text>
-                </View>
-              </View>
-              {isSignedIn && (
+        <ProfileSection title="Account">
+          {isSignedIn ? (
+            <>
+              {displayEmail ? (
+                <ProfileRow label="Email" value={displayEmail} icon="envelope" />
+              ) : null}
+              {supabaseProfile?.username && (
                 <>
                   <ProfileDivider />
-                  {displayEmail ? (
-                    <ProfileRow label="Email" value={displayEmail} icon="envelope" />
-                  ) : null}
-              {supabaseProfile && (
-                <ProfileRow label="Username" value={supabaseProfile.username || ''} icon="person" />
-              )}
-                  <ProfileDivider />
-                  <ProfileRow
-                    label="Sign out"
-                    value=""
-                    icon="door"
-                    onPress={handleSignOut}
-                    destructive
-                  />
+                  <ProfileRow label="Username" value={`@${supabaseProfile.username}`} icon="user" />
                 </>
               )}
-              {!isSignedIn && hasSupabaseConfig && (
-                <>
-                  <ProfileDivider />
-                  <ProfileRow
-                    label="Sign in"
-                    value="Connect your account to sync across devices"
-                    icon="padlock"
-                    onPress={() => router.push('/(auth)/login')}
-                  />
-                </>
-              )}
-            </ProfileSection>
-            {/* Photo Storage Section */}
-            <ProfileSection title="Photo Storage">
-              <ProfileRow
-                label="Photos saved"
-                value={`${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`}
-                icon="camera"
-              />
-              <ProfileDivider />
-              <ProfileRow
-                label="Storage location"
-                value={hasSupabaseConfig && isSignedIn ? 'Cloud (Supabase)' : 'This device only'}
-                icon="cloud"
-              />
-              <ProfileDivider />
-              <ProfileRow label="Offline mode" value="Always available locally" icon="cloud" />
-              {photoCount > 0 && (
-                <>
-                  <ProfileDivider />
-                  <ProfileRow
-                    label="Delete all photos"
-                    value="This cannot be undone"
-                    icon="trash"
-                    onPress={confirmClearPhotos}
-                    destructive
-                  />
-                </>
-              )}
-            </ProfileSection>
-            {/* Notifications Section */}
-            <ProfileSection title="Notifications">
-              <ProfileRow label="Daily reminder" value="9:00 PM" icon="clock" />
-              <ProfileDivider />
-              <ProfileRow label="Memory notifications" value="On" icon="bell" />
-            </ProfileSection>
-            {/* Settings & Preferences */}
-            <ProfileSection title="Preferences">
-              <ProfileRow
-                label="Settings"
-                value="Appearance, notifications, data"
-                icon="cog"
-                onPress={() => router.push('/settings')}
-              />
-              <ProfileDivider />
-              <ProfileRow
-                label="Collections"
-                value="Manage memory collections"
-                icon="folder"
-                onPress={() => router.push('/collections')}
-              />
-            </ProfileSection>
-          </>
+            </>
+          ) : (
+            <ProfileRow
+              label="Sign in"
+              value="Connect your account"
+              icon="padlock"
+              onPress={() => router.push('/(auth)/login')}
+            />
+          )}
+        </ProfileSection>
+
+        {/* Appearance */}
+        <ProfileSection title="Appearance">
+          <View style={styles.themeRow}>
+            <Text style={styles.themeLabel}>Theme</Text>
+            <View style={styles.themeOptions}>
+              <Pressable
+                onPress={() => setMode('dark')}
+                style={[styles.themePill, mode === 'dark' && styles.themePillActive]}
+              >
+                <Text style={[styles.themePillText, mode === 'dark' && styles.themePillTextActive]}>
+                  🌙 Dark
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setMode('light')}
+                style={[styles.themePill, mode === 'light' && styles.themePillActive]}
+              >
+                <Text style={[styles.themePillText, mode === 'light' && styles.themePillTextActive]}>
+                  ☀️ Latte
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </ProfileSection>
+
+        {/* Settings */}
+        <ProfileSection title="Settings">
+          <ProfileRow
+            label="Account Settings"
+            value=""
+            icon="user"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="Notifications"
+            value=""
+            icon="bell"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="Privacy & Security"
+            value=""
+            icon="padlock"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="Appearance"
+            value={mode === 'dark' ? 'Dark ›' : 'Latte ›'}
+            icon="cog"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="About Memora"
+            value=""
+            icon="cloud"
+            onPress={() => router.push('/settings')}
+          />
+          <ProfileDivider />
+          <ProfileRow
+            label="Help & Support"
+            value=""
+            icon="info"
+            onPress={() => router.push('/settings')}
+          />
+        </ProfileSection>
+
+        {/* Sign out */}
+        {isSignedIn && (
+          <ProfileSection title="">
+            <ProfileRow
+              label="Log Out"
+              value=""
+              icon="door"
+              onPress={confirmSignOut}
+              destructive
+            />
+          </ProfileSection>
         )}
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-function createStyles(colors: ThemeColors) { return StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.maxContentWidth,
-    alignSelf: 'center',
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-  },
-  skeletonWrapper: {
-    marginTop: spacing.lg,
-  },
-  accountSection: {
-    marginTop: spacing.lg,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.xl,
-    backgroundColor: colors.chromeDark,
-    borderWidth: borders.thin,
-    borderColor: colors.chrome,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    ...typography.display,
-    color: colors.textOnChrome,
-    fontWeight: '700',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    ...typography.serif.title2,
-    color: colors.textPrimary,
-  },
-  profileStatus: {
-    ...typography.subheadline,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  bottomSpacer: {
-    height: spacing.huge,
-  },
-}); }
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      width: '100%',
+      maxWidth: layout.maxContentWidth,
+      alignSelf: 'center',
+      paddingBottom: spacing.xxxl + layout.tabBarHeight,
+      gap: spacing.lg,
+    },
+    header: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+    },
+    headerTitle: {
+      ...typography.sans.title2,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    profileCard: {
+      marginHorizontal: spacing.lg,
+      padding: spacing.lg,
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
+      gap: spacing.lg,
+    },
+    avatarSection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    avatarWrapper: {},
+    nameSection: {
+      flex: 1,
+    },
+    displayName: {
+      ...typography.sans.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    username: {
+      ...typography.sans.footnote,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingTop: spacing.sm,
+      borderTopWidth: borders.hairline,
+      borderTopColor: colors.borderSoft,
+    },
+    stat: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 2,
+    },
+    statValue: {
+      ...typography.sans.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    statLabel: {
+      ...typography.sans.caption2,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    statDivider: {
+      width: borders.thin,
+      height: 32,
+      backgroundColor: colors.borderSoft,
+    },
+    editProfileBtn: {
+      alignSelf: 'stretch',
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
+    },
+    editProfileBtnText: {
+      ...typography.sans.callout,
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    themeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    themeLabel: {
+      ...typography.sans.callout,
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    themeOptions: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    themePill: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.round,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
+      backgroundColor: colors.surface,
+    },
+    themePillActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    themePillText: {
+      ...typography.sans.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    themePillTextActive: {
+      color: colors.textOnPrimary,
+      fontWeight: '700',
+    },
+    bottomSpacer: {
+      height: spacing.huge,
+    },
+  });
+}

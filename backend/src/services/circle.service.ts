@@ -117,6 +117,13 @@ export class CircleService {
     return await CircleRepository.updatePostCaption(postId, caption);
   }
 
+  static async updatePostPhotoPath(
+    postId: string,
+    photoPath: string,
+  ): Promise<CirclePostEntity> {
+    return await CircleRepository.updatePostPhotoPath(postId, photoPath);
+  }
+
   static async deletePost(postId: string, userId: string): Promise<void> {
     const post = await CircleRepository.findPostById(postId);
     if (!post) {

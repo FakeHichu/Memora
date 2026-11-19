@@ -1,190 +1,343 @@
-export const catppuccin = {
-  rosewater: '#f5e0dc',
-  flamingo: '#f2cdcd',
-  pink: '#f5c2e7',
-  mauve: '#cba6f7',
-  red: '#f38ba8',
-  maroon: '#eba0ac',
-  peach: '#fab387',
-  yellow: '#f9e2af',
-  green: '#a6e3a1',
-  teal: '#94e2d5',
-  sky: '#89dceb',
-  sapphire: '#74c7ec',
-  blue: '#89b4fa',
-  lavender: '#b4befe',
-  catppuccinText: '#cdd6f4',
-  subtext1: '#bac2de',
-  subtext0: '#a6adc8',
-  overlay2: '#9399b2',
-  overlay1: '#7f849c',
-  overlay0: '#6c7086',
-  surface2: '#585b70',
-  surface1: '#45475a',
+// =============================================================================
+// MEMORA DESIGN SYSTEM – Catppuccin Mocha (Dark) + Catppuccin Latte (Light)
+// Default theme: Catppuccin Mocha (dark)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Catppuccin Mocha palette (exact hex values)
+// ---------------------------------------------------------------------------
+export const catppuccinMocha = {
+  // Accents
+  rosewater: '#F5E0DC',
+  flamingo: '#F2CDCD',
+  pink: '#F5C2E7',
+  mauve: '#CBA6F7',
+  red: '#F38BA8',
+  maroon: '#EBA0AC',
+  peach: '#FAB387',
+  yellow: '#F9E2AF',
+  green: '#A6E3A1',
+  teal: '#94E2D5',
+  sky: '#89DCEB',
+  sapphire: '#74C7EC',
+  blue: '#89B4FA',
+  lavender: '#B4BEFE',
+  // Text
+  text: '#CDD6F4',
+  subtext1: '#BAC2DE',
+  subtext0: '#A6ADC8',
+  overlay2: '#9399B2',
+  overlay1: '#7F849C',
+  overlay0: '#6C7086',
+  // Surfaces
+  surface2: '#585B70',
+  surface1: '#45475A',
   surface0: '#313244',
-  base: '#1e1e2e',
+  base: '#1E1E2E',
   mantle: '#181825',
-  crust: '#11111b',
+  crust: '#11111B',
 };
-export const lightColors = {
-  background: '#F7F2E9',
-  backgroundSecondary: '#EFE7DA',
-  backgroundTertiary: '#E4DAC8',
-  backgroundElevated: '#FFFDF8',
-  card: '#FFFDF8',
-  surface: '#FFFDF8',
-  surfaceElevated: '#FFFDF8',
-  surfaceOverlay: '#E9DFF3',
-  surfaceWarm: '#F7F2E9',
-  surfaceSecondary: '#E9DFF3',
-  surfaceFloating: 'rgba(255, 253, 248, 0.95)',
-  surfaceModal: 'rgba(255, 253, 248, 0.98)',
-  surfaceNavigation: 'rgba(48, 36, 61, 0.92)',
-  glass: 'rgba(255, 253, 248, 0.85)',
-  glassStrong: 'rgba(255, 253, 248, 0.96)',
-  secondary: '#E9DFF3',
-  chromeDark: '#75677E',
-  chromeDim: '#9D8EA8',
-  chrome: '#80658F',
-  chromeHighlight: '#684E77',
-  chromeGlow: 'rgba(128, 101, 143, 0.18)',
-  primaryDark: '#5E446D',
-  onPrimary: '#FFFFFF',
-  neon: '#80658F',
-  primary: '#80658F',
-  primaryLight: '#9E84AD',
-  primarySoft: '#E9DFF3',
-  primaryUltraSoft: '#F6F0FA',
-  accent: '#80658F',
-  accentLight: '#9E84AD',
-  accentLavender: '#C3A6F2',
-  accentSoft: 'rgba(128, 101, 143, 0.12)',
-  highlight: '#E6B957',
-  accentOptional1: '#E9C9C5',
-  accentOptional2: '#C8D3BF',
-  text: '#30243D',
-  textPrimary: '#30243D',
-  textSecondary: '#75677E',
-  textTertiary: '#9E92A6',
-  textMuted: '#9E92A6',
-  muted: '#75677E',
-  textInverse: '#FFFDF8',
-  textOnPrimary: '#FFFFFF',
-  textOnChrome: '#FFFFFF',
-  border: '#E8DECE',
-  borderSubtle: 'rgba(48, 36, 61, 0.05)',
-  borderDefault: 'rgba(48, 36, 61, 0.08)',
-  borderEmphasized: 'rgba(48, 36, 61, 0.14)',
-  borderSoft: '#EFE6D8',
-  divider: '#E8DECE',
-  dividerSoft: '#F3ECE0',
-  shadow: 'rgba(48, 36, 61, 0.06)',
-  shadowStrong: 'rgba(48, 36, 61, 0.12)',
-  overlay: 'rgba(48, 36, 61, 0.6)',
-  overlayLight: 'rgba(48, 36, 61, 0.3)',
-  overlayStrong: 'rgba(48, 36, 61, 0.85)',
-  success: '#5A9468',
-  successSoft: '#EBF4ED',
-  warning: '#E6B957',
-  warningSoft: '#FDF7E7',
-  error: '#C85252',
-  errorSoft: '#FBEBEB',
-  errorBackground: '#FBEBEB',
-  accentDeep: '#5E446D',
-  accentSoftGlow: '#9E84AD',
-  accentGlow: 'rgba(128, 101, 143, 0.22)',
-  coolHighlight: '#9E84AD',
-  coolGlow: 'rgba(128, 101, 143, 0.15)',
-  borderChrome: '#DACEDF',
-  borderHighlight: '#CBBED2',
-  accentSubtle: 'rgba(128, 101, 143, 0.12)',
-  patternTint: 'rgba(128, 101, 143, 0.04)',
-  patternTintCool: 'rgba(128, 101, 143, 0.03)',
-  ...catppuccin,
+
+// ---------------------------------------------------------------------------
+// Catppuccin Latte palette (exact hex values)
+// ---------------------------------------------------------------------------
+export const catppuccinLatte = {
+  // Accents
+  rosewater: '#DC8A78',
+  flamingo: '#DD7878',
+  pink: '#EA76CB',
+  mauve: '#8839EF',
+  red: '#D20F39',
+  maroon: '#E64553',
+  peach: '#FE640B',
+  yellow: '#DF8E1D',
+  green: '#40A02B',
+  teal: '#179299',
+  sky: '#04A5E5',
+  sapphire: '#209FB5',
+  blue: '#1E66F5',
+  lavender: '#7287FD',
+  // Text
+  text: '#4C4F69',
+  subtext1: '#5C5F77',
+  subtext0: '#6C6F85',
+  overlay2: '#7C7F93',
+  overlay1: '#8C8FA1',
+  overlay0: '#9CA0B0',
+  // Surfaces
+  surface2: '#ACB0BE',
+  surface1: '#BCC0CC',
+  surface0: '#CCD0DA',
+  base: '#EFF1F5',
+  mantle: '#E6E9EF',
+  crust: '#DCE0E8',
 };
-export const colors = lightColors;
+
+// ---------------------------------------------------------------------------
+// Dark theme (Catppuccin Mocha) color assignments
+// ---------------------------------------------------------------------------
 export const darkColors = {
-  background: '#0B0813',
-  backgroundSecondary: '#151022',
-  backgroundTertiary: '#1C152D',
-  backgroundElevated: '#211633',
-  card: '#211633',
-  surface: '#211633',
-  surfaceElevated: '#2C1D44',
-  surfaceOverlay: '#382556',
-  surfaceWarm: '#211633',
-  surfaceSecondary: '#2C1D44',
-  surfaceFloating: 'rgba(33, 22, 51, 0.92)',
-  surfaceModal: 'rgba(33, 22, 51, 0.98)',
-  surfaceNavigation: 'rgba(11, 8, 19, 0.94)',
-  glass: 'rgba(33, 22, 51, 0.82)',
-  glassStrong: 'rgba(33, 22, 51, 0.95)',
-  secondary: '#2C1D44',
-  chromeDark: '#4A336E',
-  chromeDim: '#704B9F',
-  chrome: '#8052C8',
-  chromeHighlight: '#C3A6F2',
-  chromeGlow: 'rgba(128, 82, 200, 0.25)',
-  primaryDark: '#5E389B',
-  onPrimary: '#0B0813',
-  neon: '#C3A6F2',
-  primary: '#8052C8',
-  primaryLight: '#9E72DF',
-  primarySoft: '#C3A6F2',
-  primaryUltraSoft: '#E6D9FC',
-  accent: '#8052C8',
-  accentLight: '#C3A6F2',
-  accentLavender: '#C3A6F2',
-  accentSoft: 'rgba(128, 82, 200, 0.16)',
-  highlight: '#FFC857',
-  accentOptional1: '#E9C9C5',
-  accentOptional2: '#C8D3BF',
-  text: '#F6F0FF',
-  textPrimary: '#F6F0FF',
-  textSecondary: '#A99BB9',
-  textTertiary: '#867697',
-  textMuted: '#736483',
-  muted: '#A99BB9',
-  textInverse: '#0B0813',
-  textOnPrimary: '#FFFFFF',
-  textOnChrome: '#FFFFFF',
-  border: '#33234E',
-  borderSubtle: 'rgba(195, 166, 242, 0.08)',
-  borderDefault: 'rgba(195, 166, 242, 0.12)',
-  borderEmphasized: 'rgba(195, 166, 242, 0.22)',
-  borderSoft: '#291B3F',
-  divider: '#2C1C45',
-  dividerSoft: '#201534',
+  // ---- Main backgrounds ----
+  background: catppuccinMocha.base,            // #1E1E2E – main canvas
+  backgroundSecondary: catppuccinMocha.mantle, // #181825
+  backgroundTertiary: catppuccinMocha.crust,   // #11111B
+  backgroundElevated: catppuccinMocha.surface0,// #313244
+
+  // ---- Cards / surfaces ----
+  card: catppuccinMocha.surface0,              // #313244
+  surface: catppuccinMocha.surface0,           // #313244
+  surfaceElevated: catppuccinMocha.surface1,   // #45475A
+  surfaceOverlay: catppuccinMocha.surface1,    // #45475A
+  surfaceWarm: catppuccinMocha.surface0,
+  surfaceSecondary: catppuccinMocha.surface1,
+  surfaceFloating: 'rgba(49, 50, 68, 0.95)',
+  surfaceModal: 'rgba(30, 30, 46, 0.98)',
+  surfaceNavigation: catppuccinMocha.mantle,
+  glass: 'rgba(49, 50, 68, 0.80)',
+  glassStrong: 'rgba(49, 50, 68, 0.96)',
+  secondary: catppuccinMocha.surface1,
+
+  // ---- Chrome (navigation, bars) ----
+  chromeDark: catppuccinMocha.surface2,
+  chromeDim: catppuccinMocha.overlay1,
+  chrome: catppuccinMocha.overlay2,
+  chromeHighlight: catppuccinMocha.lavender,
+  chromeGlow: 'rgba(180, 190, 254, 0.20)',
+
+  // ---- Accent (Lavender primary) ----
+  primary: catppuccinMocha.lavender,           // #B4BEFE
+  primaryDark: '#8A9AE8',
+  primaryLight: catppuccinMocha.lavender,
+  primarySoft: '#D0D7FE',
+  primaryUltraSoft: '#E8EBFF',
+  onPrimary: catppuccinMocha.crust,
+  neon: catppuccinMocha.lavender,
+  accent: catppuccinMocha.lavender,            // #B4BEFE – primary accent
+  accentLight: '#C8D0FE',
+  accentLavender: catppuccinMocha.lavender,
+  accentSoft: 'rgba(180, 190, 254, 0.15)',
+  accentSubtle: 'rgba(180, 190, 254, 0.12)',
+  accentDeep: catppuccinMocha.mauve,
+  accentSoftGlow: catppuccinMocha.lavender,
+  accentGlow: 'rgba(180, 190, 254, 0.30)',
+  accentOptional1: catppuccinMocha.pink,
+  accentOptional2: catppuccinMocha.teal,
+
+  // ---- Highlight / secondary accent ----
+  highlight: catppuccinMocha.yellow,           // #F9E2AF
+  coolHighlight: catppuccinMocha.mauve,
+  coolGlow: 'rgba(203, 166, 247, 0.20)',
+
+  // ---- Text ----
+  text: catppuccinMocha.text,                  // #CDD6F4
+  textPrimary: catppuccinMocha.text,
+  textSecondary: catppuccinMocha.subtext1,     // #BAC2DE
+  textTertiary: catppuccinMocha.subtext0,
+  textMuted: catppuccinMocha.overlay1,         // #7F849C
+  muted: catppuccinMocha.subtext1,
+  textInverse: catppuccinMocha.crust,
+  textOnPrimary: catppuccinMocha.crust,
+  textOnChrome: catppuccinMocha.text,
+
+  // ---- Borders ----
+  border: catppuccinMocha.surface1,            // #45475A
+  borderSubtle: 'rgba(180, 190, 254, 0.08)',
+  borderDefault: 'rgba(180, 190, 254, 0.14)',
+  borderEmphasized: 'rgba(180, 190, 254, 0.24)',
+  borderSoft: catppuccinMocha.surface1,
+  borderChrome: catppuccinMocha.surface2,
+  borderHighlight: catppuccinMocha.overlay0,
+  divider: catppuccinMocha.surface1,
+  dividerSoft: catppuccinMocha.surface0,
+
+  // ---- Shadows ----
   shadow: 'rgba(0, 0, 0, 0.55)',
   shadowStrong: 'rgba(0, 0, 0, 0.75)',
-  overlay: 'rgba(11, 8, 19, 0.82)',
-  overlayLight: 'rgba(11, 8, 19, 0.45)',
-  overlayStrong: 'rgba(11, 8, 19, 0.96)',
-  success: '#a6e3a1',
-  successSoft: '#1e3828',
-  warning: '#FFC857',
-  warningSoft: '#423312',
-  error: '#f38ba8',
-  errorSoft: '#441824',
-  errorBackground: '#441824',
-  accentDeep: '#532D8A',
-  accentSoftGlow: '#C3A6F2',
-  accentGlow: 'rgba(128, 82, 200, 0.35)',
-  coolHighlight: '#C3A6F2',
-  coolGlow: 'rgba(195, 166, 242, 0.20)',
-  borderChrome: '#4F3574',
-  borderHighlight: '#6F4E9E',
-  accentSubtle: 'rgba(128, 82, 200, 0.18)',
-  patternTint: 'rgba(195, 166, 242, 0.04)',
-  patternTintCool: 'rgba(128, 82, 200, 0.03)',
-  ...catppuccin,
+  overlay: 'rgba(17, 17, 27, 0.80)',
+  overlayLight: 'rgba(17, 17, 27, 0.45)',
+  overlayStrong: 'rgba(17, 17, 27, 0.96)',
+
+  // ---- Status ----
+  success: catppuccinMocha.green,              // #A6E3A1
+  successSoft: 'rgba(166, 227, 161, 0.14)',
+  warning: catppuccinMocha.yellow,             // #F9E2AF
+  warningSoft: 'rgba(249, 226, 175, 0.14)',
+  error: catppuccinMocha.red,                  // #F38BA8
+  errorSoft: 'rgba(243, 139, 168, 0.14)',
+  errorBackground: 'rgba(243, 139, 168, 0.14)',
+
+  // ---- Misc ----
+  patternTint: 'rgba(180, 190, 254, 0.04)',
+  patternTintCool: 'rgba(180, 190, 254, 0.03)',
+
+  // ---- Raw palette access (use catppuccinMocha.text, etc. directly to avoid collision) ----
+  rosewater: catppuccinMocha.rosewater,
+  flamingo: catppuccinMocha.flamingo,
+  pink: catppuccinMocha.pink,
+  mauve: catppuccinMocha.mauve,
+  red: catppuccinMocha.red,
+  maroon: catppuccinMocha.maroon,
+  peach: catppuccinMocha.peach,
+  yellow: catppuccinMocha.yellow,
+  green: catppuccinMocha.green,
+  teal: catppuccinMocha.teal,
+  sky: catppuccinMocha.sky,
+  sapphire: catppuccinMocha.sapphire,
+  blue: catppuccinMocha.blue,
+  lavender: catppuccinMocha.lavender,
+  subtext1: catppuccinMocha.subtext1,
+  subtext0: catppuccinMocha.subtext0,
+  overlay2: catppuccinMocha.overlay2,
+  overlay1: catppuccinMocha.overlay1,
+  overlay0: catppuccinMocha.overlay0,
+  surface2: catppuccinMocha.surface2,
+  surface1: catppuccinMocha.surface1,
+  surface0: catppuccinMocha.surface0,
+  base: catppuccinMocha.base,
+  mantle: catppuccinMocha.mantle,
+  crust: catppuccinMocha.crust,
 };
+
+// ---------------------------------------------------------------------------
+// Light theme (Catppuccin Latte) color assignments
+// ---------------------------------------------------------------------------
+export const lightColors = {
+  // ---- Main backgrounds ----
+  background: catppuccinLatte.base,            // #EFF1F5
+  backgroundSecondary: catppuccinLatte.mantle, // #E6E9EF
+  backgroundTertiary: catppuccinLatte.crust,   // #DCE0E8
+  backgroundElevated: '#FFFFFF',
+
+  // ---- Cards / surfaces ----
+  card: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceElevated: catppuccinLatte.surface0,   // #CCD0DA
+  surfaceOverlay: catppuccinLatte.surface1,    // #BCC0CC
+  surfaceWarm: catppuccinLatte.base,
+  surfaceSecondary: catppuccinLatte.surface0,
+  surfaceFloating: 'rgba(255, 255, 255, 0.95)',
+  surfaceModal: 'rgba(255, 255, 255, 0.98)',
+  surfaceNavigation: 'rgba(230, 233, 239, 0.96)',
+  glass: 'rgba(255, 255, 255, 0.85)',
+  glassStrong: 'rgba(255, 255, 255, 0.96)',
+  secondary: catppuccinLatte.surface0,
+
+  // ---- Chrome ----
+  chromeDark: catppuccinLatte.subtext1,
+  chromeDim: catppuccinLatte.overlay1,
+  chrome: catppuccinLatte.lavender,
+  chromeHighlight: catppuccinLatte.lavender,
+  chromeGlow: 'rgba(114, 135, 253, 0.18)',
+
+  // ---- Accent (Lavender primary) ----
+  primary: catppuccinLatte.lavender,           // #7287FD
+  primaryDark: '#5A70F0',
+  primaryLight: '#8FA1FE',
+  primarySoft: '#B8C5FE',
+  primaryUltraSoft: '#E6EAFF',
+  onPrimary: '#FFFFFF',
+  neon: catppuccinLatte.lavender,
+  accent: catppuccinLatte.lavender,            // #7287FD
+  accentLight: '#8FA1FE',
+  accentLavender: catppuccinLatte.lavender,
+  accentSoft: 'rgba(114, 135, 253, 0.12)',
+  accentSubtle: 'rgba(114, 135, 253, 0.10)',
+  accentDeep: catppuccinLatte.mauve,
+  accentSoftGlow: catppuccinLatte.lavender,
+  accentGlow: 'rgba(114, 135, 253, 0.25)',
+  accentOptional1: catppuccinLatte.pink,
+  accentOptional2: catppuccinLatte.teal,
+
+  // ---- Highlight ----
+  highlight: catppuccinLatte.yellow,           // #DF8E1D
+  coolHighlight: catppuccinLatte.mauve,
+  coolGlow: 'rgba(136, 57, 239, 0.15)',
+
+  // ---- Text ----
+  text: catppuccinLatte.text,                  // #4C4F69
+  textPrimary: catppuccinLatte.text,
+  textSecondary: catppuccinLatte.subtext1,     // #5C5F77
+  textTertiary: catppuccinLatte.subtext0,
+  textMuted: catppuccinLatte.overlay1,         // #8C8FA1
+  muted: catppuccinLatte.subtext1,
+  textInverse: '#FFFFFF',
+  textOnPrimary: '#FFFFFF',
+  textOnChrome: '#FFFFFF',
+
+  // ---- Borders ----
+  border: catppuccinLatte.surface0,            // #CCD0DA
+  borderSubtle: 'rgba(114, 135, 253, 0.06)',
+  borderDefault: 'rgba(76, 79, 105, 0.10)',
+  borderEmphasized: 'rgba(76, 79, 105, 0.18)',
+  borderSoft: catppuccinLatte.surface1,        // #BCC0CC
+  borderChrome: catppuccinLatte.surface2,
+  borderHighlight: catppuccinLatte.overlay2,
+  divider: catppuccinLatte.surface1,
+  dividerSoft: catppuccinLatte.surface0,
+
+  // ---- Shadows ----
+  shadow: 'rgba(76, 79, 105, 0.08)',
+  shadowStrong: 'rgba(76, 79, 105, 0.16)',
+  overlay: 'rgba(76, 79, 105, 0.60)',
+  overlayLight: 'rgba(76, 79, 105, 0.30)',
+  overlayStrong: 'rgba(76, 79, 105, 0.85)',
+
+  // ---- Status ----
+  success: catppuccinLatte.green,              // #40A02B
+  successSoft: 'rgba(64, 160, 43, 0.12)',
+  warning: catppuccinLatte.yellow,             // #DF8E1D
+  warningSoft: 'rgba(223, 142, 29, 0.12)',
+  error: catppuccinLatte.red,                  // #D20F39
+  errorSoft: 'rgba(210, 15, 57, 0.10)',
+  errorBackground: 'rgba(210, 15, 57, 0.10)',
+
+  // ---- Misc ----
+  patternTint: 'rgba(114, 135, 253, 0.04)',
+  patternTintCool: 'rgba(114, 135, 253, 0.03)',
+
+  // ---- Raw palette access ----
+  rosewater: catppuccinLatte.rosewater,
+  flamingo: catppuccinLatte.flamingo,
+  pink: catppuccinLatte.pink,
+  mauve: catppuccinLatte.mauve,
+  red: catppuccinLatte.red,
+  maroon: catppuccinLatte.maroon,
+  peach: catppuccinLatte.peach,
+  yellow: catppuccinLatte.yellow,
+  green: catppuccinLatte.green,
+  teal: catppuccinLatte.teal,
+  sky: catppuccinLatte.sky,
+  sapphire: catppuccinLatte.sapphire,
+  blue: catppuccinLatte.blue,
+  lavender: catppuccinLatte.lavender,
+  subtext1: catppuccinLatte.subtext1,
+  subtext0: catppuccinLatte.subtext0,
+  overlay2: catppuccinLatte.overlay2,
+  overlay1: catppuccinLatte.overlay1,
+  overlay0: catppuccinLatte.overlay0,
+  surface2: catppuccinLatte.surface2,
+  surface1: catppuccinLatte.surface1,
+  surface0: catppuccinLatte.surface0,
+  base: catppuccinLatte.base,
+  mantle: catppuccinLatte.mantle,
+  crust: catppuccinLatte.crust,
+};
+
+// Legacy export (always references Mocha for static usage; use useAppTheme() in components)
+export const catppuccin = catppuccinMocha;
+export const colors = darkColors;
+
 export type ThemeColors = typeof darkColors;
 export type ThemeMode = 'dark' | 'light';
+
 export const themePalettes: Record<ThemeMode, ThemeColors> = {
   dark: darkColors,
   light: lightColors,
 };
+
+// ---------------------------------------------------------------------------
+// Spacing
+// ---------------------------------------------------------------------------
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -196,22 +349,44 @@ export const spacing = {
   huge: 48,
   massive: 64,
 };
+
+// ---------------------------------------------------------------------------
+// Border radius
+// ---------------------------------------------------------------------------
 export const radius = {
   xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
-  xxl: 32,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
   round: 999,
   circle: 9999,
 };
+
+// ---------------------------------------------------------------------------
+// Border widths
+// ---------------------------------------------------------------------------
 export const borders = {
   hairline: 0.5,
   thin: 1,
   medium: 1.5,
   thick: 2,
 };
+
+// ---------------------------------------------------------------------------
+// Layout constants
+// ---------------------------------------------------------------------------
+export const layout = {
+  maxContentWidth: 720,
+  tabBarHeight: 88,
+  screenPadding: 16,
+};
+
+// ---------------------------------------------------------------------------
+// Shadows (mobile – React Native)
+// ---------------------------------------------------------------------------
 export const shadows = {
   none: {
     shadowColor: 'transparent',
@@ -221,190 +396,77 @@ export const shadows = {
     elevation: 0,
   },
   xs: {
-    shadowColor: colors.shadow,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 1,
   },
   sm: {
-    shadowColor: colors.shadow,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
     elevation: 2,
   },
   md: {
-    shadowColor: colors.shadowStrong,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 4,
   },
   lg: {
-    shadowColor: colors.shadowStrong,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
     shadowRadius: 16,
-    elevation: 5,
+    elevation: 6,
   },
   xl: {
-    shadowColor: colors.shadowStrong,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
     shadowRadius: 24,
-    elevation: 8,
-  },
-  chrome: {
-    shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  chromeLg: {
-    shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 5,
-  },
-  glowSm: {
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 0,
-  },
-  glowMd: {
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 0,
-  },
-  glowLg: {
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 0,
+    elevation: 10,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Web box shadows
+// ---------------------------------------------------------------------------
 export const webShadows = {
   none: { boxShadow: 'none' },
-  xs: { boxShadow: '0 1px 3px rgba(23, 25, 29, 0.08)' },
-  sm: { boxShadow: '0 2px 6px rgba(23, 25, 29, 0.08), 0 1px 2px rgba(23, 25, 29, 0.06)' },
-  md: { boxShadow: '0 4px 12px rgba(23, 25, 29, 0.10), 0 2px 4px rgba(23, 25, 29, 0.06)' },
-  lg: { boxShadow: '0 8px 24px rgba(23, 25, 29, 0.12), 0 4px 8px rgba(23, 25, 29, 0.08)' },
-  xl: { boxShadow: '0 16px 40px rgba(23, 25, 29, 0.14), 0 8px 16px rgba(23, 25, 29, 0.08)' },
-  chrome: { boxShadow: '0 2px 4px rgba(129, 148, 123, 0.08)' },
-  chromeLg: { boxShadow: '0 8px 16px rgba(129, 148, 123, 0.08)' },
-  glowSm: { boxShadow: '0 0 8px rgba(129, 148, 123, 0.3)' },
-  glowMd: { boxShadow: '0 0 16px rgba(129, 148, 123, 0.25)' },
-  glowLg: { boxShadow: '0 0 24px rgba(129, 148, 123, 0.2)' },
-  chromeReflection: {
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(23, 25, 29, 0.08)',
-  },
+  xs: { boxShadow: '0 1px 3px rgba(0,0,0,0.10)' },
+  sm: { boxShadow: '0 2px 8px rgba(0,0,0,0.12)' },
+  md: { boxShadow: '0 4px 16px rgba(0,0,0,0.14)' },
+  lg: { boxShadow: '0 8px 24px rgba(0,0,0,0.16)' },
+  xl: { boxShadow: '0 16px 40px rgba(0,0,0,0.18)' },
 };
+
+// ---------------------------------------------------------------------------
+// Blur
+// ---------------------------------------------------------------------------
 export const blur = {
   none: 0,
   light: 10,
   medium: 20,
   heavy: 40,
-  chrome: 30,
 };
+
+// ---------------------------------------------------------------------------
+// Opacity
+// ---------------------------------------------------------------------------
 export const opacity = {
   disabled: 0.4,
   pressed: 0.85,
   hover: 0.9,
   overlay: 0.85,
-  pattern: 0.04,
-  patternAccent: 0.06,
-  chromeReflection: 0.1,
-  chromeHighlight: 0.15,
 };
-export const componentStyles = {
-  card: {
-    resting: {
-      backgroundColor: colors.card,
-      borderRadius: radius.xl,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-    },
-    elevated: {
-      backgroundColor: colors.card,
-      borderRadius: radius.xl,
-      borderWidth: 0,
-    },
-    image: {
-      borderRadius: radius.xl,
-    },
-  },
-  button: {
-    primary: {
-      backgroundColor: colors.primary,
-      borderRadius: radius.md,
-      borderWidth: 0,
-    },
-    secondary: {
-      backgroundColor: colors.card,
-      borderRadius: radius.md,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-    },
-    ghost: {
-      backgroundColor: 'transparent',
-      borderRadius: radius.md,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-    },
-    accent: {
-      backgroundColor: colors.accent,
-      borderRadius: radius.md,
-      borderWidth: 0,
-    },
-    destructive: {
-      backgroundColor: colors.errorSoft,
-      borderRadius: radius.md,
-      borderWidth: borders.hairline,
-      borderColor: colors.error,
-    },
-  },
-  navBar: {
-    floatingPill: {
-      backgroundColor: colors.card,
-      borderRadius: 999,
-      borderWidth: borders.thin,
-      borderColor: colors.borderSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  },
-  searchBar: {
-    field: {
-      backgroundColor: colors.card,
-      borderRadius: 999,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      paddingHorizontal: spacing.md,
-      minHeight: 48,
-    },
-  },
-  chip: {
-    resting: {
-      backgroundColor: colors.card,
-      borderRadius: 999,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-    },
-    selected: {
-      backgroundColor: colors.accentSubtle,
-      borderWidth: borders.thin,
-      borderColor: colors.accent,
-    },
-  },
-};
+
+// ---------------------------------------------------------------------------
+// Typography
+// ---------------------------------------------------------------------------
 export const typography = {
   sans: {
     display: {
@@ -610,6 +672,7 @@ export const typography = {
       textTransform: 'uppercase' as const,
     },
   },
+  // Flat shortcuts (alias to sans)
   display: {
     fontFamily: 'System',
     fontSize: 36,
@@ -668,18 +731,6 @@ export const typography = {
     fontWeight: '400' as const,
     lineHeight: 20,
   },
-  heading: {
-    fontFamily: 'System',
-    fontSize: 22,
-    fontWeight: '700' as const,
-    lineHeight: 30,
-  },
-  subheading: {
-    fontFamily: 'System',
-    fontSize: 18,
-    fontWeight: '600' as const,
-    lineHeight: 24,
-  },
   footnote: {
     fontFamily: 'System',
     fontSize: 13,
@@ -700,102 +751,61 @@ export const typography = {
     lineHeight: 14,
     letterSpacing: 0.3,
   },
-};
-export const layout = {
-  screenPadding: spacing.lg,
-  screenPaddingHorizontal: spacing.lg,
-  screenPaddingVertical: spacing.xl,
-  maxContentWidth: 720,
-  tabBarHeight: 92,
-  headerHeight: 56,
-  safeAreaTop: 44,
-  safeAreaBottom: 34,
-  photoGridColumns: {
-    phone: 2,
-    tablet: 3,
-    desktop: 3,
+  micro: {
+    fontFamily: 'System',
+    fontSize: 10,
+    fontWeight: '500' as const,
+    lineHeight: 12,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Animation
+// ---------------------------------------------------------------------------
 export const animation = {
   fast: 120,
   normal: 220,
   slow: 320,
-  spring: {
-    damping: 18,
-    stiffness: 180,
-  },
-  springGentle: {
-    damping: 22,
-    stiffness: 140,
-  },
+  spring: { damping: 20, stiffness: 200, mass: 1 },
 };
-export const breakpoints = {
-  phone: 0,
-  tablet: 768,
-  desktop: 1024,
-};
-export const backgroundPattern = {
-  symbols: ['star', 'sparkle', 'cross', 'heart', 'diamond', 'moon'],
-  defaultOpacity: 0.03,
-  defaultDensity: 0.8,
-  defaultScale: 1,
-  defaultRotation: 0,
-};
-export const effects = {
-  chromeBorder: {
-    borderWidth: borders.hairline,
-    borderColor: colors.border,
-  },
-  chromeBorderActive: {
-    borderWidth: borders.thin,
-    borderColor: colors.accent,
-  },
-  accentBorder: {
-    borderWidth: borders.hairline,
-    borderColor: colors.accent,
-  },
-  accentBorderActive: {
-    borderWidth: borders.thin,
-    borderColor: colors.accentSoft,
-  },
-  glassSurface: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(20px)',
-  },
-  glassSurfaceWeb: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-  },
-  glowAccent: {
-    shadowColor: colors.accentGlow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 0,
-  },
-  glowChrome: {
-    shadowColor: colors.chromeGlow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 0,
-  },
-};
-export const variants = {
-  memoryCard: {
-    editorial: { aspectRatio: 4 / 5, imageRadius: radius.xl, padding: spacing.lg, gap: spacing.md },
-    compact: { aspectRatio: 1, imageRadius: radius.lg, padding: 0, gap: spacing.xs },
-    timeline: { aspectRatio: 4 / 3, imageRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
-    immersive: { aspectRatio: 3 / 4, imageRadius: 0, padding: 0, gap: spacing.lg },
+
+// ---------------------------------------------------------------------------
+// Component style helpers
+// ---------------------------------------------------------------------------
+export const componentStyles = {
+  card: {
+    resting: {
+      backgroundColor: darkColors.card,
+      borderRadius: radius.xl,
+      borderWidth: borders.thin,
+      borderColor: darkColors.borderSoft,
+    },
+    elevated: {
+      backgroundColor: darkColors.card,
+      borderRadius: radius.xl,
+    },
   },
   button: {
-    primary: { backgroundColor: colors.primary, color: colors.textOnPrimary },
-    primaryPressed: { backgroundColor: colors.accentDeep },
-    secondary: { backgroundColor: colors.surface, borderColor: colors.border },
-    ghost: { backgroundColor: 'transparent', borderColor: colors.border },
-    accent: { backgroundColor: colors.accent, color: '#FFFFFF' },
-    accentPressed: { backgroundColor: colors.accentDeep },
-    destructive: { backgroundColor: colors.errorSoft, borderColor: colors.error },
+    primary: {
+      backgroundColor: darkColors.primary,
+      borderRadius: radius.md,
+    },
+    secondary: {
+      backgroundColor: darkColors.card,
+      borderRadius: radius.md,
+      borderWidth: borders.thin,
+      borderColor: darkColors.borderSoft,
+    },
   },
+};
+
+// ---------------------------------------------------------------------------
+// Background pattern config
+// ---------------------------------------------------------------------------
+export const backgroundPattern = {
+  symbols: ['◇', '○', '△', '☆', '◎', '⬡', '✦', '◈'],
+  opacity: 0.025,
+  density: 12,
 };

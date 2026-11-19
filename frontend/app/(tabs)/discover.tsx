@@ -270,7 +270,7 @@ function createStyles(colors: ThemeColors) {
   previewNoticeText: { color: colors.muted, fontSize: 9, fontWeight: '700', letterSpacing: 0.7 },
   sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.xs },
   eyebrow: { color: colors.primaryDark, fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
-  sectionTitle: { ...typography.subheading, color: colors.text, marginTop: 2 },
+  sectionTitle: { ...typography.subheadline, color: colors.textPrimary, marginTop: 2 },
   sampleTag: { color: colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   sectionArrow: { color: colors.primary, fontSize: 22 },
   topicRail: { gap: spacing.md, paddingRight: spacing.lg },

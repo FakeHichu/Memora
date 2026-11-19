@@ -95,6 +95,15 @@ export class CircleController {
         });
       }
 
+      // SECURITY FIX: Verify circle membership BEFORE accepting/storing any uploaded image
+      const post = await CircleService.createCirclePost(
+        circleId,
+        req.userId,
+        "", // Temporary empty path - will be updated after upload
+        caption?.trim() || null,
+      );
+
+      // Now that membership is verified, proceed with upload
       const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(cleanBase64, "base64");
       const filePath = `circles/${circleId}/${req.userId}/${Date.now()}.jpg`;
@@ -104,12 +113,8 @@ export class CircleController {
         contentType || "image/jpeg",
       );
 
-      const post = await CircleService.createCirclePost(
-        circleId,
-        req.userId,
-        uploadedPath,
-        caption?.trim() || null,
-      );
+      // Update the post with the actual photo path
+      const updatedPost = await CircleService.updatePostPhotoPath(post.id, uploadedPath);
 
       let downloadUrl = uploadedPath;
       try {
@@ -120,7 +125,7 @@ export class CircleController {
 
       return res.status(201).json({
         ok: true,
-        post,
+        post: updatedPost,
         photoPath: uploadedPath,
         downloadUrl,
       });

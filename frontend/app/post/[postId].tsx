@@ -230,7 +230,7 @@ export default function PostDetailScreen() {
       </View>
     );
   }
-  const date = post ? new Date(post.createdAt) : null;
+  const date = post ? new Date(post.created_at || post.createdAt) : null;
   const formattedDate = date?.toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
@@ -379,7 +379,7 @@ export default function PostDetailScreen() {
                   ))}
                 </View>
               ) : null}
-              {/* Comments Section */}
+              {/* Comments Section - open to all authenticated users */}
               {comments.length > 0 && (
                 <View style={styles.commentsSection}>
                   <Text style={styles.commentsSectionTitle}>Comments ({comments.length})</Text>
@@ -400,7 +400,8 @@ export default function PostDetailScreen() {
                   ))}
                 </View>
               )}
-              {isAuthor && (
+              {/* Comment form - available to all authenticated users */}
+              {currentUserId && (
                 <View style={styles.commentFormRow}>
                   <TextInput
                     placeholder="Add a comment..."

@@ -211,13 +211,11 @@ export class PostService {
       (err as unknown as { status: number }).status = 404;
       throw err;
     }
+    // Only the post author can delete their own post
     if (post.user_id !== userId) {
-      const isMember = await ClassRepository.isMember(post.class_id, userId);
-      if (!isMember) {
-        const err = new Error("Not authorized to delete this post.");
-        (err as unknown as { status: number }).status = 403;
-        throw err;
-      }
+      const err = new Error("Only the post author can delete this post.");
+      (err as unknown as { status: number }).status = 403;
+      throw err;
     }
     await PostRepository.softDelete(postId);
   }
@@ -249,6 +247,19 @@ export class PostService {
     content: string,
     parentId?: string | null,
   ): Promise<CommentEntity> {
+    // SECURITY FIX: Verify post exists and user is a member of the class
+    const post = await PostRepository.findById(postId);
+    if (!post) {
+      const err = new Error("Post not found.");
+      (err as unknown as { status: number }).status = 404;
+      throw err;
+    }
+    const isMember = await ClassRepository.isMember(post.class_id, userId);
+    if (!isMember) {
+      const err = new Error("You must be a member of this class to comment.");
+      (err as unknown as { status: number }).status = 403;
+      throw err;
+    }
     return PostRepository.createComment(postId, userId, content, parentId);
   }
   static async getCommentsForPost(

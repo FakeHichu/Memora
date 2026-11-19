@@ -190,6 +190,24 @@ export class CircleRepository {
     return data as CirclePostEntity;
   }
 
+  static async updatePostPhotoPath(
+    postId: string,
+    photoPath: string,
+  ): Promise<CirclePostEntity> {
+    const client = getSupabaseClient();
+    const { data, error } = await client
+      .from("circle_posts")
+      .update({
+        photo_path: photoPath,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", postId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CirclePostEntity;
+  }
+
   static async softDeletePost(postId: string): Promise<void> {
     const client = getSupabaseClient();
     const { error } = await client

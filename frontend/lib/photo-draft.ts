@@ -20,6 +20,9 @@ export type LocalPhotoPost = {
   updatedAt?: string;
   reactions?: Record<string, number>;
   userReaction?: string | null;
+  authorName?: string; // For shared circle posts
+  authorAvatar?: string | null; // For shared circle posts
+  commentCount?: number; // Comment count for display
 };
 export type LocalProfile = {
   name: string;
