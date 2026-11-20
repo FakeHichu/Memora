@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, fetchWithTimeout } from '@/lib/photo-upload';
 
 const ACTIVE_CIRCLE_KEY = 'memora.active_circle.v1';
 const CIRCLES_CACHE_KEY = 'memora.circles_cache.v1';
@@ -44,11 +44,15 @@ export function useCircle() {
         if (sessionData.session) {
           const backendUrl = getBackendUrl();
           try {
-            const apiRes = await fetch(`${backendUrl}/api/circles`, {
-              headers: {
-                Authorization: `Bearer ${sessionData.session.access_token}`,
+            const apiRes = await fetchWithTimeout(
+              `${backendUrl}/api/circles`,
+              {
+                headers: {
+                  Authorization: `Bearer ${sessionData.session.access_token}`,
+                },
               },
-            });
+              2500,
+            );
             if (apiRes.ok) {
               const apiData = await apiRes.json();
               // FIX: Replace cache even if empty, to clear stale data

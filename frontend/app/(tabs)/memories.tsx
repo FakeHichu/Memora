@@ -1,231 +1,284 @@
-import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { spacing, layout } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-import type { ThemeColors } from '@/constants/theme';
-import { getLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
-import { MemoryCard } from '@/components/ui/MemoryCard';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { FilterChips } from '@/components/ui/FilterChips';
+import { Avatar } from '@/components/ui/Avatar';
+import { Icon } from '@/components/ui/Icons';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { AppHeader } from '@/components/ui/AppHeader';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { SkeletonMemoryCard } from '@/components/ui/Skeleton';
-const MEMORY_FILTERS = ['All', 'People', 'Places', 'Events'];
-type MemorySection = {
-  key: string;
-  title: string;
-  data: LocalPhotoPost[];
+
+type NotificationType = 'photo' | 'comment' | 'reaction' | 'mention';
+
+type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  actorName: string;
+  avatarUri?: string;
+  actionText: string;
+  previewText?: string;
+  photoThumbnail?: string;
+  timestamp: string;
+  isUnread: boolean;
+  postId?: string;
 };
-export default function MemoriesScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
-  const [posts, setPosts] = useState<LocalPhotoPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-      getLocalPhotoPosts()
-        .then((savedPosts) => {
-          if (isActive) {
-            setPosts(savedPosts);
-            setIsLoading(false);
-          }
-        })
-        .catch(() => {
-          if (isActive) {
-            setPosts([]);
-            setIsLoading(false);
-          }
-        });
-      return () => {
-        isActive = false;
-      };
-    }, []),
-  );
-  const sections: MemorySection[] = useMemo(() => {
-    const filtered = posts.filter((post) => {
-      if (post.isArchived) return false;
-      if (selectedFilter !== 'All' && post.category !== selectedFilter) return false;
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
-      const caption = (post.caption || '').toLowerCase();
-      const title = (post.title || '').toLowerCase();
-      const location = (post.location || '').toLowerCase();
-      const tags = (post.tags || []).join(' ').toLowerCase();
-      const dateStr = new Date(post.createdAt).toLocaleDateString().toLowerCase();
-      return (
-        caption.includes(query) ||
-        title.includes(query) ||
-        location.includes(query) ||
-        tags.includes(query) ||
-        dateStr.includes(query)
-      );
-    });
-    const groups: Record<string, LocalPhotoPost[]> = {};
-    for (const post of filtered) {
-      const date = new Date(post.createdAt);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(post);
-    }
-    return Object.entries(groups)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, items]) => {
-        const [year, month] = key.split('-').map(Number);
-        const monthTitle = new Date(year, month).toLocaleDateString(undefined, {
-          month: 'long',
-          year: 'numeric',
-        });
-        return { key, title: monthTitle, data: items };
-      });
-  }, [posts, selectedFilter, searchQuery]);
-  const handleSearchToggle = () => {
-    setShowSearch((prev) => !prev);
-  };
-  const totalVisibleMemories = useMemo(
-    () => sections.reduce((sum, s) => sum + s.data.length, 0),
-    [sections],
-  );
+
+const SAMPLE_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-1',
+    type: 'photo',
+    actorName: 'Sarah',
+    actionText: 'shared a new photo',
+    photoThumbnail: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=200&auto=format&fit=crop',
+    timestamp: '2m ago',
+    isUnread: true,
+  },
+  {
+    id: 'notif-2',
+    type: 'comment',
+    actorName: 'Alex',
+    actionText: 'commented',
+    previewText: '"This is amazing!"',
+    timestamp: '5m ago',
+    isUnread: true,
+  },
+  {
+    id: 'notif-3',
+    type: 'reaction',
+    actorName: 'Priya',
+    actionText: 'reacted ❤️',
+    timestamp: '10m ago',
+    isUnread: false,
+  },
+  {
+    id: 'notif-4',
+    type: 'mention',
+    actorName: 'You',
+    actionText: 'were mentioned in a post',
+    timestamp: '12m ago',
+    isUnread: false,
+  },
+];
+
+export default function NotificationsScreen() {
+  const { colors, mode } = useAppTheme();
+  const isDark = mode === 'dark';
+  const styles = createStyles(colors, isDark);
+
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Mentions' | 'Activity'>('All');
+  const [notifications, setNotifications] = useState<NotificationItem[]>(SAMPLE_NOTIFICATIONS);
+
+  const filteredNotifications = notifications.filter((item) => {
+    if (activeFilter === 'Mentions') return item.type === 'mention';
+    if (activeFilter === 'Activity') return item.type === 'reaction' || item.type === 'comment' || item.type === 'photo';
+    return true;
+  });
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.content}
+      {/* Header matching Screen 13 */}
+      <View style={styles.header}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={12}
+          accessibilityLabel="Back"
+        >
+          <Icon name="arrow-left" size={20} color={colors.textPrimary} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      {/* Filter Tabs: All | Mentions | Activity */}
+      <View style={styles.filterRow}>
+        {(['All', 'Mentions', 'Activity'] as const).map((filter) => {
+          const isActive = activeFilter === filter;
+          return (
+            <Pressable
+              key={filter}
+              onPress={() => setActiveFilter(filter)}
+              style={[
+                styles.filterPill,
+                isActive && styles.filterPillActive,
+              ]}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  isActive && styles.filterTextActive,
+                ]}
+              >
+                {filter}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Notifications List */}
+      <ScrollView
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        stickySectionHeadersEnabled={false}
-        ListHeaderComponent={
-          <>
-            <AppHeader
-              title="Memories"
-              subtitle={
-                posts.length > 0
-                  ? `${totalVisibleMemories} ${totalVisibleMemories === 1 ? 'memory' : 'memories'}`
-                  : undefined
-              }
-              rightAction={{
-                icon: showSearch ? 'close' : 'search',
-                onPress: handleSearchToggle,
-                accessibilityLabel: showSearch ? 'Close search' : 'Search memories',
+      >
+        {filteredNotifications.length === 0 ? (
+          <EmptyState
+            title="No Notifications Yet"
+            message="When classmates interact with your memories, you'll see it here."
+            variant="bell"
+            style={{ marginTop: 60 }}
+          />
+        ) : (
+          filteredNotifications.map((item) => (
+            <Pressable
+              key={item.id}
+              style={[
+                styles.itemRow,
+                item.isUnread && styles.itemRowUnread,
+              ]}
+              onPress={() => {
+                // Mark as read
+                setNotifications((prev) =>
+                  prev.map((n) => (n.id === item.id ? { ...n, isUnread: false } : n))
+                );
+                router.push('/(tabs)/home');
               }}
-            />
-            {showSearch && (
-              <View style={styles.searchContainer}>
-                <SearchBar
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholder="Search your memories…"
-                  autoFocus={true}
-                  onClear={() => setSearchQuery('')}
-                />
+            >
+              <Avatar name={item.actorName} size={44} ring={item.isUnread} photoUri={item.avatarUri} />
+
+              <View style={styles.itemContent}>
+                <Text style={styles.itemText} numberOfLines={2}>
+                  <Text style={styles.actorName}>{item.actorName} </Text>
+                  {item.actionText}
+                  {item.previewText ? (
+                    <Text style={styles.previewText}> {item.previewText}</Text>
+                  ) : null}
+                </Text>
+                <Text style={styles.timestamp}>{item.timestamp}</Text>
               </View>
-            )}
-            <FilterChips
-              filters={MEMORY_FILTERS}
-              selectedFilter={selectedFilter}
-              onFilterChange={setSelectedFilter}
-            />
-          </>
-        }
-        renderSectionHeader={({ section: { title, data } }) => (
-          <View style={styles.sectionHeaderContainer}>
-            <SectionHeader
-              title={title}
-              subtitle={`${data.length} ${data.length === 1 ? 'memory' : 'memories'}`}
-            />
-          </View>
+
+              {/* Thumbnail preview or unread dot */}
+              {item.photoThumbnail ? (
+                <Image
+                  source={{ uri: item.photoThumbnail }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+              ) : item.isUnread ? (
+                <View style={styles.unreadDot} />
+              ) : null}
+            </Pressable>
+          ))
         )}
-        renderItem={({ item }) => (
-          <View style={styles.cardContainer}>
-            <MemoryCard
-              memory={item}
-              density="timeline"
-              aspectRatio={4 / 3}
-              onPress={() => router.push(`/post/${item.id}`)}
-              showMemoryId={true}
-              showReactions={true}
-              showTags={true}
-            />
-          </View>
-        )}
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.loadingFeed}>
-              {[0, 1, 2].map((i) => (
-                <SkeletonMemoryCard key={i} aspectRatio={4 / 3} variant="timeline" />
-              ))}
-            </View>
-          ) : (
-            <EmptyState
-              title={searchQuery ? 'No memories found' : 'Your memories will live here'}
-              message={
-                searchQuery
-                  ? `No memories match "${searchQuery}". Try a different search.`
-                  : 'Take a photo from Create to start your collection.'
-              }
-              variant={searchQuery ? 'search' : 'camera'}
-              action={
-                !searchQuery
-                  ? {
-                      label: 'Create a memory',
-                      onPress: () => router.push('/(tabs)/create'),
-                      variant: 'accent',
-                    }
-                  : undefined
-              }
-              style={styles.emptyState}
-            />
-          )
-        }
-        ListFooterComponent={<View style={styles.bottomSpacer} />}
-      />
+      </ScrollView>
     </SafeAreaView>
   );
 }
-function createStyles(colors: ThemeColors) { return StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.maxContentWidth,
-    alignSelf: 'center',
-    paddingBottom: spacing.xxxl + layout.tabBarHeight,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  sectionHeaderContainer: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  cardContainer: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  loadingFeed: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
-    paddingTop: spacing.md,
-  },
-  emptyState: {
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.xxl,
-    paddingTop: spacing.xxxl,
-  },
-  bottomSpacer: {
-    height: spacing.huge,
-  },
-}); }
+
+function createStyles(colors: ThemeColors, isDark: boolean) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+    },
+    backButton: {
+      padding: 6,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+    },
+    filterPill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 999,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    filterPillActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    filterText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    filterTextActive: {
+      color: colors.crust,
+      fontWeight: '700',
+    },
+    listContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 100,
+    },
+    itemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      gap: 14,
+    },
+    itemRowUnread: {
+      backgroundColor: 'transparent',
+    },
+    itemContent: {
+      flex: 1,
+      gap: 4,
+    },
+    actorName: {
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    itemText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      lineHeight: 20,
+    },
+    previewText: {
+      fontStyle: 'italic',
+      color: colors.textPrimary,
+    },
+    timestamp: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    thumbnail: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.card,
+    },
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+    },
+  });
+}

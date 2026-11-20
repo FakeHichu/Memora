@@ -1,11 +1,15 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { spacing, typography, radius, borders } from '@/constants/theme';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
-type EmptyStateVariant =
+
+export type EmptyStateVariant =
   | 'default'
   | 'camera'
+  | 'photos'
+  | 'error'
   | 'search'
   | 'calendar'
   | 'star'
@@ -15,6 +19,7 @@ type EmptyStateVariant =
   | 'bell'
   | 'cloud'
   | 'prompt';
+
 type EmptyStateProps = {
   title: string;
   message?: string;
@@ -33,69 +38,83 @@ type EmptyStateProps = {
   illustration?: React.ReactNode;
   accessibilityLabel?: string;
 };
-function getVariantConfig(colors: ReturnType<typeof useAppTheme>['colors']): Record<EmptyStateVariant, { icon: string; illustrationColor: string }> {
-  return {
-    default: { icon: 'cloud', illustrationColor: colors.textMuted },
-    camera: { icon: 'camera', illustrationColor: colors.accent },
-    search: { icon: 'search', illustrationColor: colors.accentLavender },
-    calendar: { icon: 'calendar', illustrationColor: colors.chromeDim },
-    star: { icon: 'star', illustrationColor: colors.warning },
-    users: { icon: 'users', illustrationColor: colors.accent },
-    folder: { icon: 'file', illustrationColor: colors.accentLavender },
-    photo: { icon: 'picture', illustrationColor: colors.accent },
-    bell: { icon: 'bell', illustrationColor: colors.warning },
-    cloud: { icon: 'cloud', illustrationColor: colors.chromeDim },
-    prompt: { icon: 'calendar', illustrationColor: colors.accent },
-  };
-}
-function EmptyStateIllustration({
-  variant,
-  color,
-  size = 80,
-}: {
-  variant: EmptyStateVariant;
-  color: string;
-  size?: number;
-}) {
-  const styles = StyleSheet.create({
-    illustrationWrapper: {
-      position: 'relative',
-    },
-    illustrationBg: {
-      borderRadius: radius.circle,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    illustrationRing: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      borderRadius: radius.circle,
-      borderWidth: borders.thin,
-    },
-  });
-  const icons: Record<EmptyStateVariant, JamIconName> = {
-    default: 'cloud',
-    camera: 'camera',
-    search: 'search',
-    calendar: 'calendar',
-    star: 'star',
-    users: 'users',
-    folder: 'file',
-    photo: 'picture',
-    bell: 'bell',
-    cloud: 'cloud',
-    prompt: 'calendar',
-  };
+
+function PhotosEmptyGraphic({ color, secondaryColor }: { color: string; secondaryColor: string }) {
   return (
-    <View style={[styles.illustrationWrapper, { width: size, height: size }]}>
-      <View style={[styles.illustrationBg, { backgroundColor: `${color}15`, width: size, height: size }]}>
-        <Icon name={icons[variant]} size={size * 0.5} color={color} opacity={0.6} />
-      </View>
-      <View style={[styles.illustrationRing, { borderColor: `${color}40`, width: size, height: size }]} />
+    <View style={{ width: 110, height: 90, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width="110" height="90" viewBox="0 0 110 90" fill="none">
+        {/* Back card */}
+        <Rect
+          x="15"
+          y="15"
+          width="48"
+          height="60"
+          rx="8"
+          transform="rotate(-12 39 45)"
+          fill={secondaryColor}
+          opacity={0.3}
+        />
+        {/* Front card */}
+        <Rect
+          x="45"
+          y="15"
+          width="50"
+          height="62"
+          rx="8"
+          transform="rotate(8 70 46)"
+          fill={secondaryColor}
+          opacity={0.5}
+        />
+        <Rect
+          x="50"
+          y="20"
+          width="40"
+          height="38"
+          rx="4"
+          transform="rotate(8 70 39)"
+          fill={color}
+          opacity={0.7}
+        />
+        {/* Heart sticker */}
+        <Circle cx="85" cy="18" r="8" fill={color} />
+        <Path
+          d="M85 22 C82 19 80 17 80 15 C80 13 81 12 83 12 C84 12 84.5 13 85 14 C85.5 13 86 12 87 12 C89 12 90 13 90 15 C90 17 88 19 85 22 Z"
+          fill="#11111B"
+        />
+      </Svg>
     </View>
   );
 }
+
+function ErrorEmptyGraphic({ color }: { color: string }) {
+  return (
+    <View style={{ width: 90, height: 80, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width="80" height="70" viewBox="0 0 80 70" fill="none">
+        {/* Wi-Fi arches */}
+        <Path
+          d="M10 25 C28 10 52 10 70 25"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        <Path
+          d="M22 38 C33 28 47 28 58 38"
+          stroke={color}
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <Path
+          d="M33 50 C37 45 43 45 47 50"
+          stroke={color}
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <Circle cx="40" cy="60" r="4.5" fill={color} />
+      </Svg>
+    </View>
+  );
+}
+
 export function EmptyState({
   title,
   message,
@@ -107,21 +126,64 @@ export function EmptyState({
   illustration,
   accessibilityLabel,
 }: EmptyStateProps) {
-  const { colors } = useAppTheme();
+  const { colors, mode } = useAppTheme();
   const styles = createStyles(colors);
-  const config = getVariantConfig(colors);
-  const effectiveColor = config[variant]?.illustrationColor ?? colors.textMuted;
+
+  const renderIllustration = () => {
+    if (illustration) return illustration;
+
+    if (variant === 'photos' || variant === 'camera' || variant === 'photo' || variant === 'default') {
+      return (
+        <PhotosEmptyGraphic
+          color={colors.accent}
+          secondaryColor={mode === 'dark' ? colors.surface1 : colors.surface0}
+        />
+      );
+    }
+
+    if (variant === 'error' || variant === 'cloud') {
+      return <ErrorEmptyGraphic color={colors.accent} />;
+    }
+
+    const iconNameMap: Record<string, JamIconName> = {
+      bell: 'bell',
+      users: 'users',
+      search: 'search',
+      star: 'star',
+      folder: 'file',
+      calendar: 'calendar',
+      prompt: 'picture',
+    };
+
+    const iconName = iconNameMap[variant] || 'picture';
+
+    return (
+      <View style={styles.iconCircle}>
+        <Icon name={iconName} size={36} color={colors.accent} />
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, style]} accessibilityLabel={accessibilityLabel || title}>
-      {illustration ? (
-        illustration
-      ) : (
-        <EmptyStateIllustration variant={variant} color={effectiveColor} size={96} />
-      )}
+      {renderIllustration()}
+
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
+
       {(action || secondaryAction) && (
         <View style={styles.actionsContainer}>
+          {action && (
+            <Pressable
+              onPress={action.onPress}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel={action.label}
+            >
+              <Text style={styles.actionLabel}>{action.label}</Text>
+            </Pressable>
+          )}
+
           {secondaryAction && (
             <Pressable
               onPress={secondaryAction.onPress}
@@ -132,121 +194,75 @@ export function EmptyState({
               <Text style={styles.secondaryActionLabel}>{secondaryAction.label}</Text>
             </Pressable>
           )}
-          {action && (
-            <Pressable
-              onPress={action.onPress}
-              style={[
-                styles.actionButton,
-                action.variant === 'secondary' && styles.actionButtonSecondary,
-                action.variant === 'primary' && styles.actionButtonPrimary,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={action.label}
-            >
-              <Text
-                style={[
-                  styles.actionLabel,
-                  action.variant === 'secondary' && styles.actionLabelSecondary,
-                  action.variant === 'primary' && styles.actionLabelPrimary,
-                ]}
-              >
-                {action.label}
-              </Text>
-            </Pressable>
-          )}
         </View>
       )}
     </View>
   );
 }
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
+
+function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: {
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.xxxl,
-      gap: spacing.lg,
+      paddingHorizontal: 24,
+      paddingVertical: 36,
+      gap: 12,
     },
-    illustrationWrapper: {
-      position: 'relative',
-    },
-    illustrationBg: {
-      borderRadius: radius.circle,
+    iconCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    illustrationRing: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      borderRadius: radius.circle,
-      borderWidth: borders.thin,
+      marginBottom: 4,
     },
     title: {
-      ...typography.serif.title2,
+      fontSize: 20,
+      fontWeight: '800',
       color: colors.textPrimary,
       textAlign: 'center',
-      maxWidth: 320,
+      letterSpacing: -0.3,
     },
     message: {
-      ...typography.sans.body,
-      color: colors.textMuted,
+      fontSize: 14,
+      color: colors.textSecondary,
       textAlign: 'center',
-      maxWidth: 300,
-      lineHeight: 24,
+      lineHeight: 20,
+      maxWidth: 260,
     },
     actionsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      gap: spacing.md,
-      marginTop: spacing.sm,
       width: '100%',
+      maxWidth: 240,
+      gap: 10,
+      marginTop: 8,
     },
     actionButton: {
-      paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.md,
-      backgroundColor: colors.accentSubtle,
-      borderWidth: borders.hairline,
-      borderColor: colors.accentSubtle,
-      borderRadius: radius.round,
-      minWidth: 140,
-      alignItems: 'center',
-    },
-    actionButtonPrimary: {
+      height: 48,
+      borderRadius: 14,
       backgroundColor: colors.accent,
-      borderColor: colors.accent,
-    },
-    actionButtonSecondary: {
-      backgroundColor: colors.card,
-      borderColor: colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     actionLabel: {
-      ...typography.sans.callout,
-      color: colors.accent,
-      fontWeight: '600',
-    },
-    actionLabelPrimary: {
-      color: colors.textOnPrimary,
-    },
-    actionLabelSecondary: {
-      color: colors.textPrimary,
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.crust,
     },
     secondaryActionButton: {
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
+      height: 44,
+      borderRadius: 14,
       backgroundColor: 'transparent',
-      borderWidth: borders.hairline,
-      borderColor: colors.borderSoft,
-      borderRadius: radius.round,
-      minWidth: 120,
       alignItems: 'center',
+      justifyContent: 'center',
     },
     secondaryActionLabel: {
-      ...typography.sans.callout,
+      fontSize: 14,
+      fontWeight: '600',
       color: colors.textSecondary,
-      fontWeight: '500',
     },
   });
 }

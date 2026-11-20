@@ -54,8 +54,8 @@ export default function CallbackScreen() {
             });
           }
 
-          // Navigate to welcome/onboarding
-          router.replace('/(onboarding)/welcome');
+          // Navigate to home screen
+          router.replace('/(tabs)/home');
         } else {
           setError('Authentication failed. Redirecting...');
           setTimeout(() => router.replace('/(auth)/login'), 2000);

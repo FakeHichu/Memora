@@ -17,6 +17,7 @@ import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { HeartMark } from '@/components/ui/HeartMark';
+import { SocialAuthButtons } from '@/components/ui/SocialAuthButtons';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterScreen() {
@@ -24,19 +25,14 @@ export default function RegisterScreen() {
   const styles = createStyles(colors, mode);
   
   const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [fullNameError, setFullNameError] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
 
   const validateFullName = (val: string): boolean => {
     const trimmed = val.trim();
@@ -49,29 +45,6 @@ export default function RegisterScreen() {
       return false;
     }
     setFullNameError(null);
-    return true;
-  };
-
-  const validateUsername = (val: string): boolean => {
-    const trimmed = val.trim();
-    if (!trimmed) {
-      setUsernameError('Username is required');
-      return false;
-    }
-    if (trimmed.length < 3) {
-      setUsernameError('Username must be at least 3 characters');
-      return false;
-    }
-    if (trimmed.length > 20) {
-      setUsernameError('Username must be 20 characters or less');
-      return false;
-    }
-    // Allow letters, numbers, underscores, and hyphens
-    if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
-      setUsernameError('Username can only contain letters, numbers, _ and -');
-      return false;
-    }
-    setUsernameError(null);
     return true;
   };
 
@@ -103,31 +76,16 @@ export default function RegisterScreen() {
     return true;
   };
 
-  const validateConfirmPassword = (val: string): boolean => {
-    if (!val) {
-      setConfirmPasswordError('Please confirm your password');
-      return false;
-    }
-    if (val !== password) {
-      setConfirmPasswordError('Passwords do not match');
-      return false;
-    }
-    setConfirmPasswordError(null);
-    return true;
-  };
-
   const handleRegister = async () => {
-    // Validate all fields
     const isFullNameValid = validateFullName(fullName);
-    const isUsernameValid = validateUsername(username);
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
 
-    if (!isFullNameValid || !isUsernameValid || !isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+    if (!isFullNameValid || !isEmailValid || !isPasswordValid) {
       return;
     }
 
+    const autoUsername = fullName.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
     setIsSubmitting(true);
 
     try {
@@ -147,7 +105,7 @@ export default function RegisterScreen() {
         options: {
           data: {
             full_name: fullName.trim(),
-            username: username.trim(),
+            username: autoUsername,
           },
         },
       });
@@ -192,7 +150,7 @@ export default function RegisterScreen() {
         .from('profiles')
         .insert({
           id: authData.user.id,
-          username: username.trim().toLowerCase(),
+          username: autoUsername,
           display_name: fullName.trim(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -208,7 +166,7 @@ export default function RegisterScreen() {
       if (authData.session) {
         // Auto-signed in (email confirmation not required)
         Alert.alert(
-          'Welcome to Memora! 🎉',
+          'Welcome to Memora',
           `Hi ${fullName}! Your account has been created successfully.`,
           [
             {
@@ -220,7 +178,7 @@ export default function RegisterScreen() {
       } else {
         // Email confirmation required
         Alert.alert(
-          'Check Your Email 📧',
+          'Check Your Email',
           `We've sent a confirmation email to ${email}. Please click the link in the email to verify your account, then sign in.`,
           [
             {
@@ -247,28 +205,17 @@ export default function RegisterScreen() {
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
-          {/* Brand Row */}
+          {/* Centered Brand Header matching reference board */}
           <View style={styles.brandRow}>
-            <View style={styles.brandMark}>
-              <HeartMark size={46} />
-            </View>
-            <View>
-              <Text style={styles.brandName}>Memora</Text>
-              <Text style={styles.brandTagline}>Your class. Your people. Your memories.</Text>
-            </View>
-          </View>
-
-          {/* Heading */}
-          <View style={styles.headerBlock}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join your class circle today!</Text>
+            <HeartMark size={54} />
+            <Text style={styles.brandName}>Create Account</Text>
+            <Text style={styles.brandTagline}>Join your class circle today!</Text>
           </View>
 
           {/* Card */}
           <View style={styles.card}>
             {/* Full Name */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Full name</Text>
               <View style={[styles.inputTrack, fullNameError && styles.inputError]}>
                 <Icon name="user" size={18} color={colors.textSecondary} />
                 <TextInput
@@ -278,7 +225,7 @@ export default function RegisterScreen() {
                     if (fullNameError) setFullNameError(null);
                   }}
                   onBlur={() => fullName && validateFullName(fullName)}
-                  placeholder="John Doe"
+                  placeholder="Full Name"
                   placeholderTextColor={colors.textMuted}
                   autoComplete="name"
                   autoCapitalize="words"
@@ -290,33 +237,8 @@ export default function RegisterScreen() {
               {fullNameError ? <Text style={styles.fieldError}>{fullNameError}</Text> : null}
             </View>
 
-            {/* Username */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Username</Text>
-              <View style={[styles.inputTrack, usernameError && styles.inputError]}>
-                <Icon name="user" size={18} color={colors.textSecondary} />
-                <TextInput
-                  value={username}
-                  onChangeText={(text) => {
-                    setUsername(text);
-                    if (usernameError) setUsernameError(null);
-                  }}
-                  onBlur={() => username && validateUsername(username)}
-                  placeholder="johndoe"
-                  placeholderTextColor={colors.textMuted}
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  returnKeyType="next"
-                  editable={!isSubmitting}
-                  style={styles.input}
-                />
-              </View>
-              {usernameError ? <Text style={styles.fieldError}>{usernameError}</Text> : null}
-            </View>
-
             {/* Email */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Email address</Text>
               <View style={[styles.inputTrack, emailError && styles.inputError]}>
                 <Icon name="envelope" size={18} color={colors.textSecondary} />
                 <TextInput
@@ -326,7 +248,7 @@ export default function RegisterScreen() {
                     if (emailError) setEmailError(null);
                   }}
                   onBlur={() => email && validateEmail(email)}
-                  placeholder="you@example.com"
+                  placeholder="Email address"
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   autoComplete="email"
@@ -341,7 +263,6 @@ export default function RegisterScreen() {
 
             {/* Password */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Password</Text>
               <View style={[styles.inputTrack, passwordError && styles.inputError]}>
                 <Icon name="padlock" size={18} color={colors.textSecondary} />
                 <TextInput
@@ -349,12 +270,9 @@ export default function RegisterScreen() {
                   onChangeText={(text) => {
                     setPassword(text);
                     if (passwordError) setPasswordError(null);
-                    if (confirmPassword && confirmPasswordError) {
-                      validateConfirmPassword(confirmPassword);
-                    }
                   }}
                   onBlur={() => password && validatePassword(password)}
-                  placeholder="••••••••"
+                  placeholder="Password"
                   placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   autoComplete="new-password"
@@ -368,69 +286,41 @@ export default function RegisterScreen() {
                   disabled={isSubmitting}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.showPasswordText}>{showPassword ? 'Hide' : 'Show'}</Text>
+                  <Icon
+                    name={showPassword ? 'close' : 'picture'}
+                    size={18}
+                    color={colors.textSecondary}
+                  />
                 </Pressable>
               </View>
               {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
             </View>
 
-            {/* Confirm Password */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Confirm password</Text>
-              <View style={[styles.inputTrack, confirmPasswordError && styles.inputError]}>
-                <Icon name="padlock" size={18} color={colors.textSecondary} />
-                <TextInput
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text);
-                    if (confirmPasswordError) setConfirmPasswordError(null);
-                  }}
-                  onBlur={() => confirmPassword && validateConfirmPassword(confirmPassword)}
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!showConfirmPassword}
-                  autoComplete="new-password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleRegister}
-                  editable={!isSubmitting}
-                  style={styles.input}
-                />
-                <Pressable
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.showPasswordButton}
-                  disabled={isSubmitting}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={styles.showPasswordText}>
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </Text>
-                </Pressable>
-              </View>
-              {confirmPasswordError ? (
-                <Text style={styles.fieldError}>{confirmPasswordError}</Text>
-              ) : null}
-            </View>
-
             {/* Submit Button */}
             <Pressable
               onPress={handleRegister}
-              disabled={
-                isSubmitting || !fullName || !username || !email || !password || !confirmPassword
-              }
+              disabled={isSubmitting || !fullName || !email || !password}
               style={({ pressed }) => [
                 styles.primaryButton,
-                (isSubmitting || !fullName || !username || !email || !password || !confirmPassword) &&
-                  styles.buttonDisabled,
+                (isSubmitting || !fullName || !email || !password) && styles.buttonDisabled,
                 pressed && styles.buttonPressed,
               ]}
               accessibilityRole="button"
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={colors.crust} size="small" />
               ) : (
-                <Text style={styles.primaryButtonText}>Create Account</Text>
+                <Text style={styles.primaryButtonText}>Sign Up</Text>
               )}
             </Pressable>
+
+            {/* Social Auth */}
+            <SocialAuthButtons
+              onGooglePress={() => Alert.alert('Google Sign Up', 'Connecting with Google...')}
+              onApplePress={() => Alert.alert('Apple Sign Up', 'Apple Sign Up is coming soon.')}
+              onGithubPress={() => Alert.alert('GitHub Sign Up', 'GitHub Sign Up is coming soon.')}
+              dividerText="or sign up with"
+            />
           </View>
 
           {/* Footer */}
@@ -439,7 +329,7 @@ export default function RegisterScreen() {
             <Link href="/(auth)/login" asChild>
               <Pressable disabled={isSubmitting}>
                 <Text style={[styles.loginLink, isSubmitting && styles.linkDisabled]}>
-                  Sign in
+                  Login
                 </Text>
               </Pressable>
             </Link>
@@ -502,50 +392,52 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       borderRadius: 18,
     },
     brandName: {
-      fontSize: 22,
-      fontWeight: '700',
+      fontSize: 26,
+      fontWeight: '800',
       color: colors.textPrimary,
-      letterSpacing: -0.4,
+      letterSpacing: -0.5,
+      marginTop: 4,
     },
     brandTagline: {
-      fontSize: 11,
+      fontSize: 14,
       color: colors.textSecondary,
       fontWeight: '500',
       letterSpacing: 0,
+      marginTop: 2,
     },
     headerBlock: {
       alignItems: 'center',
       gap: 6,
     },
     title: {
-      fontSize: 21,
+      fontSize: 22,
       fontWeight: '800',
       color: colors.textPrimary,
       letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
       textAlign: 'center',
       lineHeight: 22,
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 18,
-      padding: 16,
+      borderRadius: 20,
+      padding: 20,
       borderWidth: 1,
-      borderColor: colors.borderSoft,
+      borderColor: colors.border,
       gap: 16,
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: isDark
-              ? '0 12px 36px rgba(0, 0, 0, 0.5)'
-              : '0 12px 36px rgba(48, 36, 61, 0.08)',
+              ? '0 12px 36px rgba(0, 0, 0, 0.4)'
+              : '0 8px 30px rgba(76, 79, 105, 0.08)',
           } as any)
         : {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.4 : 0.08,
+            shadowOpacity: isDark ? 0.35 : 0.06,
             shadowRadius: 16,
             elevation: 4,
           }),
@@ -563,13 +455,13 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     inputTrack: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surfaceOverlay,
-      borderRadius: 999,
+      backgroundColor: isDark ? colors.surface1 : colors.background,
+      borderRadius: 14,
       paddingHorizontal: 16,
       borderWidth: 1,
-      borderColor: colors.borderSoft,
+      borderColor: colors.border,
       minHeight: 50,
-      gap: 10,
+      gap: 12,
     },
     input: {
       flex: 1,
@@ -596,14 +488,16 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     },
     primaryButton: {
       backgroundColor: colors.accent,
-      borderRadius: 999,
-      paddingVertical: 14,
+      borderRadius: 14,
+      height: 50,
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 4,
       ...(Platform.OS === 'web'
         ? ({
-            boxShadow: `0 6px 20px ${isDark ? 'rgba(128, 82, 200, 0.4)' : 'rgba(128, 101, 143, 0.3)'}`,
+            boxShadow: isDark
+              ? '0 6px 20px rgba(180, 190, 254, 0.3)'
+              : '0 6px 20px rgba(114, 135, 253, 0.25)',
           } as any)
         : {
             shadowColor: colors.accent,
@@ -614,7 +508,7 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
           }),
     },
     primaryButtonText: {
-      color: '#FFFFFF',
+      color: colors.crust,
       fontSize: 16,
       fontWeight: '700',
       letterSpacing: -0.2,
@@ -642,7 +536,7 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     loginLink: {
       fontSize: 14,
       fontWeight: '700',
-      color: colors.accent,
+      color: colors.blue || '#89B4FA',
     },
   });
 }

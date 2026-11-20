@@ -1,9 +1,8 @@
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  BackHandler,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -19,708 +18,453 @@ import * as ImagePicker from 'expo-image-picker';
 import { radius, spacing, typography, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
-import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
+import { publishLocalPhoto } from '@/lib/photo-draft';
 import { Icon } from '@/components/ui/Icons';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { TagBadge } from '@/components/ui/TagBadge';
 import { useToast } from '@/components/ui/Toast';
-import { supabase } from '@/lib/supabase/client';
-import { useClass } from '@/hooks/useClass';
+import { useUnifiedCircle } from '@/contexts/CircleContext';
 import { postMemoryToCircle } from '@/lib/photo-upload';
 
-const CATEGORIES: MemoryCategory[] = ['General', 'People', 'Places', 'Events'];
-type CreateStep = 'landing' | 'details';
-
 export default function CreateScreen() {
-  const { colors } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode } = useAppTheme();
+  const isDark = mode === 'dark';
+  const styles = createStyles(colors, isDark);
   const { showToast } = useToast();
-  const { activeClass } = useClass();
-  const [step, setStep] = useState<CreateStep>('landing');
+  const { activeCircle, circles, selectCircle } = useUnifiedCircle();
+
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [newTag, setNewTag] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [category, setCategory] = useState<MemoryCategory>('General');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const handleBack = useCallback(() => {
-    if (step === 'details') {
-      if (caption.trim() || title.trim() || location.trim() || tags.length > 0) {
-        Alert.alert('Discard changes?', 'You have unsaved changes that will be lost.', [
-          { text: 'Keep editing', style: 'cancel' },
-          {
-            text: 'Discard',
-            style: 'destructive',
-            onPress: () => {
-              setPhotoUri(null);
-              setCaption('');
-              setTitle('');
-              setLocation('');
-              setTags([]);
-              setStep('landing');
-            },
-          },
-        ]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showCirclePicker, setShowCirclePicker] = useState(false);
+
+  const handlePickImage = async () => {
+    Alert.alert('Upload Photo', 'Choose photo source', [
+      {
+        text: 'Take Photo',
+        onPress: async () => {
+          try {
+            const { granted } = await ImagePicker.requestCameraPermissionsAsync();
+            if (!granted) {
+              Alert.alert('Permission needed', 'Camera permission is required.');
+              return;
+            }
+            const res = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              quality: 0.8,
+            });
+            if (!res.canceled && res.assets[0]?.uri) {
+              setPhotoUri(res.assets[0].uri);
+            }
+          } catch (e) {
+            console.error('Camera error:', e);
+          }
+        },
+      },
+      {
+        text: 'Choose from Gallery',
+        onPress: async () => {
+          try {
+            const res = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              quality: 0.8,
+            });
+            if (!res.canceled && res.assets[0]?.uri) {
+              setPhotoUri(res.assets[0].uri);
+            }
+          } catch (e) {
+            console.error('Gallery error:', e);
+          }
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleShareMemory = async () => {
+    if (!photoUri) {
+      showToast({ message: 'Please select a photo first', variant: 'warning' });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      if (activeCircle?.id) {
+        try {
+          await postMemoryToCircle(activeCircle.id, photoUri, caption.trim());
+        } catch {
+          // Fallback to local
+          await publishLocalPhoto(
+            photoUri,
+            caption.trim() || 'Circle Memory',
+            undefined,
+            'General',
+            caption.trim() || 'Circle Memory'
+          );
+        }
       } else {
-        setPhotoUri(null);
-        setStep('landing');
-      }
-    } else {
-      router.back();
-    }
-  }, [step, caption, title, location, tags]);
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-        if (step === 'details') {
-          handleBack();
-          return true;
-        }
-        return false;
-      });
-      return () => backHandler.remove();
-    }
-  }, [step, handleBack]);
-  const handleTakePhoto = async () => {
-    try {
-      setErrorMessage(null);
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        setErrorMessage('Camera permission is required to capture memories.');
-        return;
-      }
-      setIsProcessing(true);
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        quality: 0.9,
-        allowsEditing: false,
-      });
-      if (!result.canceled && result.assets[0]?.uri) {
-        setPhotoUri(result.assets[0].uri);
-        setStep('details');
-      }
-    } catch {
-      setErrorMessage('Could not access camera.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-  const handleChooseFromLibrary = async () => {
-    try {
-      setErrorMessage(null);
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        setErrorMessage('Photo library permission is required to select photos.');
-        return;
-      }
-      setIsProcessing(true);
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.9,
-        allowsEditing: false,
-      });
-      if (!result.canceled && result.assets[0]?.uri) {
-        setPhotoUri(result.assets[0].uri);
-        setStep('details');
-      }
-    } catch {
-      setErrorMessage('Could not open photo library.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-  const handleAddTag = () => {
-    const normalized = newTag.toLowerCase().trim();
-    if (!normalized || tags.includes(normalized) || tags.length >= 10) return;
-    setTags((prev) => [...prev, normalized]);
-    setNewTag('');
-  };
-  const handleRemoveTag = (tag: string) => {
-    setTags((prev) => prev.filter((t) => t !== tag));
-  };
-  
-  
-  const handleSave = async () => {
-    if (!photoUri) return;
-    setIsSaving(true);
-    setErrorMessage(null);
-    try {
-      if (activeClass?.id && supabase) {
-        const result = await postMemoryToCircle(
-          activeClass.id,
+        await publishLocalPhoto(
           photoUri,
-          caption.trim(),
-          {
-            category,
-            title: title.trim() || undefined,
-            tags,
-            location: location.trim() || undefined,
-          },
+          caption.trim() || 'Memory',
+          undefined,
+          'General',
+          caption.trim() || 'Memory'
         );
-
-        if (!result.ok) {
-          setErrorMessage(result.message || 'Could not post memory to circle.');
-          setIsSaving(false);
-          return;
-        }
-
-        showToast({
-          message: `📸 Memory shared in ${activeClass.name}!`,
-          variant: 'success',
-          duration: 2500,
-        });
-        router.replace('/(tabs)/circle');
-        return;
       }
 
-      // If no active circle or running offline
-      await publishLocalPhoto(
-        photoUri,
-        caption.trim(),
-        undefined,
-        category,
-        title.trim() || undefined,
-        tags,
-        location.trim() || undefined,
-      );
-      showToast({ message: '📸 Memory saved locally!', variant: 'success', duration: 2000 });
-      router.replace('/(tabs)/circle');
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Could not save memory.');
+      showToast({ message: 'Memory shared successfully!', variant: 'success' });
+      setPhotoUri(null);
+      setCaption('');
+      router.push('/(tabs)/home');
+    } catch {
+      showToast({ message: 'Failed to share memory', variant: 'error' });
     } finally {
-      setIsSaving(false);
+      setIsUploading(false);
     }
   };
-  if (step === 'landing') {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <BackgroundPattern />
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <Pressable
-              onPress={handleBack}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-            >
-              <Text style={styles.backText}>Back</Text>
-            </Pressable>
-            <Text style={styles.screenTitle}>New Memory</Text>
-            <View style={{ width: 44 }} />
-          </View>
-          <Text style={styles.landingQuestion}>What do you want to remember?</Text>
-          <View style={styles.landingOptions}>
-            <Pressable
-              onPress={handleTakePhoto}
-              disabled={isProcessing}
-              style={[styles.optionCard, isProcessing && styles.optionCardDisabled]}
-              accessibilityRole="button"
-              accessibilityLabel="Take a photo"
-            >
-              <View style={styles.optionIcon}>
-                <Icon name="camera" size={28} color={colors.accent} />
-              </View>
-              <View style={styles.optionText}>
-                <Text style={styles.optionTitle}>Take a photo</Text>
-                <Text style={styles.optionSubtitle}>
-                  {isProcessing ? 'Opening camera…' : 'Capture the moment now'}
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={16} color={colors.textMuted} />
-            </Pressable>
-            <Pressable
-              onPress={handleChooseFromLibrary}
-              disabled={isProcessing}
-              style={[styles.optionCard, isProcessing && styles.optionCardDisabled]}
-              accessibilityRole="button"
-              accessibilityLabel="Choose from gallery"
-            >
-              <View style={styles.optionIcon}>
-                <Icon name="picture" size={28} color={colors.accent} />
-              </View>
-              <View style={styles.optionText}>
-                <Text style={styles.optionTitle}>Choose from gallery</Text>
-                <Text style={styles.optionSubtitle}>
-                  {isProcessing ? 'Opening gallery…' : 'Select an existing photo'}
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={16} color={colors.textMuted} />
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Header */}
           <View style={styles.header}>
             <Pressable
-              onPress={handleBack}
+              onPress={() => router.back()}
               style={styles.backButton}
-              accessibilityRole="button"
+              hitSlop={12}
               accessibilityLabel="Back"
             >
-              <Text style={styles.backText}>Back</Text>
+              <Icon name="arrow-left" size={20} color={colors.textPrimary} />
             </Pressable>
-            <Text style={styles.screenTitle}>Add Details</Text>
-            <Pressable
-              onPress={() => setStep('landing')}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Retake photo"
-            >
-              <Text style={styles.retakeText}>Retake</Text>
-            </Pressable>
-          </View>
-          {/* Photo Preview */}
-          <View style={styles.photoPreviewContainer}>
-            {photoUri && (
-              <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
-            )}
+            <Text style={styles.headerTitle}>Upload Memory</Text>
+            <View style={{ width: 24 }} />
           </View>
 
-          {/* Active Circle Destination Badge */}
-          {activeClass ? (
-            <View style={styles.circleDestinationBadge}>
-              <View style={styles.circleBadgeIcon}>
+          {/* Photo Dropzone / Selection Box */}
+          <Pressable
+            onPress={handlePickImage}
+            style={[
+              styles.dropzone,
+              photoUri ? styles.dropzoneFilled : styles.dropzoneDashed,
+            ]}
+          >
+            {photoUri ? (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
+                <View style={styles.changeBadge}>
+                  <Icon name="camera" size={14} color="#FFFFFF" />
+                  <Text style={styles.changeBadgeText}>Change</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.dropzoneInner}>
+                <View style={styles.iconCircle}>
+                  <Icon name="picture" size={32} color={colors.accent} />
+                </View>
+                <Text style={styles.dropzoneTitle}>Select a photo</Text>
+                <Text style={styles.dropzoneSubtitle}>or drag and drop</Text>
+              </View>
+            )}
+          </Pressable>
+
+          {/* Caption Input */}
+          <View style={styles.captionContainer}>
+            <TextInput
+              value={caption}
+              onChangeText={setCaption}
+              placeholder="Add a caption..."
+              placeholderTextColor={colors.textMuted}
+              style={styles.captionInput}
+              multiline
+              maxLength={400}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Select Circle Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Select Circle</Text>
+            <Pressable
+              style={styles.circleSelectorCard}
+              onPress={() => setShowCirclePicker(!showCirclePicker)}
+            >
+              <View style={styles.circleAvatar}>
                 <Icon name="users" size={18} color={colors.accent} />
               </View>
-              <View style={styles.circleBadgeInfo}>
-                <Text style={styles.circleBadgeLabel}>SHARING TO CIRCLE</Text>
-                <Text style={styles.circleBadgeName}>{activeClass.name}</Text>
+              <View style={styles.circleDetails}>
+                <Text style={styles.circleName}>
+                  {activeCircle?.name || 'Cyber Security 2026'}
+                </Text>
+                <Text style={styles.circleMembers}>
+                  {activeCircle?.memberCount || 24} members
+                </Text>
               </View>
-              <View style={styles.circleBadgeStatus}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Members only</Text>
-              </View>
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => router.push('/(onboarding)/join-class')}
-              style={styles.noCircleWarning}
-            >
-              <Icon name="users" size={18} color={colors.accent} />
-              <Text style={styles.noCircleWarningText}>
-                No circle joined yet. Tap to enter an invite code.
-              </Text>
+              <Icon
+                name={showCirclePicker ? 'close' : 'chevron-right'}
+                size={16}
+                color={colors.textMuted}
+              />
             </Pressable>
-          )}
 
-          <Card style={styles.detailsCard} padding="lg">
-            {/* Title */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Title</Text>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Beach day, Birthday party…"
-                placeholderTextColor={colors.textMuted}
-                style={styles.textInput}
-                autoCapitalize="words"
-                autoFocus={Platform.OS === 'web'}
-                maxLength={80}
-                returnKeyType="next"
-                accessibilityLabel="Memory title"
-              />
-            </View>
-            {/* Caption */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Caption</Text>
-              <TextInput
-                value={caption}
-                onChangeText={setCaption}
-                placeholder="We stayed until sunset…"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.textInput, styles.textInputMultiline]}
-                multiline
-                maxLength={500}
-                textAlignVertical="top"
-                accessibilityLabel="Memory caption"
-              />
-            </View>
-            {/* Category */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Category</Text>
-              <View style={styles.categoryPills}>
-                {CATEGORIES.map((cat) => (
+            {/* Dropdown if picker is toggled */}
+            {showCirclePicker && circles.length > 1 && (
+              <View style={styles.circleDropdown}>
+                {circles.map((c) => (
                   <Pressable
-                    key={cat}
-                    onPress={() => setCategory(cat)}
-                    style={[styles.categoryPill, category === cat && styles.categoryPillActive]}
-                    accessibilityRole="radio"
-                    accessibilityLabel={cat}
-                    accessibilityState={{ selected: category === cat }}
+                    key={c.id}
+                    onPress={() => {
+                      selectCircle(c.id);
+                      setShowCirclePicker(false);
+                    }}
+                    style={[
+                      styles.circleDropdownItem,
+                      c.id === activeCircle?.id && styles.circleDropdownItemActive,
+                    ]}
                   >
                     <Text
                       style={[
-                        styles.categoryPillText,
-                        category === cat && styles.categoryPillTextActive,
+                        styles.dropdownItemText,
+                        c.id === activeCircle?.id && styles.dropdownItemTextActive,
                       ]}
                     >
-                      {cat}
+                      {c.name} ({c.memberCount} members)
                     </Text>
                   </Pressable>
                 ))}
               </View>
-            </View>
-            {/* Location */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Location (optional)</Text>
-              <TextInput
-                value={location}
-                onChangeText={setLocation}
-                placeholder="Paris, France"
-                placeholderTextColor={colors.textMuted}
-                style={styles.textInput}
-                autoCapitalize="words"
-                maxLength={100}
-                returnKeyType="next"
-                accessibilityLabel="Memory location"
-              />
-            </View>
-            {/* Tags */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Tags (optional)</Text>
-              {tags.length > 0 && (
-                <View style={styles.tagsList}>
-                  {tags.map((tag) => (
-                    <TagBadge
-                      key={tag}
-                      label={tag}
-                      onRemove={() => handleRemoveTag(tag)}
-                      size="md"
-                    />
-                  ))}
-                </View>
-              )}
-              <View style={styles.addTagRow}>
-                <TextInput
-                  value={newTag}
-                  onChangeText={setNewTag}
-                  placeholder="Add a tag…"
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.textInput, styles.tagInput]}
-                  autoCapitalize="none"
-                  maxLength={30}
-                  onSubmitEditing={handleAddTag}
-                  returnKeyType="done"
-                  accessibilityLabel="Add tag"
-                />
-                <Pressable
-                  onPress={handleAddTag}
-                  style={styles.addTagButton}
-                  disabled={!newTag.trim() || tags.length >= 10}
-                  accessibilityRole="button"
-                  accessibilityLabel="Add tag"
-                >
-                  <Text style={styles.addTagButtonText}>+</Text>
-                </Pressable>
-              </View>
-              <Text style={styles.tagHint}>{tags.length}/10 tags</Text>
-            </View>
-          </Card>
-          {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-          <View style={styles.actionButtons}>
-            <Button
-              title={isSaving ? 'Saving…' : 'Save Memory'}
-              variant="accent"
-              onPress={handleSave}
-              disabled={isSaving}
-              fullWidth
-              size="lg"
-            />
+            )}
           </View>
+
+          {/* Share Memory Button */}
+          <Pressable
+            onPress={handleShareMemory}
+            disabled={isUploading || !photoUri}
+            style={({ pressed }) => [
+              styles.shareButton,
+              (!photoUri || isUploading) && styles.shareButtonDisabled,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            {isUploading ? (
+              <ActivityIndicator color={colors.crust} size="small" />
+            ) : (
+              <Text style={styles.shareButtonText}>Share Memory</Text>
+            )}
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-function createStyles(colors: ThemeColors) { return StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    width: '100%',
-    maxWidth: 560,
-    alignSelf: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-  },
-  backButton: {
-    padding: spacing.xs,
-    minWidth: 44,
-  },
-  backText: {
-    ...typography.sans.callout,
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  retakeText: {
-    ...typography.sans.callout,
-    color: colors.textMuted,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  screenTitle: {
-    ...typography.sans.headline,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  landingQuestion: {
-    ...typography.serif.title,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    lineHeight: 38,
-    marginTop: spacing.xxl,
-    marginBottom: spacing.xl,
-  },
-  landingOptions: {
-    gap: spacing.md,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    gap: spacing.md,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 2,
-        }),
-  },
-  optionCardDisabled: {
-    opacity: 0.6,
-  },
-  optionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    backgroundColor: colors.accentSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionText: {
-    flex: 1,
-  },
-  optionTitle: {
-    ...typography.sans.headline,
-    color: colors.textPrimary,
-  },
-  optionSubtitle: {
-    ...typography.sans.subheadline,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  photoPreviewContainer: {
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    backgroundColor: colors.backgroundElevated,
-    aspectRatio: 3 / 4,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  photoPreview: {
-    width: '100%',
-    height: '100%',
-  },
-  detailsCard: {
-    gap: spacing.md,
-  },
-  circleDestinationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  circleBadgeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circleBadgeInfo: {
-    flex: 1,
-  },
-  circleBadgeLabel: {
-    ...typography.mono.micro,
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  circleBadgeName: {
-    ...typography.sans.headline,
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  circleBadgeStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.accentSubtle,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.success,
-  },
-  statusText: {
-    ...typography.mono.micro,
-    color: colors.accent,
-    fontSize: 10,
-  },
-  noCircleWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.accentSubtle,
-    borderWidth: borders.hairline,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  noCircleWarningText: {
-    ...typography.sans.footnote,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  field: {
-    gap: spacing.xs,
-  },
-  fieldLabel: {
-    ...typography.sans.caption,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  textInput: {
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-    borderRadius: radius.md,
-    color: colors.textPrimary,
-    ...typography.sans.body,
-  },
-  textInputMultiline: {
-    paddingTop: spacing.md,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  categoryPills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  categoryPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.round,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: borders.hairline,
-    borderColor: colors.borderSubtle,
-  },
-  categoryPillActive: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accent,
-  },
-  categoryPillText: {
-    ...typography.sans.caption,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  categoryPillTextActive: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  tagsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  addTagRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  tagInput: {
-    flex: 1,
-    marginTop: 0,
-  },
-  addTagButton: {
-    width: 40,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.sm,
-  },
-  addTagButtonText: {
-    fontSize: 24,
-    color: colors.textInverse,
-    fontWeight: '700',
-    lineHeight: 28,
-  },
-  tagHint: {
-    ...typography.sans.caption2,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  errorMessage: {
-    ...typography.sans.footnote,
-    color: colors.error,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  actionButtons: {
-    flexDirection: 'column',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
-}); }
+
+function createStyles(colors: ThemeColors, isDark: boolean) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    flex: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+      gap: 20,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+    },
+    backButton: {
+      padding: 6,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    dropzone: {
+      width: '100%',
+      height: 220,
+      borderRadius: 20,
+      overflow: 'hidden',
+      backgroundColor: colors.card,
+    },
+    dropzoneDashed: {
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: isDark ? colors.surface2 : colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dropzoneFilled: {
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    dropzoneInner: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    iconCircle: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: isDark ? colors.surface1 : colors.backgroundSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 4,
+    },
+    dropzoneTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.textPrimary,
+    },
+    dropzoneSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    previewContainer: {
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+    },
+    previewImage: {
+      width: '100%',
+      height: '100%',
+    },
+    changeBadge: {
+      position: 'absolute',
+      bottom: 12,
+      right: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+    },
+    changeBadgeText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    captionContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      minHeight: 100,
+    },
+    captionInput: {
+      fontSize: 15,
+      color: colors.textPrimary,
+      lineHeight: 22,
+    },
+    section: {
+      gap: 8,
+    },
+    sectionLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginLeft: 4,
+    },
+    circleSelectorCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      gap: 12,
+    },
+    circleAvatar: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: isDark ? colors.surface1 : colors.backgroundSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    circleDetails: {
+      flex: 1,
+    },
+    circleName: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    circleMembers: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    circleDropdown: {
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginTop: 6,
+      overflow: 'hidden',
+    },
+    circleDropdownItem: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    circleDropdownItemActive: {
+      backgroundColor: colors.surface1,
+    },
+    dropdownItemText: {
+      fontSize: 14,
+      color: colors.textPrimary,
+    },
+    dropdownItemTextActive: {
+      fontWeight: '700',
+      color: colors.accent,
+    },
+    shareButton: {
+      width: '100%',
+      height: 52,
+      borderRadius: 14,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 10,
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 6px 20px rgba(180, 190, 254, 0.3)'
+              : '0 6px 20px rgba(114, 135, 253, 0.25)',
+          } as any)
+        : {
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 4,
+          }),
+    },
+    shareButtonDisabled: {
+      opacity: 0.5,
+    },
+    shareButtonText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.crust,
+    },
+    buttonPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.99 }],
+    },
+  });
+}

@@ -1,406 +1,302 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Image,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  radius,
-  spacing,
-  typography,
-  layout,
-  borders,
-  type ThemeColors,
-} from '@/constants/theme';
-import {
-  clearLocalPhotoPosts,
-  exportAllData,
-  exportDataAsJSON,
-  importData,
-} from '@/lib/photo-draft';
-import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { useToast } from '@/components/ui/Toast';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { Icon } from '@/components/ui/Icons';
+import { useToast } from '@/components/ui/Toast';
+import { signOut } from '@/lib/supabase/auth';
+import { hasSupabaseConfig } from '@/lib/supabase/client';
+
 export default function SettingsScreen() {
-  const { colors, mode } = useAppTheme();
-  const styles = createStyles(colors);
+  const { colors, mode, setMode } = useAppTheme();
+  const isDark = mode === 'dark';
+  const styles = createStyles(colors, isDark);
   const { showToast } = useToast();
-  const [confirmClear, setConfirmClear] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [showImportInput, setShowImportInput] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [isImporting, setIsImporting] = useState(false);
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      const data = await exportAllData();
-      const json = exportDataAsJSON(data);
-      if (Platform.OS === 'web') {
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `memora-export-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast({ message: `Exported ${data.posts.length} memories`, variant: 'success' });
-      } else {
-        await Share.share({
-          message: json,
-          title: `Memora Export - ${new Date().toLocaleDateString()}`,
-        });
-        showToast({ message: `Exported ${data.posts.length} memories`, variant: 'success' });
-      }
-    } catch {
-      showToast({ message: 'Export failed. Try again.', variant: 'error' });
-    } finally {
-      setIsExporting(false);
-    }
+
+  const handleToggleTheme = () => {
+    const nextMode = mode === 'dark' ? 'light' : 'dark';
+    setMode(nextMode);
+    showToast({
+      message: `Appearance switched to ${nextMode === 'dark' ? 'Catppuccin Mocha (Dark)' : 'Catppuccin Latte (Light)'}`,
+      variant: 'default',
+      duration: 2000,
+    });
   };
-  const handleImport = async () => {
-    if (!importJson.trim()) {
-      showToast({ message: 'Paste your JSON export first.', variant: 'warning' });
-      return;
-    }
-    setIsImporting(true);
-    try {
-      const result = await importData(importJson.trim());
-      setImportJson('');
-      setShowImportInput(false);
-      if (result.errors.length > 0 && result.imported === 0) {
-        showToast({ message: result.errors[0], variant: 'error' });
-      } else {
-        showToast({
-          message: `Imported ${result.imported} memories${result.skipped > 0 ? `, skipped ${result.skipped} duplicates` : ''}`,
-          variant: 'success',
-          duration: 4000,
-        });
-      }
-    } catch {
-      showToast({ message: 'Import failed. Check the JSON format.', variant: 'error' });
-    } finally {
-      setIsImporting(false);
-    }
+
+  const handleSignOut = async () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out of Memora?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          if (hasSupabaseConfig) {
+            await signOut();
+          }
+          showToast({ message: 'Logged out successfully', variant: 'default' });
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
   };
-  const handleClearData = async () => {
-    await clearLocalPhotoPosts();
-    setConfirmClear(false);
-    showToast({ message: 'All memories deleted', variant: 'error', duration: 2000 });
-  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <IconButton
-            icon="arrow-left"
+          <Pressable
             onPress={() => router.back()}
-            variant="overlay"
-            size="sm"
-            accessibilityLabel="Go back"
-          />
-          <Text style={styles.title}>Settings</Text>
-          <View style={{ width: 40 }} />
+            style={styles.backButton}
+            hitSlop={12}
+            accessibilityLabel="Back"
+          >
+            <Icon name="arrow-left" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={{ width: 24 }} />
         </View>
-        {/* About */}
-        <ProfileSection title="About">
-          <View style={styles.appInfo}>
-            <View style={styles.appIcon}>
-              <Image
-                source={require('@/assets/brand/logo-cat.png')}
-                style={styles.appIconImage}
-                resizeMode="cover"
-              />
-            </View>
-            <View style={styles.appTextContainer}>
-              <Text style={styles.appName}>Memora</Text>
-              <Text style={styles.appTagline}>A private photo journal</Text>
-              <Text style={styles.appVersion}>Version 1.0.0</Text>
-            </View>
-          </View>
-          <ProfileDivider />
-          <ProfileRow
-            label="Privacy guarantee"
-            value="Photos stay on your device. No tracking, no ads."
-            icon="padlock"
-          />
-        </ProfileSection>
-        {/* Appearance */}
-        <ProfileSection title="Appearance">
-          <ProfileRow label="Appearance" value="Dark" icon="picture" />
-          <ProfileDivider />
-          <ProfileRow label="App icon" value="Default" icon="picture" />
-        </ProfileSection>
-        {/* Data */}
-        <ProfileSection title="Import & Export">
-          <ProfileRow
-            label="Export all memories"
-            value={isExporting ? 'Exporting…' : 'Download as JSON'}
-            icon="file"
-            onPress={handleExport}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Import memories"
-            value={showImportInput ? 'Paste JSON below' : 'Restore from JSON export'}
-            icon="cloud"
-            onPress={() => setShowImportInput(!showImportInput)}
-          />
-          {showImportInput && (
-            <View style={styles.importContainer}>
-              <TextInput
-                value={importJson}
-                onChangeText={setImportJson}
-                placeholder="Paste your exported JSON here…"
-                placeholderTextColor={colors.textMuted}
-                style={styles.importInput}
-                multiline
-                textAlignVertical="top"
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="Import JSON"
-              />
-              <View style={styles.importActions}>
-                <Button
-                  title="Cancel"
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => {
-                    setShowImportInput(false);
-                    setImportJson('');
-                  }}
-                />
-                <Button
-                  title={isImporting ? 'Importing…' : 'Import'}
-                  variant="accent"
-                  size="sm"
-                  onPress={handleImport}
-                  disabled={isImporting || !importJson.trim()}
-                />
+
+        {/* Main Settings Card List matching Screen 16 */}
+        <View style={styles.card}>
+          {/* Account Settings */}
+          <Pressable
+            style={styles.row}
+            onPress={() => router.push('/edit-profile')}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="user" size={18} color={colors.textPrimary} />
               </View>
+              <Text style={styles.rowLabel}>Account Settings</Text>
             </View>
-          )}
-        </ProfileSection>
-        {/* Keyboard Shortcuts */}
-        {Platform.OS === 'web' && (
-          <ProfileSection title="Keyboard Shortcuts">
-            <View style={styles.shortcutsList}>
-              {[
-                { key: '⌘K', action: 'Command palette' },
-                { key: '/', action: 'Focus search' },
-                { key: 'Esc', action: 'Close dialogs' },
-              ].map((s, i) => (
-                <View key={i} style={styles.shortcutRow}>
-                  <Text style={styles.shortcutKey}>{s.key}</Text>
-                  <Text style={styles.shortcutAction}>{s.action}</Text>
-                </View>
-              ))}
+            <Icon name="chevron-right" size={16} color={colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* Notifications */}
+          <Pressable
+            style={styles.row}
+            onPress={() => router.push('/(tabs)/memories')}
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="bell" size={18} color={colors.textPrimary} />
+              </View>
+              <Text style={styles.rowLabel}>Notifications</Text>
             </View>
-          </ProfileSection>
-        )}
-        {/* Danger Zone */}
-        <ProfileSection title="Data & Safety">
-          <ProfileRow
-            label="Delete all memories"
-            value="Permanently remove all local data"
-            icon="trash"
-            onPress={() => setConfirmClear(true)}
-            destructive
-          />
-        </ProfileSection>
+            <Icon name="chevron-right" size={16} color={colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* Privacy & Security */}
+          <Pressable
+            style={styles.row}
+            onPress={() =>
+              Alert.alert(
+                'Privacy & Security',
+                'Memora uses end-to-end access controls and isolated circle storage for your class photos.'
+              )
+            }
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="padlock" size={18} color={colors.textPrimary} />
+              </View>
+              <Text style={styles.rowLabel}>Privacy & Security</Text>
+            </View>
+            <Icon name="chevron-right" size={16} color={colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* Appearance (Dark / Latte) */}
+          <Pressable
+            style={styles.row}
+            onPress={handleToggleTheme}
+            accessibilityRole="button"
+            accessibilityLabel={`Appearance current: ${mode}`}
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="picture" size={18} color={colors.textPrimary} />
+              </View>
+              <Text style={styles.rowLabel}>Appearance</Text>
+            </View>
+            <View style={styles.valueRow}>
+              <Text style={styles.rowValue}>
+                {mode === 'dark' ? 'Dark' : 'Latte'}
+              </Text>
+              <Icon name="chevron-right" size={16} color={colors.textMuted} />
+            </View>
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* About Memora */}
+          <Pressable
+            style={styles.row}
+            onPress={() =>
+              Alert.alert(
+                'About Memora',
+                'Memora v1.0.0\nYour class. Your people. Your memories.\nA private memory-sharing platform for class communities.'
+              )
+            }
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="info" size={18} color={colors.textPrimary} />
+              </View>
+              <Text style={styles.rowLabel}>About Memora</Text>
+            </View>
+            <Icon name="chevron-right" size={16} color={colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* Help & Support */}
+          <Pressable
+            style={styles.row}
+            onPress={() =>
+              Alert.alert(
+                'Help & Support',
+                'Need help? Contact support or check out our guide.'
+              )
+            }
+            accessibilityRole="button"
+          >
+            <View style={styles.rowLeft}>
+              <View style={styles.iconCircle}>
+                <Icon name="info" size={18} color={colors.textPrimary} />
+              </View>
+              <Text style={styles.rowLabel}>Help & Support</Text>
+            </View>
+            <Icon name="chevron-right" size={16} color={colors.textMuted} />
+          </Pressable>
+        </View>
+
+        {/* Log Out button in separate card */}
+        <View style={styles.logoutCard}>
+          <Pressable
+            style={styles.logoutRow}
+            onPress={handleSignOut}
+            accessibilityRole="button"
+          >
+            <Icon name="door" size={20} color={colors.error} />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </Pressable>
+        </View>
       </ScrollView>
-      <ConfirmDialog
-        visible={confirmClear}
-        title="Delete all memories?"
-        message="This permanently removes all photos and memories stored on this device. This cannot be undone."
-        confirmLabel="Delete everything"
-        destructive
-        onConfirm={handleClearData}
-        onCancel={() => setConfirmClear(false)}
-      />
     </SafeAreaView>
   );
 }
-function createStyles(colors: ThemeColors) {
+
+function createStyles(colors: ThemeColors, isDark: boolean) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
     },
     content: {
-      padding: spacing.xl,
-      paddingBottom: spacing.xxxl,
-      gap: spacing.xl,
-      maxWidth: layout.maxContentWidth,
-      width: '100%',
-      alignSelf: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+      gap: 20,
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: spacing.sm,
+      paddingVertical: 12,
     },
-    title: {
-      ...typography.serif.title2,
+    backButton: {
+      padding: 6,
+    },
+    headerTitle: {
+      fontSize: 22,
+      fontWeight: '700',
       color: colors.textPrimary,
     },
-    appInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: spacing.lg,
-      gap: spacing.md,
-    },
-    appIcon: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.lg,
-      backgroundColor: '#0E0D17',
-      borderWidth: 1.5,
-      borderColor: 'rgba(128, 82, 200, 0.4)',
-      alignItems: 'center',
-      justifyContent: 'center',
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
       overflow: 'hidden',
     },
-    appIconImage: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.lg,
-    },
-    appIconText: {
-      ...typography.serif.title3,
-      color: colors.chrome,
-      fontWeight: '700',
-    },
-    appTextContainer: {
-      flex: 1,
-      gap: 2,
-    },
-    appName: {
-      ...typography.sans.headline,
-      color: colors.textPrimary,
-    },
-    appTagline: {
-      ...typography.sans.subheadline,
-      color: colors.textSecondary,
-    },
-    appVersion: {
-      ...typography.mono.caption,
-      color: colors.textMuted,
-    },
-    appearanceControl: {
-      gap: spacing.sm,
-      padding: spacing.lg,
-    },
-    appearanceLabel: {
-      ...typography.sans.callout,
-      color: colors.textPrimary,
-      fontWeight: '600',
-    },
-    appearanceHint: {
-      ...typography.sans.footnote,
-      color: colors.textSecondary,
-    },
-    appearanceOptions: {
+    row: {
       flexDirection: 'row',
-      gap: spacing.sm,
-      marginTop: spacing.xs,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 15,
     },
-    appearanceOption: {
-      flex: 1,
-      minHeight: 44,
+    rowLeft: {
       flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    iconCircle: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: isDark ? colors.surface1 : colors.backgroundSecondary,
       alignItems: 'center',
       justifyContent: 'center',
-      gap: spacing.sm,
-      borderWidth: borders.hairline,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      backgroundColor: colors.surfaceElevated,
     },
-    appearanceOptionActive: {
-      borderColor: colors.accent,
-      backgroundColor: colors.accentSubtle,
-    },
-    appearanceIcon: {
-      color: colors.textSecondary,
-      fontSize: 16,
-    },
-    appearanceIconActive: {
-      color: colors.accent,
-    },
-    appearanceOptionLabel: {
-      ...typography.sans.callout,
-      color: colors.textSecondary,
-    },
-    appearanceOptionLabelActive: {
-      color: colors.textPrimary,
+    rowLabel: {
+      fontSize: 15,
       fontWeight: '600',
+      color: colors.textPrimary,
     },
-    shortcutsList: {
-      padding: spacing.lg,
-      gap: spacing.md,
-    },
-    shortcutRow: {
+    valueRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.lg,
+      gap: 6,
     },
-    shortcutKey: {
-      ...typography.mono.body,
-      color: colors.accent,
-      fontWeight: '700',
-      backgroundColor: colors.accentSubtle,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-      borderRadius: radius.sm,
-      borderWidth: borders.hairline,
-      borderColor: colors.accent,
-      minWidth: 44,
-      textAlign: 'center',
-    },
-    shortcutAction: {
-      ...typography.sans.callout,
+    rowValue: {
+      fontSize: 14,
+      fontWeight: '500',
       color: colors.textSecondary,
     },
-    importContainer: {
-      padding: spacing.md,
-      gap: spacing.md,
-      borderTopWidth: borders.hairline,
-      borderTopColor: colors.borderSubtle,
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginHorizontal: 16,
     },
-    importInput: {
-      backgroundColor: colors.backgroundElevated,
-      borderWidth: borders.hairline,
-      borderColor: colors.borderDefault,
-      borderRadius: radius.md,
-      padding: spacing.md,
-      color: colors.textPrimary,
-      ...typography.mono.body,
-      minHeight: 120,
-      fontSize: 11,
+    logoutCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
     },
-    importActions: {
+    logoutRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: spacing.md,
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 12,
+    },
+    logoutText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.error,
     },
   });
 }

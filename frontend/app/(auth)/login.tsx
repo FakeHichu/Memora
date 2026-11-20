@@ -2,6 +2,7 @@ import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -18,10 +19,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import { HeartMark } from '@/components/ui/HeartMark';
+import { SocialAuthButtons } from '@/components/ui/SocialAuthButtons';
 export default function LoginScreen() {
   const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
-  const { rememberMe, setRememberMe, signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -113,8 +115,8 @@ export default function LoginScreen() {
           }
         }
         
-        console.log('Login successful, navigating to welcome');
-        router.replace('/(onboarding)/welcome');
+        console.log('Login successful, navigating to home');
+        router.replace('/(tabs)/home');
       } else {
         setErrorMessage('Unable to sign in. Please try again.');
         setIsSubmitting(false);
@@ -130,7 +132,7 @@ export default function LoginScreen() {
       setIsSubmitting(false);
     }
   };
-  const continueLocally = () => router.replace('/(onboarding)/welcome');
+  const continueLocally = () => router.replace('/(tabs)/home');
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
@@ -187,7 +189,7 @@ export default function LoginScreen() {
         }
 
         console.log('Google sign-in successful');
-        router.replace('/(onboarding)/welcome');
+        router.replace('/(tabs)/home');
       } else {
         setErrorMessage('Unable to complete Google sign-in. Please try again.');
         setIsGoogleLoading(false);
@@ -204,21 +206,13 @@ export default function LoginScreen() {
       <BackgroundPattern />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
-          {/* Brand Mark Pill */}
+          {/* Centered Brand Header matching reference board */}
           <View style={styles.brandRow}>
-            <View style={styles.brandMark}>
-              <HeartMark size={46} />
-            </View>
-            <View>
-              <Text style={styles.brandName}>Memora</Text>
-              <Text style={styles.brandTagline}>Your class. Your people. Your memories.</Text>
-            </View>
+            <HeartMark size={54} />
+            <Text style={styles.brandName}>Memora</Text>
+            <Text style={styles.brandTagline}>Welcome back</Text>
           </View>
-          {/* Heading */}
-          <View style={styles.headerBlock}>
-            <Text style={styles.title}>Welcome back! 👋</Text>
-            <Text style={styles.subtitle}>Your class memories, all in one place.</Text>
-          </View>
+
           {/* Form Card */}
           <View style={styles.card}>
             {hasSupabaseConfig ? (
@@ -248,6 +242,7 @@ export default function LoginScreen() {
                   </View>
                   {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
                 </View>
+
                 {/* Password field */}
                 <View style={styles.fieldContainer}>
                   <View style={[styles.inputTrack, passwordError && styles.inputError]}>
@@ -260,7 +255,7 @@ export default function LoginScreen() {
                         if (errorMessage) setErrorMessage(null);
                       }}
                       onBlur={() => password && validatePassword(password)}
-                      placeholder="••••••••"
+                      placeholder="Password"
                       placeholderTextColor={colors.textMuted}
                       secureTextEntry={!showPassword}
                       autoComplete="current-password"
@@ -276,36 +271,23 @@ export default function LoginScreen() {
                       disabled={isSubmitting}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Text style={styles.showPasswordText}>{showPassword ? 'Hide' : 'Show'}</Text>
+                      <Icon
+                        name={showPassword ? 'close' : 'picture'}
+                        size={18}
+                        color={colors.textSecondary}
+                      />
                     </Pressable>
                   </View>
                   {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
                 </View>
-                {/* Remember Me toggle */}
-                <View style={styles.rememberMeContainer}>
-                  <Pressable
-                    onPress={() => setRememberMe(!rememberMe)}
-                    style={[
-                      styles.rememberMeBox,
-                      rememberMe && styles.rememberMeBoxChecked,
-                    ]}
-                    accessibilityLabel={rememberMe ? 'Disable Remember Me' : 'Enable Remember Me'}
-                    accessibilityState={{ checked: rememberMe }}
-                  >
-                    <Text style={styles.rememberMeIconText}>
-                      {rememberMe ? '✓' : ''}
-                    </Text>
-                  </Pressable>
-                  <Text style={styles.rememberMeText}>
-                    {rememberMe ? 'Remember Me' : "Don't remember"}
-                  </Text>
-                </View>
+
                 {errorMessage ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorMessage}>{errorMessage}</Text>
                   </View>
                 ) : null}
-                {/* Primary Button */}
+
+                {/* Primary Login Button */}
                 <Pressable
                   onPress={handleLogin}
                   disabled={isSubmitting || isGoogleLoading || !email.trim() || !password}
@@ -317,40 +299,20 @@ export default function LoginScreen() {
                   accessibilityRole="button"
                 >
                   {isSubmitting ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <ActivityIndicator color={colors.crust} size="small" />
                   ) : (
-                    <Text style={styles.primaryButtonText}>Sign in</Text>
+                    <Text style={styles.primaryButtonText}>Login</Text>
                   )}
                 </Pressable>
 
-                {/* Divider */}
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                {/* Google Sign-In Button */}
-                <Pressable
-                  onPress={handleGoogleSignIn}
-                  disabled={isSubmitting || isGoogleLoading}
-                  style={({ pressed }) => [
-                    styles.googleButton,
-                    (isSubmitting || isGoogleLoading) && styles.buttonDisabled,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign in with Google"
-                >
-                  {isGoogleLoading ? (
-                    <ActivityIndicator color={colors.textPrimary} size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.googleIcon}>G</Text>
-                      <Text style={styles.googleButtonText}>Continue with Google</Text>
-                    </>
-                  )}
-                </Pressable>
+                {/* Social Auth Buttons */}
+                <SocialAuthButtons
+                  onGooglePress={handleGoogleSignIn}
+                  onApplePress={() => Alert.alert('Apple Sign In', 'Apple Sign In is coming soon.')}
+                  onGithubPress={() => Alert.alert('GitHub Sign In', 'GitHub Sign In is coming soon.')}
+                  isGoogleLoading={isGoogleLoading}
+                  dividerText="or continue with"
+                />
 
                 <Link href="/(auth)/forgot-password" asChild>
                   <Pressable disabled={isSubmitting || isGoogleLoading} style={styles.forgotPassLink}>
@@ -468,50 +430,52 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       borderRadius: 18,
     },
     brandName: {
-      fontSize: 22,
-      fontWeight: '700',
+      fontSize: 26,
+      fontWeight: '800',
       color: colors.textPrimary,
-      letterSpacing: -0.4,
+      letterSpacing: -0.5,
+      marginTop: 4,
     },
     brandTagline: {
-      fontSize: 11,
+      fontSize: 14,
       color: colors.textSecondary,
       fontWeight: '500',
       letterSpacing: 0,
+      marginTop: 2,
     },
     headerBlock: {
       alignItems: 'center',
       gap: 6,
     },
     title: {
-      fontSize: 21,
+      fontSize: 22,
       fontWeight: '800',
       color: colors.textPrimary,
       letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
       textAlign: 'center',
       lineHeight: 22,
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 18,
-      padding: 16,
+      borderRadius: 20,
+      padding: 20,
       borderWidth: 1,
-      borderColor: colors.borderSoft,
-      gap: 18,
+      borderColor: colors.border,
+      gap: 16,
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: isDark
-              ? '0 12px 36px rgba(0, 0, 0, 0.5)'
-              : '0 12px 36px rgba(48, 36, 61, 0.08)',
+              ? '0 12px 36px rgba(0, 0, 0, 0.4)'
+              : '0 8px 30px rgba(76, 79, 105, 0.08)',
           } as any)
         : {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.4 : 0.08,
+            shadowOpacity: isDark ? 0.35 : 0.06,
             shadowRadius: 16,
             elevation: 4,
           }),
@@ -529,13 +493,13 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
     inputTrack: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surfaceOverlay,
-      borderRadius: 999,
+      backgroundColor: isDark ? colors.surface1 : colors.background,
+      borderRadius: 14,
       paddingHorizontal: 16,
       borderWidth: 1,
-      borderColor: colors.borderSoft,
+      borderColor: colors.border,
       minHeight: 50,
-      gap: 10,
+      gap: 12,
     },
     input: {
       flex: 1,
@@ -564,7 +528,7 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       backgroundColor: colors.errorSoft,
       borderWidth: 1,
       borderColor: colors.error,
-      borderRadius: 16,
+      borderRadius: 12,
       padding: 12,
     },
     errorMessage: {

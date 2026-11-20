@@ -1,444 +1,410 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui/Button';
-import { Icon, type JamIconName } from '@/components/ui/Icons';
-import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
-import { borders, radius, spacing, typography } from '@/constants/theme';
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import type { ThemeColors } from '@/constants/theme';
 import { HeartMark } from '@/components/ui/HeartMark';
+import { supabase } from '@/lib/supabase/client';
 
-const ONBOARDING_SLIDES = [
+const SLIDES = [
   {
+    key: 'memories',
     title: 'Capture Memories\nTogether',
     subtitle: 'Share photos, relive moments,\nand stay connected with your circle.',
-    illustration: 'photos',
   },
   {
+    key: 'circle',
     title: 'Your Circle,\nYour World',
     subtitle: 'Be part of your class circle\nand see what everyone shares.',
-    illustration: 'people',
   },
 ];
 
 export default function WelcomeScreen() {
   const { colors, mode } = useAppTheme();
-  const isDark = mode === 'dark';
-  const styles = createStyles(colors, isDark);
+  const styles = createStyles(colors, mode);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handleNext = async () => {
+    if (currentSlide < SLIDES.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    } else {
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          router.replace('/(tabs)/home');
+          return;
+        }
+      }
+      router.replace('/(auth)/register');
+    }
+  };
+
+  const handleSkip = async () => {
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        router.replace('/(tabs)/home');
+        return;
+      }
+    }
+    router.replace('/(auth)/login');
+  };
+
+  const slide = SLIDES[currentSlide];
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BackgroundPattern opacity={0.022} />
-      <View pointerEvents="none" style={styles.ambientBackdrop}>
-        <View style={styles.ambientGlow} />
+      <View style={styles.topBar}>
+        <HeartMark size={32} />
+        {currentSlide === 0 ? (
+          <Pressable onPress={handleSkip} hitSlop={12} style={styles.skipBtn}>
+            <Text style={styles.skipText}>Skip</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => setCurrentSlide(0)}
+            hitSlop={12}
+            style={styles.skipBtn}
+          >
+            <Text style={styles.skipText}>Back</Text>
+          </Pressable>
+        )}
       </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.brandRow}>
-          <View style={styles.brandMark}>
-            <HeartMark size={30} />
-          </View>
-          <Text style={styles.brandName}>MEMORA</Text>
-          <View style={styles.privatePill}>
-            <View style={styles.privateDot} />
-            <Text style={styles.privateLabel}>YOUR CLASS. YOUR CIRCLE.</Text>
-          </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Visual Illustration Container */}
+        <View style={styles.illustrationWrapper}>
+          {currentSlide === 0 ? (
+            <PhotosIllustration colors={colors} mode={mode} />
+          ) : (
+            <CircleIllustration colors={colors} mode={mode} />
+          )}
         </View>
 
-        <View style={styles.hero}>
-          <Text style={styles.eyebrow}>YOUR CLASS. YOUR PEOPLE. YOUR MEMORIES.</Text>
-          <Text style={styles.title}>{"Capture memories\ntogether."}</Text>
-          <Text style={styles.subtitle}>
-            Share photos, relive moments, and stay connected with your class circle.
-          </Text>
-
-          <View style={styles.illustration}>
-            <View style={styles.illustrationHalo} />
-            <View style={[styles.floatCard, styles.floatCardBack]}>
-              <View style={styles.floatCardIcon}>
-                <Icon name="users" size={18} color={colors.accentLight} />
-              </View>
-              <View style={styles.floatLines}>
-                <View style={styles.floatLineLong} />
-                <View style={styles.floatLineShort} />
-              </View>
-            </View>
-            <View style={[styles.floatCard, styles.floatCardSide]}>
-              <Icon name="heart" size={19} color={colors.accentLight} />
-              <Text style={styles.sideCardLabel}>CIRCLE</Text>
-            </View>
-            <View style={styles.memoryPreview}>
-              <View style={styles.previewImage}>
-                <View style={styles.previewSun} />
-                <View style={styles.previewHillBack} />
-                <View style={styles.previewHillFront} />
-                <View style={styles.previewSparkle}>
-                  <Icon name="star" size={14} color="#F9E2AF" />
-                </View>
-              </View>
-              <View style={styles.previewFooter}>
-                <View>
-                  <Text style={styles.previewTitle}>Cyber Security 2026</Text>
-                  <Text style={styles.previewDate}>24 members</Text>
-                </View>
-                <View style={styles.previewHeart}>
-                  <Icon name="heart" size={14} color={colors.accentLight} />
-                </View>
-              </View>
-            </View>
-            <View style={styles.savedBadge}>
-              <View style={styles.savedBadgeIcon}>
-                <Icon name="users" size={13} color={colors.accentLight} />
-              </View>
-              <Text style={styles.savedBadgeText}>You're inside this Circle!</Text>
-            </View>
-          </View>
+        {/* Text Content */}
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{slide.title}</Text>
+          <Text style={styles.subtitle}>{slide.subtitle}</Text>
         </View>
 
-        <View style={styles.onboardingDots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
+        {/* Indicators */}
+        <View style={styles.dotsRow}>
+          <View style={[styles.dot, currentSlide === 0 && styles.dotActive]} />
+          <View style={[styles.dot, currentSlide === 1 && styles.dotActive]} />
           <View style={styles.dot} />
         </View>
 
-        <View style={styles.actions}>
-          <Button
-            title="Next →"
-            onPress={() => router.replace('/(tabs)/home')}
-            size="lg"
-            variant="accent"
-            fullWidth
-          />
-          <View style={styles.secondaryAction}>
-            <Text style={styles.secondaryHint}>Making memories together?</Text>
-            <Button
-              title="Create or join a Circle"
-              variant="secondary"
-              onPress={() => router.push('/(onboarding)/create-class')}
-              fullWidth
-            />
-          </View>
-          <Text style={styles.footerNote}>Skip</Text>
+        {/* Actions */}
+        <View style={styles.actionContainer}>
+          <Pressable
+            style={styles.primaryButton}
+            onPress={handleNext}
+            accessibilityRole="button"
+          >
+            <Text style={styles.primaryButtonText}>
+              {currentSlide === 0 ? 'Next →' : 'Get Started'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.secondaryButton}
+            onPress={() => router.push('/(auth)/login')}
+          >
+            <Text style={styles.secondaryButtonText}>
+              Already have an account? <Text style={styles.secondaryHighlight}>Login</Text>
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: boolean) {
+function PhotosIllustration({ colors, mode }: { colors: ThemeColors; mode: string }) {
+  const isDark = mode === 'dark';
+  return (
+    <View style={illustStyles.container}>
+      <Svg width="260" height="230" viewBox="0 0 260 230" fill="none">
+        <Defs>
+          <LinearGradient id="photoGrad1" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor={isDark ? '#45475A' : '#CCD0DA'} />
+            <Stop offset="100%" stopColor={isDark ? '#313244' : '#E6E9EF'} />
+          </LinearGradient>
+          <LinearGradient id="photoGrad2" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor={isDark ? '#585B70' : '#ACB0BE'} />
+            <Stop offset="100%" stopColor={isDark ? '#313244' : '#CCD0DA'} />
+          </LinearGradient>
+          <LinearGradient id="accentGlow" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor={colors.accent} stopOpacity={0.4} />
+            <Stop offset="100%" stopColor={colors.mauve || '#CBA6F7'} stopOpacity={0.05} />
+          </LinearGradient>
+        </Defs>
+
+        {/* Soft background glow */}
+        <Circle cx="130" cy="115" r="90" fill="url(#accentGlow)" />
+
+        {/* Back Photo Card (tilted left) */}
+        <Rect
+          x="30"
+          y="35"
+          width="110"
+          height="135"
+          rx="14"
+          transform="rotate(-12 85 102)"
+          fill={colors.card}
+          stroke={colors.border}
+          strokeWidth="2"
+        />
+        <Rect
+          x="40"
+          y="45"
+          width="90"
+          height="85"
+          rx="8"
+          transform="rotate(-12 85 87)"
+          fill="url(#photoGrad1)"
+        />
+
+        {/* Front Photo Card (tilted right) */}
+        <Rect
+          x="115"
+          y="45"
+          width="115"
+          height="145"
+          rx="14"
+          transform="rotate(8 172 117)"
+          fill={colors.card}
+          stroke={colors.border}
+          strokeWidth="2"
+        />
+        <Rect
+          x="125"
+          y="55"
+          width="95"
+          height="95"
+          rx="8"
+          transform="rotate(8 172 102)"
+          fill="url(#photoGrad2)"
+        />
+
+        {/* Photo graphic highlights */}
+        <Circle cx="150" cy="80" r="12" fill={colors.yellow || '#F9E2AF'} opacity={0.8} />
+        <Path
+          d="M130 135 Q 160 100 185 125 T 215 130"
+          stroke={colors.accent}
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+
+        {/* Floating Heart Badge */}
+        <Circle cx="205" cy="40" r="16" fill={colors.accent} />
+        <Path
+          d="M205 47 C200 42 195 36 195 32 C195 28 198 26 201 26 C203 26 204 27 205 29 C206 27 207 26 209 26 C212 26 215 28 215 32 C215 36 210 42 205 47 Z"
+          fill={colors.crust}
+        />
+      </Svg>
+    </View>
+  );
+}
+
+function CircleIllustration({ colors, mode }: { colors: ThemeColors; mode: string }) {
+  const isDark = mode === 'dark';
+  return (
+    <View style={illustStyles.container}>
+      <Svg width="260" height="230" viewBox="0 0 260 230" fill="none">
+        <Defs>
+          <LinearGradient id="circGlow" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor={colors.accent} stopOpacity={0.35} />
+            <Stop offset="100%" stopColor={colors.blue || '#89B4FA'} stopOpacity={0.08} />
+          </LinearGradient>
+        </Defs>
+
+        {/* Soft background glow */}
+        <Circle cx="130" cy="115" r="95" fill="url(#circGlow)" />
+
+        {/* Class circle banner / card */}
+        <Rect
+          x="35"
+          y="50"
+          width="190"
+          height="120"
+          rx="20"
+          fill={colors.card}
+          stroke={colors.border}
+          strokeWidth="2"
+        />
+
+        {/* Class Avatar 1 */}
+        <Circle cx="80" cy="95" r="22" fill={colors.accent} />
+        <Circle cx="80" cy="88" r="9" fill={colors.crust} opacity={0.6} />
+        <Path d="M66 110 C66 102 73 98 80 98 C87 98 94 102 94 110" fill={colors.crust} opacity={0.6} />
+
+        {/* Class Avatar 2 (Center) */}
+        <Circle cx="130" cy="90" r="26" fill={colors.mauve || '#CBA6F7'} />
+        <Circle cx="130" cy="82" r="11" fill={colors.crust} opacity={0.6} />
+        <Path d="M113 112 C113 103 121 98 130 98 C139 98 147 103 147 112" fill={colors.crust} opacity={0.6} />
+
+        {/* Class Avatar 3 */}
+        <Circle cx="180" cy="95" r="22" fill={colors.teal || '#94E2D5'} />
+        <Circle cx="180" cy="88" r="9" fill={colors.crust} opacity={0.6} />
+        <Path d="M166 110 C166 102 173 98 180 98 C187 98 194 102 194 110" fill={colors.crust} opacity={0.6} />
+
+        {/* Pill badge: Cyber Security 2026 */}
+        <Rect
+          x="65"
+          y="138"
+          width="130"
+          height="22"
+          rx="11"
+          fill={isDark ? '#45475A' : '#CCD0DA'}
+        />
+        <Circle cx="76" cy="149" r="4" fill={colors.green} />
+      </Svg>
+    </View>
+  );
+}
+
+const illustStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 240,
+  },
+});
+
+function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
+  const isDark = mode === 'dark';
   return StyleSheet.create({
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    ambientBackdrop: {
-      ...StyleSheet.absoluteFill,
-      overflow: 'hidden',
-    },
-    ambientGlow: {
-      position: 'absolute',
-      width: 280,
-      height: 280,
-      borderRadius: radius.circle,
-      top: 100,
-      right: -180,
-      backgroundColor: colors.accentSoft,
-    },
-    content: {
-      width: '100%',
-      maxWidth: 540,
-      alignSelf: 'center',
-      paddingHorizontal: spacing.xl,
-      paddingTop: spacing.sm,
-      paddingBottom: spacing.xxxl,
-    },
-    brandRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      marginBottom: spacing.xxl,
-    },
-    brandMark: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: isDark ? '#0E0D17' : colors.accent,
-      overflow: 'hidden',
-      borderWidth: borders.thin,
-      borderColor: colors.accentSoft,
-    },
-    brandMarkImage: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.md,
-    },
-    brandName: {
-      ...typography.sans.caption,
-      color: colors.textPrimary,
-      fontWeight: '700',
-      letterSpacing: 1.6,
-    },
-    privatePill: {
-      marginLeft: 'auto',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-      borderRadius: radius.round,
-      backgroundColor: colors.accentSubtle,
-      borderWidth: borders.hairline,
-      borderColor: colors.accent,
-    },
-    privateDot: {
-      width: 6,
-      height: 6,
-      borderRadius: radius.circle,
-      backgroundColor: colors.success,
-    },
-    privateLabel: {
-      ...typography.sans.micro,
-      color: colors.accent,
-      fontSize: 8,
-    },
-    hero: {
-      alignItems: 'flex-start',
-    },
-    eyebrow: {
-      ...typography.mono.micro,
-      color: colors.accent,
-      letterSpacing: 1.15,
-      marginBottom: spacing.sm,
-      fontSize: 9,
-    },
-    title: {
-      ...typography.sans.title,
-      color: colors.textPrimary,
-      fontSize: 32,
-      lineHeight: 40,
-      letterSpacing: -0.8,
-    },
-    subtitle: {
-      ...typography.sans.callout,
-      color: colors.textSecondary,
-      lineHeight: 23,
-      marginTop: spacing.sm,
-      maxWidth: 390,
-    },
-    illustration: {
-      width: '100%',
-      height: 220,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: spacing.md,
-      marginBottom: spacing.xs,
-    },
-    illustrationHalo: {
-      position: 'absolute',
-      width: 180,
-      height: 180,
-      borderRadius: radius.circle,
-      backgroundColor: colors.accentSoft,
-    },
-    floatCard: {
-      position: 'absolute',
-      zIndex: 1,
-      borderRadius: radius.lg,
-      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.90)' : 'rgba(255, 255, 255, 0.90)',
-      borderWidth: borders.thin,
-      borderColor: colors.borderSoft,
-    },
-    floatCardBack: {
-      width: 94,
-      height: 76,
-      top: 24,
-      left: '12%',
-      padding: spacing.sm,
-      transform: [{ rotate: '-9deg' }],
-    },
-    floatCardIcon: {
-      width: 29,
-      height: 29,
-      borderRadius: radius.sm,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.accentSoft,
-    },
-    floatLines: {
-      gap: 4,
-      marginTop: spacing.xs,
-    },
-    floatLineLong: {
-      width: 48,
-      height: 3,
-      borderRadius: radius.round,
-      backgroundColor: colors.borderSoft,
-    },
-    floatLineShort: {
-      width: 31,
-      height: 3,
-      borderRadius: radius.round,
-      backgroundColor: colors.borderSoft,
-    },
-    floatCardSide: {
-      width: 72,
-      height: 68,
-      top: 40,
-      right: '11%',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.xs,
-      transform: [{ rotate: '9deg' }],
-    },
-    sideCardLabel: {
-      ...typography.sans.micro,
-      color: colors.textSecondary,
-      fontSize: 8,
-      letterSpacing: 0.8,
-    },
-    memoryPreview: {
-      zIndex: 2,
-      width: 194,
-      padding: spacing.sm,
-      borderRadius: radius.xl,
-      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      borderWidth: borders.thin,
-      borderColor: colors.borderSoft,
-      transform: [{ rotate: '-2deg' }],
-    },
-    previewImage: {
-      height: 112,
-      overflow: 'hidden',
-      borderRadius: radius.lg,
-      backgroundColor: isDark ? '#2A2040' : '#C3A6F2',
-    },
-    previewSun: {
-      position: 'absolute',
-      width: 31,
-      height: 31,
-      borderRadius: radius.circle,
-      top: 21,
-      right: 35,
-      backgroundColor: isDark ? '#F9E2AF' : '#DF8E1D',
-    },
-    previewHillBack: {
-      position: 'absolute',
-      width: 176,
-      height: 85,
-      left: -22,
-      bottom: -36,
-      borderRadius: 80,
-      transform: [{ rotate: '-14deg' }],
-      backgroundColor: isDark ? '#585B70' : '#7287FD',
-    },
-    previewHillFront: {
-      position: 'absolute',
-      width: 165,
-      height: 74,
-      right: -29,
-      bottom: -42,
-      borderRadius: 70,
-      transform: [{ rotate: '15deg' }],
-      backgroundColor: isDark ? '#211633' : '#8052C8',
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-    },
-    previewSparkle: {
-      position: 'absolute',
-      top: 16,
-      left: 18,
-    },
-    previewFooter: {
+    topBar: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 2,
-      paddingTop: spacing.sm,
+      paddingHorizontal: 24,
+      paddingTop: 12,
+      paddingBottom: 8,
     },
-    previewTitle: {
-      ...typography.sans.caption,
-      color: colors.textPrimary,
+    skipBtn: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    skipText: {
+      fontSize: 14,
       fontWeight: '600',
+      color: colors.textSecondary,
     },
-    previewDate: {
-      ...typography.sans.caption2,
-      color: colors.textMuted,
-      marginTop: 2,
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: 24,
+      paddingBottom: 32,
+      justifyContent: 'space-between',
     },
-    previewHeart: {
-      width: 28,
-      height: 28,
-      borderRadius: radius.circle,
+    illustrationWrapper: {
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.accentSoft,
+      marginTop: 20,
     },
-    savedBadge: {
-      position: 'absolute',
-      zIndex: 3,
-      bottom: 9,
-      right: '4%',
-      flexDirection: 'row',
+    textContainer: {
       alignItems: 'center',
-      gap: spacing.xs,
-      paddingLeft: spacing.xs,
-      paddingRight: spacing.md,
-      paddingVertical: spacing.xs,
-      borderRadius: radius.round,
-      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      borderWidth: borders.thin,
-      borderColor: colors.accent,
+      marginVertical: 24,
+      paddingHorizontal: 16,
     },
-    savedBadgeIcon: {
-      width: 23,
-      height: 23,
-      borderRadius: radius.circle,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.accentSoft,
+    title: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.textPrimary,
+      textAlign: 'center',
+      lineHeight: 36,
+      letterSpacing: -0.5,
     },
-    savedBadgeText: {
-      ...typography.sans.caption2,
-      color: colors.accent,
-      fontWeight: '700',
+    subtitle: {
+      fontSize: 15,
+      fontWeight: '400',
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 22,
+      marginTop: 12,
     },
-    onboardingDots: {
+    dotsRow: {
       flexDirection: 'row',
       justifyContent: 'center',
-      gap: spacing.xs,
-      marginTop: spacing.xl,
-      marginBottom: spacing.md,
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 28,
     },
     dot: {
       width: 8,
       height: 8,
-      borderRadius: radius.circle,
-      backgroundColor: colors.borderSoft,
+      borderRadius: 4,
+      backgroundColor: isDark ? colors.surface1 : colors.surface1,
+      opacity: 0.5,
     },
     dotActive: {
-      backgroundColor: colors.accent,
       width: 24,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+      opacity: 1,
     },
-    actions: {
-      marginTop: spacing.md,
-      gap: spacing.md,
+    actionContainer: {
+      gap: 12,
+      width: '100%',
     },
-    secondaryAction: {
-      gap: spacing.sm,
+    primaryButton: {
+      width: '100%',
+      height: 52,
+      borderRadius: 14,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...(Platform.OS === 'web'
+        ? ({
+            boxShadow: isDark
+              ? '0 6px 20px rgba(180, 190, 254, 0.3)'
+              : '0 6px 20px rgba(114, 135, 253, 0.25)',
+          } as any)
+        : {
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 4,
+          }),
     },
-    secondaryHint: {
-      ...typography.sans.caption,
-      color: colors.textMuted,
-      textAlign: 'center',
+    primaryButtonText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.crust,
     },
-    footerNote: {
-      ...typography.sans.caption2,
-      color: colors.textMuted,
-      textAlign: 'center',
-      marginTop: spacing.xs,
+    secondaryButton: {
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    secondaryButtonText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    secondaryHighlight: {
+      color: colors.blue || '#89B4FA',
+      fontWeight: '700',
     },
   });
 }

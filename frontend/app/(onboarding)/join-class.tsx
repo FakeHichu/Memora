@@ -11,7 +11,7 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
 import { useClass } from '@/hooks/useClass';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, fetchWithTimeout } from '@/lib/photo-upload';
 
 export default function JoinClassScreen() {
   const { colors: themeColors } = useAppTheme();
@@ -46,14 +46,18 @@ export default function JoinClassScreen() {
       }
       const cleanCode = code.trim().toUpperCase();
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/classes/join`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${data.session.access_token}`,
-          'Content-Type': 'application/json',
+      const response = await fetchWithTimeout(
+        `${backendUrl}/api/classes/join`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ joinCode: cleanCode }),
         },
-        body: JSON.stringify({ joinCode: cleanCode }),
-      });
+        4000,
+      );
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message ?? 'Could not join class.');

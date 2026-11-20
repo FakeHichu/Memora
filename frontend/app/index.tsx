@@ -106,8 +106,8 @@ export default function SplashScreen() {
     <SafeAreaView style={styles.container}>
       <View style={[styles.waveContainer, { pointerEvents: 'none' }]}>
         <Svg width="100%" height="100%" viewBox="0 0 390 220" preserveAspectRatio="none">
-          <Path d="M0 65C70 25 106 122 181 115c72-7 119-86 209-42v147H0Z" fill="#8052C8" opacity={0.28} />
-          <Path d="M0 102c65-12 94 35 155 43 90 11 150-57 235-38v113H0Z" fill="#C3A6F2" opacity={0.16} />
+          <Path d="M0 65C70 25 106 122 181 115c72-7 119-86 209-42v147H0Z" fill={colors.accentDeep || '#CBA6F7'} opacity={0.25} />
+          <Path d="M0 102c65-12 94 35 155 43 90 11 150-57 235-38v113H0Z" fill={colors.accent || '#B4BEFE'} opacity={0.16} />
         </Svg>
       </View>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
@@ -123,13 +123,11 @@ export default function SplashScreen() {
               },
             ]}
           >
-            <View style={styles.logoBadge}>
-              <HeartMark size={70} />
-            </View>
+            <HeartMark size={96} />
           </Animated.View>
           <Text style={styles.appName}>Memora</Text>
           <Text style={styles.appTagline}>Your class. Your people. Your memories.</Text>
-          {/* WhatsApp-style mini progress indicator */}
+          {/* Subtle loading indicator */}
           <View style={styles.progressBarTrack}>
             <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
           </View>

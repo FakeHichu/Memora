@@ -7,6 +7,15 @@ export default function TabsLayout() {
       tabBar={(props) => <MemoraTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+        },
       }}
     >
       <Tabs.Screen

@@ -12,7 +12,7 @@ import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icons';
 import { IconButton } from '@/components/ui/IconButton';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, fetchWithTimeout } from '@/lib/photo-upload';
 
 export default function CreateClassScreen() {
   const { colors: themeColors } = useAppTheme();
@@ -66,18 +66,22 @@ export default function CreateClassScreen() {
         return;
       }
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/classes`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${data.session.access_token}`,
-          'Content-Type': 'application/json',
+      const response = await fetchWithTimeout(
+        `${backendUrl}/api/classes`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            schoolName: school.trim() || undefined,
+            academicYear: Number(year),
+          }),
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          schoolName: school.trim() || undefined,
-          academicYear: Number(year),
-        }),
-      });
+        4000,
+      );
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message ?? 'Could not create class.');

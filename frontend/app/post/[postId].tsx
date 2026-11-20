@@ -358,7 +358,8 @@ export default function PostDetailScreen() {
               {post.location ? (
                 <View style={styles.pillTagsRow}>
                   <View style={styles.tagCapsule}>
-                    <Text style={styles.tagCapsuleText}>📍 {post.location}</Text>
+                    <Icon name="map-marker" size={12} color={colors.textSecondary} />
+                    <Text style={styles.tagCapsuleText}>{post.location}</Text>
                   </View>
                 </View>
               ) : null}
@@ -379,45 +380,49 @@ export default function PostDetailScreen() {
                   ))}
                 </View>
               ) : null}
-              {/* Comments Section - open to all authenticated users */}
-              {comments.length > 0 && (
-                <View style={styles.commentsSection}>
-                  <Text style={styles.commentsSectionTitle}>Comments ({comments.length})</Text>
-                  {comments.map((comment) => (
-                    <View
-                      key={comment.id}
-                      style={styles.commentItem}
-                    >
-                      <View style={styles.commentHeader}>
-                        <Avatar
-                          name={comment.authorName}
-                          size={20}
-                          />
-                        <Text style={styles.commentAuthor}>{comment.authorName}</Text>
+              {/* Comments Section - matches Screen 12 */}
+              <View style={styles.commentsSection}>
+                <Text style={styles.commentsSectionTitle}>Comments ({comments.length})</Text>
+                {comments.length === 0 ? (
+                  <Text style={styles.noCommentsText}>No comments yet. Start the conversation!</Text>
+                ) : (
+                  comments.map((comment, idx) => (
+                    <View key={comment.id || idx} style={styles.commentItem}>
+                      <Avatar name={comment.authorName} size={36} ring />
+                      <View style={styles.commentBody}>
+                        <View style={styles.commentHeader}>
+                          <Text style={styles.commentAuthor}>{comment.authorName}</Text>
+                          <Text style={styles.commentTime}>recently</Text>
+                        </View>
+                        <Text style={styles.commentContent}>{comment.content}</Text>
                       </View>
-                      <Text style={styles.commentContent}>{comment.content}</Text>
                     </View>
-                  ))}
-                </View>
-              )}
-              {/* Comment form - available to all authenticated users */}
-              {currentUserId && (
-                <View style={styles.commentFormRow}>
-                  <TextInput
-                    placeholder="Add a comment..."
-                    placeholderTextColor={colors.textMuted}
-                    value={newComment}
-                    onChangeText={setNewComment}
-                    style={styles.commentInput}
-                  />
-                  <Button
-                    title="Post"
-                    size="sm"
-                    onPress={handleSendComment}
-                    disabled={!newComment.trim()}
-                  />
-                </View>
-              )}
+                  ))
+                )}
+              </View>
+
+              {/* Comment form - matches Screen 12 bottom bar */}
+              <View style={styles.commentFormRow}>
+                <TextInput
+                  placeholder="Add a comment..."
+                  placeholderTextColor={colors.textMuted}
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  style={styles.commentInput}
+                  onSubmitEditing={handleSendComment}
+                />
+                <Pressable
+                  onPress={handleSendComment}
+                  disabled={!newComment.trim()}
+                  style={[
+                    styles.commentSendBtn,
+                    !newComment.trim() && styles.commentSendBtnDisabled,
+                  ]}
+                  accessibilityLabel="Send comment"
+                >
+                  <Icon name="arrow-left" size={18} color={colors.crust} style={{ transform: [{ rotate: '180deg' }] }} />
+                </Pressable>
+              </View>
             </View>
           )}
           {/* Related Moments */}
@@ -658,6 +663,9 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
       gap: 8,
     },
     tagCapsule: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
       backgroundColor: colors.surfaceOverlay,
       paddingHorizontal: 14,
       paddingVertical: 7,
@@ -708,25 +716,42 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
       marginBottom: 12,
     },
     commentItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
       marginBottom: spacing.md,
-      paddingBottom: spacing.md,
+      paddingBottom: spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: colors.borderSoft,
+    },
+    commentBody: {
+      flex: 1,
+      gap: 3,
     },
     commentHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      marginBottom: 4,
+      justifyContent: 'space-between',
     },
     commentAuthor: {
-      fontSize: 13,
-      fontWeight: '600',
+      fontSize: 14,
+      fontWeight: '700',
       color: colors.textPrimary,
     },
+    commentTime: {
+      fontSize: 11,
+      color: colors.textMuted,
+    },
     commentContent: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textSecondary,
+      lineHeight: 20,
+    },
+    noCommentsText: {
+      fontSize: 14,
+      color: colors.textMuted,
+      fontStyle: 'italic',
+      marginVertical: 12,
     },
     commentFormRow: {
       marginTop: spacing.md,
@@ -739,14 +764,25 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], mode: 'd
     },
     commentInput: {
       flex: 1,
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: colors.card,
       borderWidth: 1,
-      borderColor: colors.borderSoft,
-      borderRadius: 12,
-      paddingHorizontal: spacing.md,
+      borderColor: colors.border,
+      borderRadius: 22,
+      paddingHorizontal: 16,
       paddingVertical: Platform.OS === 'ios' ? 10 : 8,
       color: colors.textPrimary,
       fontSize: 14,
+    },
+    commentSendBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    commentSendBtnDisabled: {
+      opacity: 0.4,
     },
     emptyView: {
       flex: 1,

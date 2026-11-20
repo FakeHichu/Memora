@@ -11,7 +11,7 @@ export const catppuccinMocha = {
   rosewater: '#F5E0DC',
   flamingo: '#F2CDCD',
   pink: '#F5C2E7',
-  mauve: '#8052C8',
+  mauve: '#CBA6F7',
   red: '#F38BA8',
   maroon: '#EBA0AC',
   peach: '#FAB387',
@@ -21,21 +21,21 @@ export const catppuccinMocha = {
   sky: '#89DCEB',
   sapphire: '#74C7EC',
   blue: '#89B4FA',
-  lavender: '#C3A6F2',
+  lavender: '#B4BEFE',
   // Text
-  text: '#F6F0FF',
-  subtext1: '#C6B9D9',
-  subtext0: '#A99BB9',
+  text: '#CDD6F4',
+  subtext1: '#BAC2DE',
+  subtext0: '#A6ADC8',
   overlay2: '#9399B2',
   overlay1: '#7F849C',
   overlay0: '#6C7086',
   // Surfaces
   surface2: '#585B70',
-  surface1: '#38304D',
-  surface0: '#211633',
-  base: '#0B0813',
-  mantle: '#151021',
-  crust: '#0B0813',
+  surface1: '#45475A',
+  surface0: '#313244',
+  base: '#1E1E2E',
+  mantle: '#181825',
+  crust: '#11111B',
 };
 
 // ---------------------------------------------------------------------------
@@ -79,47 +79,47 @@ export const catppuccinLatte = {
 export const darkColors = {
   // ---- Main backgrounds ----
   background: catppuccinMocha.base,            // #1E1E2E – main canvas
-  backgroundSecondary: catppuccinMocha.mantle, // #181825
-  backgroundTertiary: catppuccinMocha.crust,   // #11111B
-  backgroundElevated: '#2A2040',
+  backgroundSecondary: catppuccinMocha.mantle, // #181825 – navigation
+  backgroundTertiary: catppuccinMocha.crust,   // #11111B – deep background
+  backgroundElevated: catppuccinMocha.surface0,// #313244
 
   // ---- Cards / surfaces ----
-  card: catppuccinMocha.surface0,              // #313244
+  card: catppuccinMocha.surface0,              // #313244 – main cards
   surface: catppuccinMocha.surface0,           // #313244
-  surfaceElevated: '#2A2040',
-  surfaceOverlay: '#2A2040',
+  surfaceElevated: catppuccinMocha.surface1,
+  surfaceOverlay: 'rgba(24, 24, 37, 0.85)',
   surfaceWarm: catppuccinMocha.surface0,
-  surfaceSecondary: '#2A2040',
-  surfaceFloating: 'rgba(42, 32, 64, 0.95)',
-  surfaceModal: 'rgba(11, 8, 19, 0.98)',
+  surfaceSecondary: catppuccinMocha.surface1,
+  surfaceFloating: 'rgba(49, 50, 68, 0.95)',
+  surfaceModal: 'rgba(24, 24, 37, 0.98)',
   surfaceNavigation: catppuccinMocha.mantle,
-  glass: 'rgba(42, 32, 64, 0.80)',
-  glassStrong: 'rgba(42, 32, 64, 0.96)',
-  secondary: '#2A2040',
+  glass: 'rgba(49, 50, 68, 0.80)',
+  glassStrong: 'rgba(49, 50, 68, 0.96)',
+  secondary: catppuccinMocha.surface1,
 
   // ---- Chrome (navigation, bars) ----
   chromeDark: catppuccinMocha.surface2,
   chromeDim: catppuccinMocha.overlay1,
   chrome: catppuccinMocha.overlay2,
   chromeHighlight: catppuccinMocha.lavender,
-  chromeGlow: 'rgba(195, 166, 242, 0.20)',
+  chromeGlow: 'rgba(180, 190, 254, 0.20)',
 
   // ---- Accent (Lavender primary) ----
-  primary: catppuccinMocha.lavender,
-  primaryDark: '#8052C8',
-  primaryLight: '#D7C2FF',
-  primarySoft: '#D7C2FF',
-  primaryUltraSoft: '#E7DCFA',
+  primary: catppuccinMocha.lavender,           // #B4BEFE
+  primaryDark: '#89B4FA',
+  primaryLight: '#CBA6F7',
+  primarySoft: '#CBA6F7',
+  primaryUltraSoft: '#D7C2FF',
   onPrimary: catppuccinMocha.crust,
   neon: catppuccinMocha.lavender,
-  accent: catppuccinMocha.lavender,
-  accentLight: '#D7C2FF',
+  accent: catppuccinMocha.lavender,            // #B4BEFE
+  accentLight: '#CBA6F7',
   accentLavender: catppuccinMocha.lavender,
-  accentSoft: 'rgba(195, 166, 242, 0.15)',
-  accentSubtle: 'rgba(195, 166, 242, 0.12)',
+  accentSoft: 'rgba(180, 190, 254, 0.15)',
+  accentSubtle: 'rgba(180, 190, 254, 0.10)',
   accentDeep: catppuccinMocha.mauve,
   accentSoftGlow: catppuccinMocha.lavender,
-  accentGlow: 'rgba(195, 166, 242, 0.30)',
+  accentGlow: 'rgba(180, 190, 254, 0.30)',
   accentOptional1: catppuccinMocha.pink,
   accentOptional2: catppuccinMocha.teal,
 
@@ -130,29 +130,29 @@ export const darkColors = {
 
   // ---- Text ----
   text: catppuccinMocha.text,                  // #CDD6F4
-  textPrimary: catppuccinMocha.text,
+  textPrimary: catppuccinMocha.text,           // #CDD6F4
   textSecondary: catppuccinMocha.subtext1,     // #BAC2DE
-  textTertiary: catppuccinMocha.subtext0,
-  textMuted: catppuccinMocha.subtext0,
-  muted: catppuccinMocha.subtext1,
+  textTertiary: catppuccinMocha.subtext0,      // #A6ADC8
+  textMuted: catppuccinMocha.overlay1,         // #7F849C
+  muted: catppuccinMocha.overlay1,             // #7F849C
   textInverse: catppuccinMocha.crust,
   textOnPrimary: catppuccinMocha.crust,
   textOnChrome: catppuccinMocha.text,
 
   // ---- Borders ----
   border: catppuccinMocha.surface1,            // #45475A
-  borderSubtle: 'rgba(195, 166, 242, 0.08)',
-  borderDefault: 'rgba(195, 166, 242, 0.14)',
-  borderEmphasized: 'rgba(195, 166, 242, 0.24)',
+  borderSubtle: 'rgba(180, 190, 254, 0.08)',
+  borderDefault: catppuccinMocha.surface1,
+  borderEmphasized: catppuccinMocha.surface2,  // #585B70
   borderSoft: catppuccinMocha.surface1,
   borderChrome: catppuccinMocha.surface2,
-  borderHighlight: catppuccinMocha.overlay0,
+  borderHighlight: catppuccinMocha.lavender,
   divider: catppuccinMocha.surface1,
   dividerSoft: catppuccinMocha.surface0,
 
   // ---- Shadows ----
-  shadow: 'rgba(0, 0, 0, 0.55)',
-  shadowStrong: 'rgba(0, 0, 0, 0.75)',
+  shadow: 'rgba(0, 0, 0, 0.45)',
+  shadowStrong: 'rgba(0, 0, 0, 0.70)',
   overlay: 'rgba(17, 17, 27, 0.80)',
   overlayLight: 'rgba(17, 17, 27, 0.45)',
   overlayStrong: 'rgba(17, 17, 27, 0.96)',
@@ -167,10 +167,10 @@ export const darkColors = {
   errorBackground: 'rgba(243, 139, 168, 0.14)',
 
   // ---- Misc ----
-  patternTint: 'rgba(195, 166, 242, 0.04)',
-  patternTintCool: 'rgba(195, 166, 242, 0.03)',
+  patternTint: 'rgba(180, 190, 254, 0.04)',
+  patternTintCool: 'rgba(180, 190, 254, 0.03)',
 
-  // ---- Raw palette access (use catppuccinMocha.text, etc. directly to avoid collision) ----
+  // ---- Raw palette access ----
   rosewater: catppuccinMocha.rosewater,
   flamingo: catppuccinMocha.flamingo,
   pink: catppuccinMocha.pink,
@@ -211,7 +211,7 @@ export const lightColors = {
   // ---- Cards / surfaces ----
   card: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceElevated: catppuccinLatte.surface0,   // #CCD0DA
+  surfaceElevated: '#FFFFFF',
   surfaceOverlay: catppuccinLatte.surface1,    // #BCC0CC
   surfaceWarm: catppuccinLatte.base,
   surfaceSecondary: catppuccinLatte.surface0,
@@ -706,6 +706,19 @@ export const typography = {
     fontSize: 17,
     fontWeight: '600' as const,
     lineHeight: 22,
+  },
+  heading: {
+    fontFamily: 'System',
+    fontSize: 18,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+    letterSpacing: -0.1,
+  },
+  subheading: {
+    fontFamily: 'System',
+    fontSize: 14,
+    fontWeight: '400' as const,
+    lineHeight: 20,
   },
   body: {
     fontFamily: 'System',

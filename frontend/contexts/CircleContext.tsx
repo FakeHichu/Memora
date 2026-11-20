@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase/client';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, fetchWithTimeout } from '@/lib/photo-upload';
 import type { ClassRecord } from '@/types/database';
 
 const ACTIVE_CIRCLE_KEY = 'memora.unified_active_circle.v2';
@@ -82,11 +82,15 @@ export function CircleProvider({ children }: { children: React.ReactNode }) {
           const backendUrl = getBackendUrl();
           
           try {
-            const response = await fetch(`${backendUrl}/api/classes`, {
-              headers: {
-                Authorization: `Bearer ${sessionData.session.access_token}`,
+            const response = await fetchWithTimeout(
+              `${backendUrl}/api/classes`,
+              {
+                headers: {
+                  Authorization: `Bearer ${sessionData.session.access_token}`,
+                },
               },
-            });
+              2500,
+            );
             
             if (response.ok) {
               const result = await response.json();

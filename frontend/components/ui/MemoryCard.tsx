@@ -173,7 +173,7 @@ export const MemoryCard = React.memo(function MemoryCard({
         {/* Pinned indicator */}
         {memory.isPinned && !isBlurred && (
           <View style={styles.pinnedIndicator}>
-            <Text style={styles.pinnedIcon}>📌</Text>
+            <Icon name="bookmark" size={14} color={colors.accent} />
           </View>
         )}
         {/* Archive indicator */}
@@ -184,7 +184,8 @@ export const MemoryCard = React.memo(function MemoryCard({
         )}
         {isBlurred && (
           <View style={styles.blurOverlay}>
-            <Text style={styles.blurText}>🔒 Post today's photo to reveal</Text>
+            <Icon name="padlock" size={14} color={colors.textSecondary} />
+            <Text style={styles.blurText}>Post today's photo to reveal</Text>
           </View>
         )}
         {authorName && (
@@ -210,8 +211,9 @@ export const MemoryCard = React.memo(function MemoryCard({
             )}
             {memory.location && (
               <View style={styles.locationPill}>
+                <Icon name="map-marker" size={12} color={colors.textMuted} />
                 <Text style={styles.locationText} numberOfLines={1}>
-                  📍 {memory.location}
+                  {memory.location}
                 </Text>
               </View>
             )}
@@ -240,7 +242,7 @@ export const MemoryCard = React.memo(function MemoryCard({
           {memory.prompt && (
             <View style={styles.promptBadge}>
               <Text style={styles.promptBadgeText} numberOfLines={1}>
-                💬 {memory.prompt}
+                {memory.prompt}
               </Text>
             </View>
           )}

@@ -159,7 +159,7 @@ export default function ProfileScreen() {
           {/* Edit Profile button */}
           <Pressable
             style={styles.editProfileBtn}
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push('/edit-profile')}
             accessibilityRole="button"
           >
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
           <Text style={styles.gridTitle}>Memories</Text>
           {profilePosts.length ? (
             <View style={styles.memoryGrid}>
-              {profilePosts.slice(0, 12).map((post) => (
+              {profilePosts.slice(0, 18).map((post) => (
                 <Pressable
                   key={post.id}
                   style={styles.memoryTile}
@@ -187,94 +187,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Account Section */}
-        <ProfileSection title="Account">
-          {isSignedIn ? (
-            <>
-              {displayEmail ? (
-                <ProfileRow label="Email" value={displayEmail} icon="envelope" />
-              ) : null}
-              {supabaseProfile?.username && (
-                <>
-                  <ProfileDivider />
-                  <ProfileRow label="Username" value={`@${supabaseProfile.username}`} icon="user" />
-                </>
-              )}
-            </>
-          ) : (
-            <ProfileRow
-              label="Sign in"
-              value="Connect your account"
-              icon="padlock"
-              onPress={() => router.push('/(auth)/login')}
-            />
-          )}
-        </ProfileSection>
-
-        {/* Appearance */}
-        <ProfileSection title="Appearance">
-          <ProfileRow label="Appearance" value="Dark" icon="picture" />
-        </ProfileSection>
-
-        {/* Settings */}
-        <ProfileSection title="Settings">
-          <ProfileRow
-            label="Account Settings"
-            value=""
-            icon="user"
-            onPress={() => router.push('/settings')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Notifications"
-            value=""
-            icon="bell"
-            onPress={() => router.push('/settings')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Privacy & Security"
-            value=""
-            icon="padlock"
-            onPress={() => router.push('/settings')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Appearance"
-            value={mode === 'dark' ? 'Dark ›' : 'Latte ›'}
-            icon="cog"
-            onPress={() => router.push('/settings')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="About Memora"
-            value=""
-            icon="cloud"
-            onPress={() => router.push('/settings')}
-          />
-          <ProfileDivider />
-          <ProfileRow
-            label="Help & Support"
-            value=""
-            icon="info"
-            onPress={() => router.push('/settings')}
-          />
-        </ProfileSection>
-
-        {/* Sign out */}
-        {isSignedIn && (
-          <ProfileSection title="">
-            <ProfileRow
-              label="Log Out"
-              value=""
-              icon="door"
-              onPress={confirmSignOut}
-              destructive
-            />
-          </ProfileSection>
-        )}
-
-        <View style={styles.bottomSpacer} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );

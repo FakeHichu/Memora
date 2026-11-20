@@ -1,29 +1,52 @@
 import React from 'react';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { useAppTheme } from '@/providers/ThemeProvider';
 
-export function HeartMark({ size = 56 }: { size?: number }) {
+export interface HeartMarkProps {
+  size?: number;
+  color?: string;
+  secondaryColor?: string;
+}
+
+export function HeartMark({ size = 56, color, secondaryColor }: HeartMarkProps) {
+  const { colors, mode } = useAppTheme();
+  const gradId = `memoraHeart_${mode}_${Math.round(size)}`;
+
+  const c1 = color || (mode === 'dark' ? '#B4BEFE' : '#7287FD');
+  const c2 = secondaryColor || (mode === 'dark' ? '#CBA6F7' : '#8839EF');
+
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100" fill="none" accessibilityLabel="Memora heart logo">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
+      fill="none"
+      accessibilityLabel="Memora heart logo"
+    >
       <Defs>
-        <LinearGradient id="memoraHeart" x1="12" y1="16" x2="88" y2="90" gradientUnits="userSpaceOnUse">
-          <Stop stopColor="#B9A2FF" />
-          <Stop offset="1" stopColor="#8052C8" />
+        <LinearGradient id={gradId} x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor={c1} />
+          <Stop offset="100%" stopColor={c2} />
         </LinearGradient>
       </Defs>
+
+      {/* Outer loop of intertwined heart */}
       <Path
-        d="M50 86C40 78 16 61 16 43c0-14 15-22 27-13 4 3 7 8 7 13 1-6 5-12 10-15 12-7 26 1 26 15 0 18-24 34-36 43Z"
-        stroke="url(#memoraHeart)"
-        strokeWidth="7"
+        d="M60 98 C45 86 16 68 16 42 C16 24 32 14 47 24 C53 28 58 35 60 40 C62 35 67 28 73 24 C88 14 104 24 104 42 C104 68 75 86 60 98 Z"
+        stroke={`url(#${gradId})`}
+        strokeWidth="9"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
+      {/* Inner intertwined ribbon contour */}
       <Path
-        d="M50 79C41 72 27 61 27 48c0-9 9-14 17-9 3 2 5 5 6 9 2-5 6-9 11-10 8-2 15 4 15 12 0 12-15 23-26 29Z"
-        stroke="url(#memoraHeart)"
-        strokeWidth="5"
+        d="M60 88 C48 78 28 62 28 44 C28 32 39 24 50 31 C55 34 58 39 60 44 C62 39 65 34 70 31 C81 24 92 32 92 44 C92 62 72 78 60 88 Z"
+        stroke={`url(#${gradId})`}
+        strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity={0.88}
+        opacity={0.85}
       />
     </Svg>
   );

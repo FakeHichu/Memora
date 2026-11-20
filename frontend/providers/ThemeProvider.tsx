@@ -1,18 +1,50 @@
-import React, { createContext, useContext } from 'react';
-import { darkColors, type ThemeColors, type ThemeMode } from '@/constants/theme';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  darkColors,
+  lightColors,
+  type ThemeColors,
+  type ThemeMode,
+} from '@/constants/theme';
+
+const THEME_STORAGE_KEY = 'memora_theme_mode';
 
 type AppThemeContextValue = {
-  mode: 'dark';
+  mode: ThemeMode;
   colors: ThemeColors;
-  /** Kept for compatibility with older screens; Memora is permanently dark. */
   setMode: (mode: ThemeMode) => void;
+  toggleMode: () => void;
 };
 
 const AppThemeContext = createContext<AppThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: React.PropsWithChildren) {
+  const [mode, setModeState] = useState<ThemeMode>('dark');
+
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_STORAGE_KEY)
+      .then((stored) => {
+        if (stored === 'light' || stored === 'dark') {
+          setModeState(stored);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const setMode = (newMode: ThemeMode) => {
+    setModeState(newMode);
+    AsyncStorage.setItem(THEME_STORAGE_KEY, newMode).catch(() => undefined);
+  };
+
+  const toggleMode = () => {
+    const nextMode: ThemeMode = mode === 'dark' ? 'light' : 'dark';
+    setMode(nextMode);
+  };
+
+  const colors = mode === 'light' ? lightColors : darkColors;
+
   return (
-    <AppThemeContext.Provider value={{ mode: 'dark', colors: darkColors, setMode: () => undefined }}>
+    <AppThemeContext.Provider value={{ mode, colors, setMode, toggleMode }}>
       {children}
     </AppThemeContext.Provider>
   );

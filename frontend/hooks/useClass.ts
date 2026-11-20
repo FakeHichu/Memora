@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { ClassRecord } from '@/types/database';
-import { getBackendUrl } from '@/lib/photo-upload';
+import { getBackendUrl, fetchWithTimeout } from '@/lib/photo-upload';
 
 const CLASSES_STORAGE_KEY = 'memora.classes.v1';
 const ACTIVE_CLASS_KEY = 'memora.active_class_id.v1';
@@ -33,11 +33,15 @@ export function useClass() {
           const backendUrl = getBackendUrl();
           // Try fetching from backend API first (uses service role, guaranteed to return all user's classes)
           try {
-            const apiRes = await fetch(`${backendUrl}/api/classes`, {
-              headers: {
-                Authorization: `Bearer ${sessionData.session.access_token}`,
+            const apiRes = await fetchWithTimeout(
+              `${backendUrl}/api/classes`,
+              {
+                headers: {
+                  Authorization: `Bearer ${sessionData.session.access_token}`,
+                },
               },
-            });
+              2500,
+            );
             if (apiRes.ok) {
               const apiData = await apiRes.json();
               // SECURITY FIX: Replace cache even if empty, to clear stale data

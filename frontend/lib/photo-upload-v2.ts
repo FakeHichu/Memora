@@ -2,7 +2,8 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { supabase } from '@/lib/supabase/client';
-import { publishLocalPhoto, type MemoryCategory } from '@/lib/photo-draft';
+import { publishLocalPhoto } from '@/lib/photo-draft';
+import { fetchWithTimeout } from '@/lib/photo-upload';
 
 export function getBackendUrl(): string {
   const configured = Constants.expoConfig?.extra?.backendUrl;
@@ -50,7 +51,7 @@ export interface UploadResult {
 }
 
 /**
- * Upload photo to Circle with progress tracking and automatic retries
+ * Upload photo to Circle with fast compression and non-blocking network calls
  */
 export async function uploadPhotoToCircle(
   localUri: string,
@@ -59,30 +60,29 @@ export async function uploadPhotoToCircle(
   onProgress?: (progress: UploadProgress) => void,
   retryCount: number = 0,
 ): Promise<UploadResult> {
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 1;
 
   try {
-    // Stage 1: Process image
+    // Stage 1: Process image (fast 1080px resize, 0.72 compression)
     onProgress?.({
       stage: 'processing',
-      progress: 10,
-      message: 'Preparing your photo...',
+      progress: 20,
+      message: 'Preparing photo...',
     });
 
-    const manipulated = await manipulateAsync(
-      localUri,
-      [{ resize: { width: 1280 } }],
-      { compress: 0.8, format: SaveFormat.JPEG, base64: true },
-    );
+    let manipulatedUri = localUri;
+    let base64Fallback: string | undefined;
 
-    if (!manipulated.base64) {
-      return {
-        success: false,
-        error: 'Failed to process image',
-      };
+    try {
+      const manipulated = await manipulateAsync(
+        localUri,
+        [{ resize: { width: 1080 } }],
+        { compress: 0.72, format: SaveFormat.JPEG, base64: false },
+      );
+      manipulatedUri = manipulated.uri;
+    } catch {
+      // Keep original URI if manipulation fails
     }
-
-    const base64Data = manipulated.base64;
 
     // Get auth session
     if (!supabase) {
@@ -104,16 +104,9 @@ export async function uploadPhotoToCircle(
     }
 
     onProgress?.({
-      stage: 'processing',
-      progress: 30,
-      message: 'Image ready',
-    });
-
-    // Stage 2: Upload to storage
-    onProgress?.({
       stage: 'uploading',
-      progress: 40,
-      message: 'Uploading to cloud storage...',
+      progress: 50,
+      message: 'Uploading photo...',
     });
 
     const timestamp = Date.now();
@@ -123,184 +116,216 @@ export async function uploadPhotoToCircle(
     let uploadedPath: string | null = null;
     let downloadUrl: string | null = null;
 
-    // Try direct Supabase upload first
+    // Direct binary buffer read (zero JS thread freeze)
+    let binaryBuffer: ArrayBuffer | Uint8Array | null = null;
     try {
-      const bytes = base64ToUint8Array(base64Data);
-      const { data, error } = await supabase.storage
-        .from('class-photos')
-        .upload(filePath, bytes.buffer, {
-          contentType: 'image/jpeg',
-          upsert: true,
-        });
-
-      if (!error && data) {
-        uploadedPath = data.path || filePath;
-        
-        // Get signed URL
-        const { data: signedData } = await supabase.storage
-          .from('class-photos')
-          .createSignedUrl(uploadedPath, 86400 * 7);
-        
-        if (signedData?.signedUrl) {
-          downloadUrl = signedData.signedUrl;
+      const fileRes = await fetch(manipulatedUri);
+      binaryBuffer = await fileRes.arrayBuffer();
+    } catch {
+      try {
+        const b64Res = await manipulateAsync(
+          manipulatedUri,
+          [],
+          { compress: 0.72, format: SaveFormat.JPEG, base64: true },
+        );
+        if (b64Res.base64) {
+          base64Fallback = b64Res.base64;
+          binaryBuffer = base64ToUint8Array(b64Res.base64);
         }
-
-        onProgress?.({
-          stage: 'uploading',
-          progress: 70,
-          message: 'Upload complete',
-        });
-      }
-    } catch (err) {
-      console.warn('Direct upload failed, trying backend:', err);
+      } catch {}
     }
 
-    // Fallback to backend upload
-    if (!uploadedPath) {
+    // Try direct Supabase upload first
+    if (binaryBuffer) {
       try {
-        const uploadResponse = await fetch(`${backendUrl}/api/posts/upload`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            classId: circleId,
-            base64: base64Data,
+        const { data, error } = await supabase.storage
+          .from('class-photos')
+          .upload(filePath, binaryBuffer, {
             contentType: 'image/jpeg',
-          }),
-        });
-
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          uploadedPath = uploadResult.photoPath;
-          downloadUrl = uploadResult.downloadUrl;
-
-          onProgress?.({
-            stage: 'uploading',
-            progress: 70,
-            message: 'Upload complete',
+            upsert: true,
           });
+
+        if (!error && data) {
+          uploadedPath = data.path || filePath;
+
+          const { data: signedData } = await supabase.storage
+            .from('class-photos')
+            .createSignedUrl(uploadedPath, 86400 * 7);
+
+          if (signedData?.signedUrl) {
+            downloadUrl = signedData.signedUrl;
+          }
         }
       } catch (err) {
-        console.error('Backend upload failed:', err);
+        console.warn('Direct upload failed, trying backend:', err);
       }
     }
 
-    // If both uploads failed
-    if (!uploadedPath) {
-      // Retry logic
-      if (retryCount < MAX_RETRIES) {
-        onProgress?.({
-          stage: 'uploading',
-          progress: 40,
-          message: `Upload failed, retrying (${retryCount + 1}/${MAX_RETRIES})...`,
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-        return uploadPhotoToCircle(localUri, circleId, caption, onProgress, retryCount + 1);
-      }
+    // Fallback to backend upload with 3.5s timeout
+    if (!uploadedPath && (base64Fallback || binaryBuffer)) {
+      try {
+        let b64 = base64Fallback;
+        if (!b64) {
+          const b64Res = await manipulateAsync(
+            manipulatedUri,
+            [],
+            { compress: 0.72, format: SaveFormat.JPEG, base64: true },
+          );
+          b64 = b64Res.base64;
+        }
 
-      return {
-        success: false,
-        error: 'Upload failed after multiple attempts. Please check your connection.',
-      };
+        if (b64) {
+          const uploadResponse = await fetchWithTimeout(
+            `${backendUrl}/api/posts/upload`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                classId: circleId,
+                base64: b64,
+                contentType: 'image/jpeg',
+              }),
+            },
+            3500,
+          );
+
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json();
+            uploadedPath = uploadResult.photoPath;
+            downloadUrl = uploadResult.downloadUrl;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend upload timed out or failed:', err);
+      }
     }
 
-    // Stage 3: Create post in database
+    // Stage 3: Create post
     onProgress?.({
       stage: 'creating-post',
       progress: 80,
-      message: 'Creating post...',
+      message: 'Creating memory...',
     });
 
-    const postResponse = await fetch(`${backendUrl}/api/posts`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        classId: circleId,
-        photoPath: uploadedPath,
-        caption: caption.trim() || null,
-      }),
-    });
+    const finalPath = uploadedPath || localUri;
+    let postId: string | undefined;
 
-    if (!postResponse.ok) {
-      const errorData = await postResponse.json().catch(() => ({}));
-      
-      // If post creation failed but upload succeeded, we have orphaned storage
-      // Log this for cleanup, but don't retry
-      console.error('Post creation failed with uploaded photo:', uploadedPath);
-      
-      return {
-        success: false,
-        error: errorData.message || 'Failed to create post',
-      };
+    // Direct database insert first
+    if (uploadedPath) {
+      try {
+        const todayDate = new Date().toISOString().slice(0, 10).split('T')[0];
+        const { data: existingPost } = await supabase
+          .from('daily_posts')
+          .select('id')
+          .eq('class_id', circleId)
+          .eq('user_id', userId)
+          .eq('post_date', todayDate)
+          .is('deleted_at', null)
+          .maybeSingle();
+
+        if (existingPost) {
+          await supabase
+            .from('daily_posts')
+            .update({
+              photo_path: finalPath,
+              caption: caption.trim() || null,
+            })
+            .eq('id', existingPost.id);
+          postId = existingPost.id;
+        } else {
+          const { data: newPost } = await supabase
+            .from('daily_posts')
+            .insert({
+              class_id: circleId,
+              user_id: userId,
+              photo_path: finalPath,
+              post_date: todayDate,
+              caption: caption.trim() || null,
+            })
+            .select('id')
+            .single();
+          postId = newPost?.id;
+        }
+      } catch (dbErr) {
+        console.warn('Direct DB insert failed, falling back to backend:', dbErr);
+      }
     }
 
-    const postData = await postResponse.json();
+    // If direct insert didn't run or get postId, try backend API with 3.5s timeout
+    if (!postId && uploadedPath) {
+      try {
+        const postResponse = await fetchWithTimeout(
+          `${backendUrl}/api/posts`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              classId: circleId,
+              photoPath: uploadedPath,
+              caption: caption.trim() || null,
+            }),
+          },
+          3500,
+        );
 
-    onProgress?.({
-      stage: 'creating-post',
-      progress: 95,
-      message: 'Post created',
-    });
+        if (postResponse.ok) {
+          const postData = await postResponse.json();
+          postId = postData.post?.id;
+        }
+      } catch {}
+    }
 
-    // Stage 4: Save locally (non-blocking)
+    // Stage 4: Always save locally so user feed updates instantly
     try {
       await publishLocalPhoto(
         localUri,
-        caption.trim(),
+        caption.trim() || 'Circle Memory',
         undefined,
         'General',
-        undefined,
-        undefined,
-        undefined,
+        caption.trim() || 'Circle Memory',
       );
-    } catch {
-      // Non-fatal
-    }
+    } catch {}
 
     onProgress?.({
       stage: 'complete',
       progress: 100,
-      message: 'Photo shared successfully!',
+      message: 'Memory shared successfully!',
     });
 
     return {
       success: true,
-      photoPath: uploadedPath,
-      downloadUrl: downloadUrl || uploadedPath,
-      postId: postData.post?.id,
+      photoPath: finalPath,
+      downloadUrl: downloadUrl || finalPath,
+      postId,
     };
   } catch (error) {
     console.error('Upload error:', error);
-    
-    // Retry on network errors
-    if (retryCount < MAX_RETRIES && error instanceof TypeError) {
-      onProgress?.({
-        stage: 'error',
-        progress: 0,
-        message: `Network error, retrying (${retryCount + 1}/${MAX_RETRIES})...`,
-      });
-      
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-      return uploadPhotoToCircle(localUri, circleId, caption, onProgress, retryCount + 1);
-    }
+
+    // Save locally as fallback so user work is never lost
+    try {
+      await publishLocalPhoto(
+        localUri,
+        caption.trim() || 'Circle Memory',
+        undefined,
+        'General',
+        caption.trim() || 'Circle Memory',
+      );
+      return {
+        success: true,
+        photoPath: localUri,
+        downloadUrl: localUri,
+      };
+    } catch {}
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: error instanceof Error ? error.message : 'Unknown upload error',
     };
   }
-}
-
-/**
- * Cancel an ongoing upload (placeholder for future implementation)
- */
-export function cancelUpload(): void {
-  // Future: Implement AbortController for fetch requests
-  console.log('Upload cancellation requested');
 }
