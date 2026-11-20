@@ -16,7 +16,7 @@ interface CircleHomeSectionProps {
 function MemberAvatarRow({ count }: { count: number }) {
   const { colors } = useAppTheme();
   const max = 4;
-  const avatarColors = ['#B4BEFE', '#CBA6F7', '#89B4FA', '#94E2D5', '#A6E3A1'];
+  const avatarColors = ['#C3A6F2', '#8052C8', '#89B4FA', '#94E2D5', '#A6E3A1'];
   const shown = Math.min(count, max);
   const overflow = count - shown;
 
@@ -80,19 +80,6 @@ export function CircleHomeSection({ circle, onShareMemory }: CircleHomeSectionPr
   return (
     <View style={styles.container}>
       {/* Section Label */}
-      <View style={styles.sectionLabelRow}>
-        <Text style={styles.sectionLabel}>YOUR CIRCLE</Text>
-        <Pressable
-          style={styles.activePill}
-          onPress={() => router.push('/(tabs)/circle')}
-          accessibilityRole="button"
-        >
-          <View style={styles.activeDot} />
-          <Text style={styles.activePillText}>Active</Text>
-          <Icon name="chevron-right" size={12} color={colors.success} />
-        </Pressable>
-      </View>
-
       {/* Circle Card – matches screenshots */}
       <Pressable
         style={styles.circleCard}
@@ -100,6 +87,14 @@ export function CircleHomeSection({ circle, onShareMemory }: CircleHomeSectionPr
         accessibilityRole="button"
         accessibilityLabel={`Open ${circle.name} circle`}
       >
+        <View style={styles.cardTopRow}>
+          <Text style={styles.cardEyebrow}>YOUR CIRCLE</Text>
+          <View style={styles.activePill}>
+            <View style={styles.activeDot} />
+            <Text style={styles.activePillText}>Active</Text>
+            <Icon name="chevron-right" size={12} color={colors.success} />
+          </View>
+        </View>
         {/* Circle name */}
         <Text style={styles.circleName} numberOfLines={1}>
           {circle.name}
@@ -108,11 +103,6 @@ export function CircleHomeSection({ circle, onShareMemory }: CircleHomeSectionPr
         {/* Member avatars + count */}
         <View style={styles.membersRow}>
           <MemberAvatarRow count={circle.memberCount} />
-          {circle.memberCount > 4 && (
-            <Text style={styles.memberCountText}>
-              +{circle.memberCount - 4}
-            </Text>
-          )}
         </View>
 
         {/* "You're inside this Circle!" badge */}
@@ -122,14 +112,11 @@ export function CircleHomeSection({ circle, onShareMemory }: CircleHomeSectionPr
         </View>
 
         {/* View Circle link */}
-        <Pressable
+        <View
           style={styles.viewCircleBtn}
-          onPress={() => router.push('/(tabs)/circle')}
-          accessibilityRole="button"
-          accessibilityLabel="View Circle"
         >
           <Text style={styles.viewCircleBtnText}>View Circle →</Text>
-        </Pressable>
+        </View>
       </Pressable>
     </View>
   );
@@ -141,17 +128,16 @@ function createStyles(colors: ThemeColors) {
       paddingHorizontal: spacing.lg,
       marginBottom: spacing.xl,
     },
-    sectionLabelRow: {
+    cardTopRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: spacing.sm,
     },
-    sectionLabel: {
+    cardEyebrow: {
       ...typography.mono.micro,
-      color: colors.textMuted,
-      letterSpacing: 1.0,
-      fontSize: 10,
+      color: colors.textSecondary,
+      letterSpacing: 0.4,
+      fontSize: 9,
     },
     activePill: {
       flexDirection: 'row',
@@ -211,6 +197,7 @@ function createStyles(colors: ThemeColors) {
     insideBadge: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
       gap: 6,
       marginTop: 2,
     },
@@ -221,6 +208,7 @@ function createStyles(colors: ThemeColors) {
     },
     viewCircleBtn: {
       marginTop: spacing.xs,
+      alignItems: 'center',
     },
     viewCircleBtnText: {
       ...typography.sans.footnote,

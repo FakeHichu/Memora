@@ -23,4 +23,8 @@ router.get(
   "/:classId/feed",
   PostController.getClassFeed as unknown as RequestHandler,
 );
+router.delete(
+  "/:classId/leave",
+  ClassController.leaveClass as unknown as RequestHandler,
+);
 export const classRoutes = router;

@@ -11,7 +11,7 @@ export const catppuccinMocha = {
   rosewater: '#F5E0DC',
   flamingo: '#F2CDCD',
   pink: '#F5C2E7',
-  mauve: '#CBA6F7',
+  mauve: '#8052C8',
   red: '#F38BA8',
   maroon: '#EBA0AC',
   peach: '#FAB387',
@@ -21,21 +21,21 @@ export const catppuccinMocha = {
   sky: '#89DCEB',
   sapphire: '#74C7EC',
   blue: '#89B4FA',
-  lavender: '#B4BEFE',
+  lavender: '#C3A6F2',
   // Text
-  text: '#CDD6F4',
-  subtext1: '#BAC2DE',
-  subtext0: '#A6ADC8',
+  text: '#F6F0FF',
+  subtext1: '#C6B9D9',
+  subtext0: '#A99BB9',
   overlay2: '#9399B2',
   overlay1: '#7F849C',
   overlay0: '#6C7086',
   // Surfaces
   surface2: '#585B70',
-  surface1: '#45475A',
-  surface0: '#313244',
-  base: '#1E1E2E',
-  mantle: '#181825',
-  crust: '#11111B',
+  surface1: '#38304D',
+  surface0: '#211633',
+  base: '#0B0813',
+  mantle: '#151021',
+  crust: '#0B0813',
 };
 
 // ---------------------------------------------------------------------------
@@ -81,45 +81,45 @@ export const darkColors = {
   background: catppuccinMocha.base,            // #1E1E2E – main canvas
   backgroundSecondary: catppuccinMocha.mantle, // #181825
   backgroundTertiary: catppuccinMocha.crust,   // #11111B
-  backgroundElevated: catppuccinMocha.surface0,// #313244
+  backgroundElevated: '#2A2040',
 
   // ---- Cards / surfaces ----
   card: catppuccinMocha.surface0,              // #313244
   surface: catppuccinMocha.surface0,           // #313244
-  surfaceElevated: catppuccinMocha.surface1,   // #45475A
-  surfaceOverlay: catppuccinMocha.surface1,    // #45475A
+  surfaceElevated: '#2A2040',
+  surfaceOverlay: '#2A2040',
   surfaceWarm: catppuccinMocha.surface0,
-  surfaceSecondary: catppuccinMocha.surface1,
-  surfaceFloating: 'rgba(49, 50, 68, 0.95)',
-  surfaceModal: 'rgba(30, 30, 46, 0.98)',
+  surfaceSecondary: '#2A2040',
+  surfaceFloating: 'rgba(42, 32, 64, 0.95)',
+  surfaceModal: 'rgba(11, 8, 19, 0.98)',
   surfaceNavigation: catppuccinMocha.mantle,
-  glass: 'rgba(49, 50, 68, 0.80)',
-  glassStrong: 'rgba(49, 50, 68, 0.96)',
-  secondary: catppuccinMocha.surface1,
+  glass: 'rgba(42, 32, 64, 0.80)',
+  glassStrong: 'rgba(42, 32, 64, 0.96)',
+  secondary: '#2A2040',
 
   // ---- Chrome (navigation, bars) ----
   chromeDark: catppuccinMocha.surface2,
   chromeDim: catppuccinMocha.overlay1,
   chrome: catppuccinMocha.overlay2,
   chromeHighlight: catppuccinMocha.lavender,
-  chromeGlow: 'rgba(180, 190, 254, 0.20)',
+  chromeGlow: 'rgba(195, 166, 242, 0.20)',
 
   // ---- Accent (Lavender primary) ----
-  primary: catppuccinMocha.lavender,           // #B4BEFE
-  primaryDark: '#8A9AE8',
-  primaryLight: catppuccinMocha.lavender,
-  primarySoft: '#D0D7FE',
-  primaryUltraSoft: '#E8EBFF',
+  primary: catppuccinMocha.lavender,
+  primaryDark: '#8052C8',
+  primaryLight: '#D7C2FF',
+  primarySoft: '#D7C2FF',
+  primaryUltraSoft: '#E7DCFA',
   onPrimary: catppuccinMocha.crust,
   neon: catppuccinMocha.lavender,
-  accent: catppuccinMocha.lavender,            // #B4BEFE – primary accent
-  accentLight: '#C8D0FE',
+  accent: catppuccinMocha.lavender,
+  accentLight: '#D7C2FF',
   accentLavender: catppuccinMocha.lavender,
-  accentSoft: 'rgba(180, 190, 254, 0.15)',
-  accentSubtle: 'rgba(180, 190, 254, 0.12)',
+  accentSoft: 'rgba(195, 166, 242, 0.15)',
+  accentSubtle: 'rgba(195, 166, 242, 0.12)',
   accentDeep: catppuccinMocha.mauve,
   accentSoftGlow: catppuccinMocha.lavender,
-  accentGlow: 'rgba(180, 190, 254, 0.30)',
+  accentGlow: 'rgba(195, 166, 242, 0.30)',
   accentOptional1: catppuccinMocha.pink,
   accentOptional2: catppuccinMocha.teal,
 
@@ -133,7 +133,7 @@ export const darkColors = {
   textPrimary: catppuccinMocha.text,
   textSecondary: catppuccinMocha.subtext1,     // #BAC2DE
   textTertiary: catppuccinMocha.subtext0,
-  textMuted: catppuccinMocha.overlay1,         // #7F849C
+  textMuted: catppuccinMocha.subtext0,
   muted: catppuccinMocha.subtext1,
   textInverse: catppuccinMocha.crust,
   textOnPrimary: catppuccinMocha.crust,
@@ -141,9 +141,9 @@ export const darkColors = {
 
   // ---- Borders ----
   border: catppuccinMocha.surface1,            // #45475A
-  borderSubtle: 'rgba(180, 190, 254, 0.08)',
-  borderDefault: 'rgba(180, 190, 254, 0.14)',
-  borderEmphasized: 'rgba(180, 190, 254, 0.24)',
+  borderSubtle: 'rgba(195, 166, 242, 0.08)',
+  borderDefault: 'rgba(195, 166, 242, 0.14)',
+  borderEmphasized: 'rgba(195, 166, 242, 0.24)',
   borderSoft: catppuccinMocha.surface1,
   borderChrome: catppuccinMocha.surface2,
   borderHighlight: catppuccinMocha.overlay0,
@@ -167,8 +167,8 @@ export const darkColors = {
   errorBackground: 'rgba(243, 139, 168, 0.14)',
 
   // ---- Misc ----
-  patternTint: 'rgba(180, 190, 254, 0.04)',
-  patternTintCool: 'rgba(180, 190, 254, 0.03)',
+  patternTint: 'rgba(195, 166, 242, 0.04)',
+  patternTintCool: 'rgba(195, 166, 242, 0.03)',
 
   // ---- Raw palette access (use catppuccinMocha.text, etc. directly to avoid collision) ----
   rosewater: catppuccinMocha.rosewater,

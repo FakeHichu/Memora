@@ -4,6 +4,7 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
   owner: 'memora_fakehichu',
   name: 'Memora',
   slug: 'memora',
+  userInterfaceStyle: 'dark',
   scheme: process.env.EXPO_PUBLIC_APP_SCHEME ?? 'memora',
   ios: {
     ...config.ios,

@@ -33,6 +33,7 @@ interface CircleContextValue {
   refreshCircles: () => Promise<void>;
   createCircle: (name: string, schoolName?: string, year?: number) => Promise<{ success: boolean; circle?: UnifiedCircle; message: string }>;
   joinCircle: (joinCode: string) => Promise<{ success: boolean; circle?: UnifiedCircle; message: string }>;
+  leaveCircle: (circleId: string) => Promise<{ success: boolean; message: string }>;
   clearCircleCache: () => Promise<void>;
 }
 
@@ -257,6 +258,33 @@ export function CircleProvider({ children }: { children: React.ReactNode }) {
     setActiveCircle(null);
   }, []);
 
+  const leaveCircle = useCallback(async (
+    circleId: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      if (!supabase) return { success: false, message: 'Not authenticated' };
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return { success: false, message: 'Not authenticated' };
+
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/classes/${circleId}/leave`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        return { success: false, message: result.message || 'Failed to leave circle' };
+      }
+      await refreshCircles();
+      return { success: true, message: 'You have left the circle.' };
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to leave circle',
+      };
+    }
+  }, [refreshCircles]);
+
   const value: CircleContextValue = {
     activeCircle,
     circles,
@@ -266,6 +294,7 @@ export function CircleProvider({ children }: { children: React.ReactNode }) {
     refreshCircles,
     createCircle,
     joinCircle,
+    leaveCircle,
     clearCircleCache,
   };
 

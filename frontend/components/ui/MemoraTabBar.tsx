@@ -12,9 +12,9 @@ type TabConfig = {
 };
 const MAIN_TABS: TabConfig[] = [
   { routeName: 'home', label: 'Home', iconName: 'home' },
-  { routeName: 'memories', label: 'Memories', iconName: 'picture' },
+  { routeName: 'circle', label: 'Circles', iconName: 'users' },
   { routeName: 'create', label: 'Create', iconName: 'plus' },
-  { routeName: 'circle', label: 'Circle', iconName: 'users' },
+  { routeName: 'memories', label: 'Notifications', iconName: 'bell' },
   { routeName: 'profile', label: 'Profile', iconName: 'user' },
 ];
 export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
@@ -27,7 +27,6 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
   const isCreateTab = (routeName: string) => routeName === 'create';
   return (
     <View
-      pointerEvents="box-none"
       style={[
         styles.wrapper,
         {
@@ -70,6 +69,7 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
                     color={colors.textInverse}
                   />
                 </View>
+                <Text style={styles.inactiveLabel}>{tab.label}</Text>
               </Pressable>
             );
           }
@@ -97,9 +97,7 @@ export function MemoraTabBar({ state, navigation }: BottomTabBarProps) {
                   color={isFocused ? colors.textPrimary : colors.textSecondary}
                 />
               </View>
-              {isFocused && (
-                <Text style={styles.activeLabel}>{tab.label}</Text>
-              )}
+              <Text style={[styles.activeLabel, !isFocused && styles.inactiveLabel]}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -118,19 +116,21 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       justifyContent: 'center',
       zIndex: 999,
       pointerEvents: 'box-none',
-      paddingHorizontal: 20,
+      paddingHorizontal: 0,
     },
     navContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: isDark ? colors.surfaceNavigation : colors.card,
-      borderRadius: 999,
-      paddingVertical: 8,
+      justifyContent: 'space-around',
+      width: '100%',
+      backgroundColor: colors.backgroundSecondary,
+      borderTopLeftRadius: 18,
+      borderTopRightRadius: 18,
+      paddingTop: 7,
+      paddingBottom: 5,
       paddingHorizontal: 8,
-      gap: 6,
-      borderWidth: 1,
-      borderColor: isDark ? colors.borderEmphasized : colors.borderDefault,
+      borderTopWidth: 1,
+      borderColor: colors.border,
       ...(Platform.OS === 'web'
         ? ({
             backdropFilter: 'blur(32px) saturate(180%)',
@@ -148,40 +148,34 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
           }),
     },
     tabButton: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 8,
-      paddingHorizontal: 4,
-      paddingVertical: 4,
-      borderRadius: 999,
-      transitionDuration: '200ms',
-      minWidth: 48,
+      gap: 2,
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+      flex: 1,
+      minWidth: 0,
     } as any,
     tabButtonActive: {
-      paddingHorizontal: 12,
-      paddingVertical: 4,
-      backgroundColor: isDark ? colors.surface : colors.surfaceOverlay,
-      minWidth: 110,
+      backgroundColor: 'transparent',
     },
     tabButtonPressed: {
       opacity: 0.7,
       transform: [{ scale: 0.95 }],
     },
     iconCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 25,
+      height: 25,
+      borderRadius: 13,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(48, 36, 61, 0.05)',
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(48, 36, 61, 0.08)',
+      backgroundColor: 'transparent',
     },
     iconCircleActive: {
-      backgroundColor: isDark ? colors.accent : colors.accent,
-      borderColor: isDark ? colors.accentLight : colors.accentDeep,
-      borderWidth: 1.5,
+      backgroundColor: 'rgba(195,166,242,0.16)',
+      borderColor: 'transparent',
+      borderWidth: 0,
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: isDark
@@ -197,22 +191,24 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
           }),
     },
     activeLabel: {
-      fontSize: 14,
+      fontSize: 9,
       fontWeight: '600',
-      color: colors.textPrimary,
-      letterSpacing: -0.2,
-      marginRight: 4,
+      color: colors.primary,
+      letterSpacing: 0,
+    },
+    inactiveLabel: {
+      color: colors.textSecondary,
     },
     createButton: {
-      marginHorizontal: 4,
-      width: 64,
+      marginHorizontal: 0,
+      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
     },
     createIconCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.accent,

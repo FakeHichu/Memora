@@ -85,7 +85,7 @@ export function BackgroundPattern({
   if (!enabled || patternElements.length === 0) return null;
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.containerWeb, style]} pointerEvents="none">
+      <View style={[styles.containerWeb, style, { pointerEvents: 'none' }]}>
         {patternElements.map((el) => (
           <Text
             key={el.id}
@@ -108,7 +108,7 @@ export function BackgroundPattern({
     );
   }
   return (
-    <View style={[styles.container, style]} pointerEvents="none">
+    <View style={[styles.container, style, { pointerEvents: 'none' }]}>
       {patternElements.map((el) => (
         <Text
           key={el.id}

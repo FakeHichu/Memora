@@ -327,6 +327,14 @@ export default function CircleScreen() {
           <>
             {/* Prominent Active Circle Identification Banner */}
             <View style={styles.activeCircleBanner}>
+              {sharedPosts[0]?.uri ? (
+                <Image
+                  source={{ uri: sharedPosts[0].uri }}
+                  style={styles.circleCoverImage}
+                  resizeMode="cover"
+                  accessibilityLabel={`${activeClass.name} cover photo`}
+                />
+              ) : null}
               <View style={styles.activeBannerTop}>
                 <View style={styles.activeIndicatorRow}>
                   <View style={styles.activeDotPulse} />
@@ -635,11 +643,11 @@ function createStyles(colors: ThemeColors) {
     activeCircleBanner: {
       marginHorizontal: spacing.lg,
       marginBottom: spacing.md,
-      padding: spacing.lg,
       backgroundColor: colors.surface,
       borderRadius: radius.xxl,
-      borderWidth: 1.5,
-      borderColor: colors.accent,
+      borderWidth: borders.thin,
+      borderColor: colors.border,
+      overflow: 'hidden',
       ...(Platform.OS === 'web'
         ? { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }
         : {
@@ -654,10 +662,16 @@ function createStyles(colors: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: spacing.md,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.md,
+      marginBottom: spacing.sm,
       paddingBottom: spacing.sm,
       borderBottomWidth: borders.hairline,
       borderBottomColor: colors.borderSoft,
+    },
+    circleCoverImage: {
+      width: '100%',
+      height: 136,
     },
     activeIndicatorRow: {
       flexDirection: 'row',
@@ -701,6 +715,7 @@ function createStyles(colors: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
+      marginHorizontal: spacing.lg,
       marginBottom: spacing.md,
     },
     classAvatar: {
@@ -735,6 +750,7 @@ function createStyles(colors: ThemeColors) {
       marginTop: 1,
     },
     switcherSection: {
+      marginHorizontal: spacing.lg,
       marginBottom: spacing.md,
       paddingTop: spacing.xs,
     },
@@ -771,6 +787,8 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '700',
     },
     classStats: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
       flexDirection: 'row',
       paddingTop: spacing.md,
       borderTopWidth: borders.hairline,

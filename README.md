@@ -1,98 +1,102 @@
-# Memora - Class Memory Sharing App
+# Memora — Class Memory Sharing App
 
-A private, class-based photo sharing application built with React Native (Expo) and Node.js backend.
+A private, class-based photo sharing application built with React Native (Expo) and a Node.js/Express backend, using Supabase for auth, database, and storage.
 
-![Memora Logo](https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=82)
+## Status
 
-## 📱 Overview
+Cross-user photo sharing is **fully operational** when both the backend and Supabase credentials are configured. Without credentials the app falls back to a login screen (no silent bypass). A user without credentials sees the auth screen, not the main feed.
 
-Memora helps classes capture and share daily moments through photos. Users can create or join classes, upload photos with daily prompts, and view a filtered feed of memories from their class community.
+## Features
 
-## ✨ Features
+### Circles (Classes)
+- Create private circles with auto-generated 8-character join codes
+- Join circles using invite codes
+- Leave any circle you are not the owner of (`DELETE /api/classes/:id/leave`)
+- Switch between multiple circles without logging out
+- Member list visible to all members of the same circle
 
-### Class Management
-- Create private class circles with 8-character join codes
-- Join classes using invitation codes
-- Automatic owner assignment and member role management
-- View all classes you're a member of
+### Shared Memory Feed
+- Upload photos from camera or gallery
+- Photos go to Supabase Storage (`class-photos` bucket, private)
+- Backend signs time-limited download URLs (7-day expiry)
+- Feed loads all posts for the active circle via `GET /api/classes/:id/feed`
+- Pull-to-refresh, loading skeletons, empty states
 
-### Daily Posts
-- Upload daily photos with captions
-- Daily prompts to inspire memories
-- Class-wide feed showing all members' posts
-- Reaction system (heart, laugh, cry, fire, dead, respect)
-- Comment on posts
+### Interactions
+- Six reaction types: heart, laugh, cry, fire, dead, respect
+- Toggle reactions (re-sending the same type removes it)
+- Comments — any authenticated circle member can comment
+- Edit and delete own comments
 
 ### Security
-- JWT authentication via Supabase
-- Row-level security (RLS) for data isolation
-- Member-only access to class content
-- Unique and validated join codes
+- JWT authentication via Supabase Auth on every backend request
+- Row Level Security on all tables (see migrations 003, 007, 008, 009)
+- Storage bucket is private; only class members can read their class folder
+- Owners cannot leave their own class (must transfer ownership first)
+- Service-role key is backend-only; never sent to clients
 
-## 🚀 Quick Start
+### Themes
+- **Default**: Catppuccin Mocha (dark) — `#1E1E2E` base, `#B4BEFE` lavender accent
+- **Light**: Catppuccin Latte — `#EFF1F5` base, `#7287FD` lavender accent
+- Persisted across restarts; switchable from Profile → Appearance
+
+---
+
+## Quick Start
 
 ### Prerequisites
-- Node.js (v18+)
-- Supabase account
-- Expo CLI
-- Android Studio (for Android testing) or iOS Simulator
+- Node.js 18+
+- A Supabase project
+- Expo CLI (`npm install -g expo-cli`)
 
-### 1. Backend Setup
+### 1. Database
+
+Run migrations in the Supabase SQL editor in order:
+
+```
+database/migrations/001_initial_schema.sql
+database/migrations/002_class_creation_rpc.sql
+database/migrations/003_daily_photo_storage_policies.sql
+database/migrations/004_extended_schema.sql
+database/migrations/005_comments_reactions.sql
+database/migrations/006_fix_class_creation_function.sql
+database/migrations/007_circles_implementation.sql
+database/migrations/008_fixes_and_improvements.sql   ← adds member_count, bio, join_requests
+database/migrations/009_rls_security_fixes.sql        ← RLS on all previously unprotected tables
+```
+
+### 2. Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your Supabase credentials
+# Fill in SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
 npm run dev
 ```
 
-Backend runs on `http://localhost:4000`
+Runs on `http://localhost:4000`.
 
-### 2. Frontend Setup
+### 3. Frontend
 
 ```bash
 cd frontend
 npm install
 cp .env.example .env
-# Edit .env with your configuration
+# Fill in EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY, EXPO_PUBLIC_BACKEND_URL
 npx expo start
 ```
 
 **Platform-specific backend URLs:**
-- **Web**: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4000`
-- **Android Emulator**: `EXPO_PUBLIC_BACKEND_URL=http://10.0.2.2:4000`
-- **Physical Android**: `EXPO_PUBLIC_BACKEND_URL=http://YOUR_LOCAL_IP:4000`
-- **iOS Simulator**: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4000`
+| Platform | `EXPO_PUBLIC_BACKEND_URL` |
+|---|---|
+| Web / iOS Simulator | `http://localhost:4000` |
+| Android Emulator | `http://10.0.2.2:4000` |
+| Physical device | `http://<your-local-ip>:4000` |
 
-## 📁 Project Structure
+---
 
-```
-memora/
-├── backend/               # Node.js + Express API
-│   ├── src/
-│   │   ├── controllers/  # Route handlers
-│   │   ├── services/     # Business logic
-│   │   ├── repositories/ # Database access
-│   │   ├── middleware/   # Auth & error handling
-│   │   ├── validators/   # Input validation (Zod)
-│   │   └── routes/       # API routes
-│   └── package.json
-│
-├── frontend/             # React Native (Expo)
-│   ├── app/             # File-based routing
-│   │   ├── (auth)/      # Login, register
-│   │   ├── (onboarding)/ # Create/join class
-│   │   └── (tabs)/      # Main app tabs
-│   ├── components/      # Reusable UI
-│   ├── hooks/          # Custom React hooks
-│   └── lib/            # Utilities & Supabase client
-│
-└── database/
-    └── migrations/       # Supabase schema
-```
-
-## 🔑 Environment Variables
+## Environment Variables
 
 ### Backend (`backend/.env`)
 
@@ -108,172 +112,100 @@ NODE_ENV=development
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-EXPO_PUBLIC_BACKEND_URL=http://10.0.2.2:4000
-EXPO_PUBLIC_APP_NAME=Memora
-EXPO_PUBLIC_APP_SCHEME=memora
+EXPO_PUBLIC_BACKEND_URL=http://localhost:4000
 ```
 
-> ⚠️ **Important**: Never commit `.env` files to version control. The service role key must only exist in the backend.
+> ⚠️ Never commit `.env` files. The service role key must only exist on the backend.
 
-## 🧪 Testing
+---
 
-### Backend Commands
+## Project Structure
+
+```
+memora/
+├── backend/
+│   └── src/
+│       ├── controllers/   route handlers
+│       ├── services/      business logic
+│       ├── repositories/  database access (Supabase admin client)
+│       ├── middleware/    auth (JWT) + error handler
+│       ├── validators/    Zod schemas
+│       └── routes/        Express routers
+├── frontend/
+│   ├── app/
+│   │   ├── (auth)/        login · register · forgot-password · callback
+│   │   ├── (onboarding)/  create-class · join-class · welcome
+│   │   └── (tabs)/        home · memories · create · circle · profile
+│   ├── components/
+│   │   ├── circle/        CircleHomeSection · CircleSwitcher · …
+│   │   └── ui/            Button · Avatar · MemoryCard · MemoraTabBar · …
+│   ├── constants/theme.ts  Catppuccin Mocha + Latte design tokens
+│   ├── contexts/          CircleContext (active circle, join, leave)
+│   ├── hooks/             useAuth · useClass · useCircleFeed · …
+│   └── providers/         ThemeProvider (default: dark)
+└── database/migrations/
+```
+
+---
+
+## API Reference
+
+All routes require `Authorization: Bearer <access_token>` except `/api/health` and `/api/ready`.
+
+### Classes
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/classes` | Create a class |
+| `POST` | `/api/classes/join` | Join via invite code |
+| `GET` | `/api/classes` | List user's classes |
+| `GET` | `/api/classes/:id` | Class details |
+| `GET` | `/api/classes/:id/members` | Member list |
+| `GET` | `/api/classes/:id/feed` | All posts in class |
+| `GET` | `/api/classes/:id/feed/today` | Posts + today status |
+| `DELETE` | `/api/classes/:id/leave` | Leave a class (non-owners) |
+
+### Posts
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/posts/upload` | Upload photo to storage |
+| `POST` | `/api/posts` | Create post record |
+| `PATCH` | `/api/posts/:id` | Update caption |
+| `DELETE` | `/api/posts/:id` | Delete own post |
+| `POST` | `/api/posts/:id/reactions` | Toggle reaction |
+| `POST` | `/api/posts/:id/comments` | Add comment |
+| `GET` | `/api/posts/:id/comments` | List comments |
+| `PATCH` | `/api/posts/:id/comments/:cid` | Edit own comment |
+| `DELETE` | `/api/posts/:id/comments/:cid` | Delete own comment |
+| `POST` | `/api/posts/:id/comments/:cid/reactions` | React to comment |
+
+### Circles (sub-groups, migration 007)
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/circles` | Create circle inside a class |
+| `GET` | `/api/circles` | User's circles |
+| `POST` | `/api/circles/:id/join` | Join circle |
+| `GET` | `/api/circles/:id/feed` | Circle posts feed |
+
+---
+
+## Security Notes
+
+- Migrations 008 and 009 must be run to close the gaps left by migrations 004 and 005.
+- 004 and 005 used `grant all ... to public, anon, authenticated` without enabling RLS. Migration 009 enables RLS on all 17 affected tables and revokes the `anon` grants.
+- The `class_members` SELECT policy was narrowed in 003 (self-read only). Migration 009 replaces it with a policy that allows members to see everyone in classes they belong to.
+- The splash screen routes unauthenticated users to the login screen regardless of Supabase configuration state; there is no silent bypass into the main app.
+
+---
+
+## Development Commands
 
 ```bash
-npm run build      # TypeScript compilation
-npm run typecheck  # Type checking only
-npm run dev        # Development server
+# Frontend
+npx expo start              # dev server
+npx tsc --noEmit            # type check (0 errors expected)
+npx eslint . --max-warnings=0
+
+# Backend
+npm run dev                 # ts-node dev server
+npx tsc --noEmit            # type check (0 errors expected)
 ```
-
-### Frontend Commands
-
-```bash
-npx expo start         # Start dev server
-npx expo start -c      # Clear cache and start
-npx expo start --web   # Web only
-```
-
-### Manual Test Flow
-
-1. **Create Class**: User A creates "CS 2024" → receives 8-char code
-2. **Join Class**: User B enters code → successfully joins
-3. **Verify**: Both users see class in their list
-4. **Duplicate Check**: User B rejoins → handled gracefully
-5. **Invalid Code**: User C tries "FAKE1234" → error shown
-```
-
-## 📊 Database Schema
-
-### Core Tables
-- `profiles` - User profiles
-- `classes` - Class circles
-- `class_members` - Class membership with roles
-- `daily_posts` - Photo posts with date
-- `reactions` - Post reactions (heart, laugh, etc.)
-- `daily_prompts` - Daily photo prompts
-
-### Key Constraints
-- Unique join codes (8 characters)
-- Unique class membership per user
-- One post per user per day per class
-```
-
-## 🛠️ Development Commands
-
-### Backend
-
-```bash
-npm run dev        # Start dev server with watch
-npm run build      # Compile TypeScript
-npm run start      # Run compiled code
-npm run typecheck  # Check types without building
-```
-
-### Frontend
-
-```bash
-npx expo start         # Start dev server
-npx expo start -c      # Clear cache and start
-npx expo start --web   # Web only
-npx expo start --android # Android only
-npx expo start --ios   # iOS only
-```
-```
-
-## 🐛 Common Issues & Solutions
-
-### Backend won't start
-```bash
-cd backend
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-### Frontend can't connect to backend
-1. Check backend is running: `curl http://localhost:4000`
-2. Verify `.env` has correct URL for your platform
-3. For Android: Use `10.0.2.2` not `localhost`
-4. Restart Expo: Press `r` in terminal
-
-### Database errors
-1. Check Supabase dashboard for logs
-2. Verify migrations are applied
-3. Check service role key is correct
-3. Ensure RPC function `create_class_with_owner` exists
-
-### Android emulator connection
-1. Backend URL must be `http://10.0.2.2:4000`
-2. Backend must be running on host machine
-3. Restart Expo dev server after `.env` changes
-4. Clear Expo cache: `npx expo start -c`
-```
-
-## 🔐 Security Notes
-
-- Never commit `.env` files to version control
-- Service role key only in backend (never frontend)
-- All API endpoints require authentication
-- RLS policies enforce data isolation
-- Join codes are unique and validated
-```
-
-## 📦 Database Migrations
-
-Apply migrations in order via Supabase Dashboard SQL Editor or CLI:
-
-1. `001_initial_schema.sql` - Core tables
-2. `002_class_creation_rpc.sql` - Atomic class creation
-3. `003_daily_photo_storage_policies.sql` - Storage RLS
-4. `004_extended_schema.sql` - Groups & advanced features
-5. `005_comments_reactions.sql` - Social features
-
-```
-```
-
-## 🚢 Deployment
-
-### Backend
-- Configure environment variables in hosting platform
-- Build: `npm run build`
-- Start: `npm run start`
-- Ensure port 4000 accessible (or configure PORT env var)
-
-### Frontend
-```bash
-# Build for production
-npx expo build:android
-npx expo build:ios
-npx expo build:web
-
-# Or use EAS Build
-eas build --platform android
-eas build --platform ios
-```
-```
-
-## 🤝 Contributing
-
-1. Create feature branch
-2. Make changes
-3. Test thoroughly
-4. Build backend: `cd backend && npm run build`
-5. Commit with descriptive message
-6. Create pull request
-```
-
-## 📄 License
-
-Private project - All rights reserved
-
-## 🆘 Support
-
-For issues or questions:
-1. Check this README
-2. Review `.env.example` files
-3. Check Supabase dashboard logs
-4. Review backend logs
-
-**Last Updated**: 2026
-
-**Version**: 1.0.0

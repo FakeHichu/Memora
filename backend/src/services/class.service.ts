@@ -157,4 +157,8 @@ export class ClassService {
   static async getUserClasses(userId: string): Promise<ClassEntity[]> {
     return ClassRepository.getUserClasses(userId);
   }
+
+  static async leaveClass(classId: string, userId: string): Promise<void> {
+    return ClassRepository.leaveClass(classId, userId);
+  }
 }

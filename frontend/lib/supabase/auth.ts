@@ -1,9 +1,10 @@
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
+import { Platform } from 'react-native';
 import { supabase } from './client';
 
 // Complete the browser session for OAuth
-WebBrowser.maybeCompleteAuthSession();
+if (Platform.OS !== 'web') WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithEmail(email: string, password: string) {
   if (!supabase) return { data: null, error: new Error('Supabase is not configured.') };
@@ -28,6 +29,14 @@ export async function signInWithGoogle() {
   if (!supabase) return { data: null, error: new Error('Supabase is not configured.') };
 
   try {
+    if (Platform.OS === 'web') {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/callback` },
+      });
+      return { data: { session: null, user: null }, error };
+    }
+
     // Create the redirect URI
     const redirectTo = makeRedirectUri({
       scheme: 'memora',

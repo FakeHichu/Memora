@@ -2,7 +2,6 @@ import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -18,8 +17,9 @@ import type { ThemeColors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { HeartMark } from '@/components/ui/HeartMark';
 export default function LoginScreen() {
-  const { colors, mode, setMode } = useAppTheme();
+  const { colors, mode } = useAppTheme();
   const styles = createStyles(colors, mode);
   const { rememberMe, setRememberMe, signInWithEmail, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
@@ -131,7 +131,6 @@ export default function LoginScreen() {
     }
   };
   const continueLocally = () => router.replace('/(onboarding)/welcome');
-  const toggleTheme = () => setMode(mode === 'dark' ? 'light' : 'dark');
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
@@ -203,38 +202,22 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <BackgroundPattern />
-      {/* Top right theme toggle */}
-      <View style={styles.topBar}>
-        <Pressable
-          onPress={toggleTheme}
-          style={styles.themeToggle}
-          accessibilityLabel={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          <Text style={styles.themeToggleText}>
-            {mode === 'dark' ? '☀️ Light' : '🌙 Midnight'}
-          </Text>
-        </Pressable>
-      </View>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           {/* Brand Mark Pill */}
           <View style={styles.brandRow}>
             <View style={styles.brandMark}>
-              <Image
-                source={require('@/assets/brand/logo-cat.png')}
-                style={styles.brandMarkImage}
-                resizeMode="cover"
-              />
+              <HeartMark size={46} />
             </View>
             <View>
-              <Text style={styles.brandName}>MEMORA</Text>
-              <Text style={styles.brandTagline}>Memory Capsule</Text>
+              <Text style={styles.brandName}>Memora</Text>
+              <Text style={styles.brandTagline}>Your class. Your people. Your memories.</Text>
             </View>
           </View>
           {/* Heading */}
           <View style={styles.headerBlock}>
-            <Text style={styles.title}>Welcome back</Text>
-            <Text style={styles.subtitle}>Sign in to access your memories and moments.</Text>
+            <Text style={styles.title}>Welcome back! 👋</Text>
+            <Text style={styles.subtitle}>Your class memories, all in one place.</Text>
           </View>
           {/* Form Card */}
           <View style={styles.card}>
@@ -242,7 +225,6 @@ export default function LoginScreen() {
               <>
                 {/* Email field */}
                 <View style={styles.fieldContainer}>
-                  <Text style={styles.fieldLabel}>Email address</Text>
                   <View style={[styles.inputTrack, emailError && styles.inputError]}>
                     <Icon name="envelope" size={18} color={colors.textSecondary} />
                     <TextInput
@@ -253,7 +235,7 @@ export default function LoginScreen() {
                         if (errorMessage) setErrorMessage(null);
                       }}
                       onBlur={() => email && validateEmail(email)}
-                      placeholder="you@example.com"
+                      placeholder="Email address"
                       placeholderTextColor={colors.textMuted}
                       autoCapitalize="none"
                       autoComplete="email"
@@ -261,13 +243,13 @@ export default function LoginScreen() {
                       returnKeyType="next"
                       editable={!isSubmitting}
                       style={styles.input}
+                      accessibilityLabel="Email address"
                     />
                   </View>
                   {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
                 </View>
                 {/* Password field */}
                 <View style={styles.fieldContainer}>
-                  <Text style={styles.fieldLabel}>Password</Text>
                   <View style={[styles.inputTrack, passwordError && styles.inputError]}>
                     <Icon name="padlock" size={18} color={colors.textSecondary} />
                     <TextInput
@@ -286,6 +268,7 @@ export default function LoginScreen() {
                       onSubmitEditing={handleLogin}
                       editable={!isSubmitting}
                       style={styles.input}
+                      accessibilityLabel="Password"
                     />
                     <Pressable
                       onPress={() => setShowPassword(!showPassword)}
@@ -449,25 +432,24 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       width: '100%',
       maxWidth: 440,
       alignSelf: 'center',
-      gap: 20,
+      gap: 14,
     },
     brandRow: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       alignItems: 'center',
-      gap: 14,
+      gap: 5,
       alignSelf: 'center',
-      marginBottom: 6,
+      marginBottom: 2,
     },
     brandMark: {
-      width: 52,
-      height: 52,
-      borderRadius: 18,
+      width: 64,
+      height: 64,
+      borderRadius: 0,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#0E0D17',
-      overflow: 'hidden',
-      borderWidth: 1.5,
-      borderColor: 'rgba(128, 82, 200, 0.4)',
+      backgroundColor: 'transparent',
+      overflow: 'visible',
+      borderWidth: 0,
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: `0 8px 24px ${isDark ? 'rgba(128, 82, 200, 0.4)' : 'rgba(128, 101, 143, 0.3)'}`,
@@ -486,37 +468,37 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       borderRadius: 18,
     },
     brandName: {
-      fontSize: 20,
-      fontWeight: '800',
+      fontSize: 22,
+      fontWeight: '700',
       color: colors.textPrimary,
-      letterSpacing: 2,
+      letterSpacing: -0.4,
     },
     brandTagline: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textSecondary,
       fontWeight: '500',
-      letterSpacing: 0.5,
+      letterSpacing: 0,
     },
     headerBlock: {
       alignItems: 'center',
       gap: 6,
     },
     title: {
-      fontSize: 28,
+      fontSize: 21,
       fontWeight: '800',
       color: colors.textPrimary,
       letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 15,
+      fontSize: 12,
       color: colors.textSecondary,
       textAlign: 'center',
       lineHeight: 22,
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 28,
-      padding: 24,
+      borderRadius: 18,
+      padding: 16,
       borderWidth: 1,
       borderColor: colors.borderSoft,
       gap: 18,

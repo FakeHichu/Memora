@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
-import { Icon } from '@/components/ui/Icons';
+import { HeartMark } from '@/components/ui/HeartMark';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
 export default function SplashScreen() {
   const { colors } = useAppTheme();
@@ -20,13 +21,13 @@ export default function SplashScreen() {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 6,
         tension: 40,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
     const pulseLoop = Animated.loop(
@@ -35,13 +36,13 @@ export default function SplashScreen() {
           toValue: 1.06,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.98,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );
@@ -53,20 +54,29 @@ export default function SplashScreen() {
       useNativeDriver: false,
     }).start();
     async function checkAuthAndNavigate() {
-      let targetRoute = '/(auth)/login';
-      if (hasSupabaseConfig && supabase) {
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          if (!error && data.session) {
-            targetRoute = '/(tabs)/home';
-          }
-        } catch (err) {
-          console.warn('Auth check failed:', err);
-        }
-      } else {
-        targetRoute = '/(tabs)/home';
+      // When Supabase is not configured this is a development/demo build.
+      // We still route to login so the user sees the intentional entry point
+      // rather than landing silently inside the app without a session.
+      if (!hasSupabaseConfig || !supabase) {
+        // No backend configured: show login screen which will offer a
+        // "continue without account" option via the hasSupabaseConfig branch.
+        setDestinationRoute('/(auth)/login');
+        return;
       }
-      setDestinationRoute(targetRoute);
+
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (!error && data.session) {
+          setDestinationRoute('/(tabs)/home');
+        } else {
+          setDestinationRoute('/(auth)/login');
+        }
+      } catch (err) {
+        console.warn('Auth check failed during splash:', err);
+        // Network error or Supabase unavailable — route to login.
+        // The login screen handles reconnection gracefully.
+        setDestinationRoute('/(auth)/login');
+      }
     }
     checkAuthAndNavigate();
     const timer = setTimeout(() => {
@@ -82,7 +92,7 @@ export default function SplashScreen() {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         router.replace(destinationRoute as any);
       });
@@ -94,6 +104,12 @@ export default function SplashScreen() {
   });
   return (
     <SafeAreaView style={styles.container}>
+      <View style={[styles.waveContainer, { pointerEvents: 'none' }]}>
+        <Svg width="100%" height="100%" viewBox="0 0 390 220" preserveAspectRatio="none">
+          <Path d="M0 65C70 25 106 122 181 115c72-7 119-86 209-42v147H0Z" fill="#8052C8" opacity={0.28} />
+          <Path d="M0 102c65-12 94 35 155 43 90 11 150-57 235-38v113H0Z" fill="#C3A6F2" opacity={0.16} />
+        </Svg>
+      </View>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {/* Ambient background glow */}
         <View style={styles.ambientGlow} />
@@ -108,24 +124,15 @@ export default function SplashScreen() {
             ]}
           >
             <View style={styles.logoBadge}>
-              <Image
-                source={require('@/assets/brand/logo-cat.png')}
-                style={styles.logoImage}
-                resizeMode="cover"
-              />
+              <HeartMark size={70} />
             </View>
           </Animated.View>
           <Text style={styles.appName}>Memora</Text>
-          <Text style={styles.appTagline}>Capture & relive every moment</Text>
+          <Text style={styles.appTagline}>Your class. Your people. Your memories.</Text>
           {/* WhatsApp-style mini progress indicator */}
           <View style={styles.progressBarTrack}>
             <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
           </View>
-        </View>
-        {/* WhatsApp-style bottom footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerPrefix}>FROM</Text>
-          <Text style={styles.footerBrand}>MEMORA</Text>
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -136,6 +143,13 @@ function createStyles(colors: ThemeColors) {
     container: {
       flex: 1,
       backgroundColor: colors.background,
+    },
+    waveContainer: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: '34%',
     },
     content: {
       flex: 1,

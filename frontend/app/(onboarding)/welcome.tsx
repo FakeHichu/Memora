@@ -1,24 +1,32 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Icon, type JamIconName } from '@/components/ui/Icons';
 import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { borders, radius, spacing, typography } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { HeartMark } from '@/components/ui/HeartMark';
 
-const features: { icon: JamIconName; title: string; detail: string }[] = [
-  { icon: 'camera', title: 'Save a moment', detail: 'Photos, right from your day' },
-  { icon: 'pencil', title: 'Tell its story', detail: 'Add the little details' },
-  { icon: 'calendar', title: 'Look back', detail: 'Memories, in their own time' },
-  { icon: 'search', title: 'Find it again', detail: 'Your moments, easy to find' },
+const ONBOARDING_SLIDES = [
+  {
+    title: 'Capture Memories\nTogether',
+    subtitle: 'Share photos, relive moments,\nand stay connected with your circle.',
+    illustration: 'photos',
+  },
+  {
+    title: 'Your Circle,\nYour World',
+    subtitle: 'Be part of your class circle\nand see what everyone shares.',
+    illustration: 'people',
+  },
 ];
 
 export default function WelcomeScreen() {
   const { colors, mode } = useAppTheme();
   const isDark = mode === 'dark';
   const styles = createStyles(colors, isDark);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -29,11 +37,7 @@ export default function WelcomeScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.brandRow}>
           <View style={styles.brandMark}>
-            <Image
-              source={require('@/assets/brand/logo-cat.png')}
-              style={styles.brandMarkImage}
-              resizeMode="cover"
-            />
+            <HeartMark size={30} />
           </View>
           <Text style={styles.brandName}>MEMORA</Text>
           <View style={styles.privatePill}>
@@ -243,7 +247,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       position: 'absolute',
       zIndex: 1,
       borderRadius: radius.lg,
-      backgroundColor: isDark ? 'rgba(49, 50, 68, 0.90)' : 'rgba(255, 255, 255, 0.90)',
+      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.90)' : 'rgba(255, 255, 255, 0.90)',
       borderWidth: borders.thin,
       borderColor: colors.borderSoft,
     },
@@ -300,7 +304,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       width: 194,
       padding: spacing.sm,
       borderRadius: radius.xl,
-      backgroundColor: isDark ? 'rgba(49, 50, 68, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.95)' : 'rgba(255, 255, 255, 0.95)',
       borderWidth: borders.thin,
       borderColor: colors.borderSoft,
       transform: [{ rotate: '-2deg' }],
@@ -309,7 +313,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       height: 112,
       overflow: 'hidden',
       borderRadius: radius.lg,
-      backgroundColor: isDark ? '#45475A' : '#B4BEFE',
+      backgroundColor: isDark ? '#2A2040' : '#C3A6F2',
     },
     previewSun: {
       position: 'absolute',
@@ -338,7 +342,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       bottom: -42,
       borderRadius: 70,
       transform: [{ rotate: '15deg' }],
-      backgroundColor: isDark ? '#313244' : '#8FA1FE',
+      backgroundColor: isDark ? '#211633' : '#8052C8',
       borderWidth: 1,
       borderColor: colors.borderSoft,
     },
@@ -384,7 +388,7 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       paddingRight: spacing.md,
       paddingVertical: spacing.xs,
       borderRadius: radius.round,
-      backgroundColor: isDark ? 'rgba(49, 50, 68, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: isDark ? 'rgba(33, 22, 51, 0.95)' : 'rgba(255, 255, 255, 0.95)',
       borderWidth: borders.thin,
       borderColor: colors.accent,
     },

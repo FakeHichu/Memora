@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -17,6 +16,7 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { Icon } from '@/components/ui/Icons';
 import type { ThemeColors } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
+import { HeartMark } from '@/components/ui/HeartMark';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterScreen() {
@@ -250,22 +250,18 @@ export default function RegisterScreen() {
           {/* Brand Row */}
           <View style={styles.brandRow}>
             <View style={styles.brandMark}>
-              <Image
-                source={require('@/assets/brand/logo-cat.png')}
-                style={styles.brandMarkImage}
-                resizeMode="cover"
-              />
+              <HeartMark size={46} />
             </View>
             <View>
-              <Text style={styles.brandName}>MEMORA</Text>
-              <Text style={styles.brandTagline}>Memory Capsule</Text>
+              <Text style={styles.brandName}>Memora</Text>
+              <Text style={styles.brandTagline}>Your class. Your people. Your memories.</Text>
             </View>
           </View>
 
           {/* Heading */}
           <View style={styles.headerBlock}>
-            <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.subtitle}>Join your class and start saving memories together.</Text>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join your class circle today!</Text>
           </View>
 
           {/* Card */}
@@ -473,22 +469,21 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       gap: 18,
     },
     brandRow: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       alignItems: 'center',
-      gap: 14,
+      gap: 5,
       alignSelf: 'center',
-      marginBottom: 4,
+      marginBottom: 2,
     },
     brandMark: {
-      width: 52,
-      height: 52,
-      borderRadius: 18,
+      width: 64,
+      height: 64,
+      borderRadius: 0,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#0E0D17',
-      overflow: 'hidden',
-      borderWidth: 1.5,
-      borderColor: 'rgba(128, 82, 200, 0.4)',
+      backgroundColor: 'transparent',
+      overflow: 'visible',
+      borderWidth: 0,
       ...(Platform.OS === 'web'
         ? ({
             boxShadow: `0 8px 24px ${isDark ? 'rgba(128, 82, 200, 0.4)' : 'rgba(128, 101, 143, 0.3)'}`,
@@ -507,37 +502,37 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       borderRadius: 18,
     },
     brandName: {
-      fontSize: 20,
-      fontWeight: '800',
+      fontSize: 22,
+      fontWeight: '700',
       color: colors.textPrimary,
-      letterSpacing: 2,
+      letterSpacing: -0.4,
     },
     brandTagline: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textSecondary,
       fontWeight: '500',
-      letterSpacing: 0.5,
+      letterSpacing: 0,
     },
     headerBlock: {
       alignItems: 'center',
       gap: 6,
     },
     title: {
-      fontSize: 28,
+      fontSize: 21,
       fontWeight: '800',
       color: colors.textPrimary,
       letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 15,
+      fontSize: 12,
       color: colors.textSecondary,
       textAlign: 'center',
       lineHeight: 22,
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 28,
-      padding: 24,
+      borderRadius: 18,
+      padding: 16,
       borderWidth: 1,
       borderColor: colors.borderSoft,
       gap: 16,

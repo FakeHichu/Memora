@@ -220,6 +220,30 @@ export class ClassRepository {
     return data as ClassEntity | null;
   }
 
+  static async leaveClass(classId: string, userId: string): Promise<void> {
+    // Owners cannot leave — they must transfer ownership or archive the class first.
+    const { data: membership, error: memberErr } = await supabaseAdmin
+      .from("class_members")
+      .select("role")
+      .eq("class_id", classId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (memberErr) throw memberErr;
+    if (!membership) throw Object.assign(new Error("You are not a member of this class."), { status: 404 });
+    if (membership.role === "owner") {
+      throw Object.assign(
+        new Error("Class owners cannot leave. Transfer ownership or archive the class first."),
+        { status: 403 },
+      );
+    }
+    const { error } = await supabaseAdmin
+      .from("class_members")
+      .delete()
+      .eq("class_id", classId)
+      .eq("user_id", userId);
+    if (error) throw error;
+  }
+
   static async findById(classId: string): Promise<ClassEntity | null> {
     const { data, error } = await supabaseAdmin
       .from("classes")

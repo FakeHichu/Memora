@@ -82,6 +82,7 @@ export default function HomeScreen() {
             user.email?.split('@')[0] ||
             'Memory Keeper';
           setProfileName(displayName);
+          setProfileAvatar(user.user_metadata?.avatar_url || user.user_metadata?.picture || null);
 
           // Load circle feed from CORRECT endpoint (classes, not circles)
           if (activeCircle?.id) {
@@ -181,7 +182,7 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Open profile"
           >
-            <Avatar name={profileName} size={42} ring />
+            <Avatar name={profileName} size={42} ring photoUri={profileAvatar ?? undefined} />
           </Pressable>
         </View>
 
@@ -244,11 +245,9 @@ export default function HomeScreen() {
         <View style={styles.sectionBlock}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Memories</Text>
-            {allPosts.length > 6 && (
-              <Pressable onPress={() => router.push('/(tabs)/circle')}>
-                <Text style={styles.sectionAction}>See all →</Text>
-              </Pressable>
-            )}
+            <Pressable onPress={() => router.push('/(tabs)/memories')}>
+              <Text style={styles.sectionAction}>See all →</Text>
+            </Pressable>
           </View>
 
           {isLoading ? (
@@ -264,23 +263,33 @@ export default function HomeScreen() {
               variant="camera"
               action={{
                 label: 'Upload Memory',
-                onPress: () => router.push('/(tabs)/circle'),
+                onPress: () => router.push('/(tabs)/create'),
                 variant: 'accent',
               }}
               style={styles.emptyState}
             />
           ) : (
-            <View style={styles.feedGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.recentStrip}
+            >
               {recentPosts.map((post) => (
-                <MemoryFeedCard
+                <Pressable
                   key={post.id}
-                  post={post}
-                  colors={colors}
                   onPress={() => router.push(`/post/${post.id}`)}
-                  onReact={(emoji) => handleReact(post.id, emoji)}
-                />
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open memory${post.caption ? `: ${post.caption}` : ''}`}
+                  style={styles.recentMemoryCard}
+                >
+                  {post.uri ? (
+                    <Image source={{ uri: post.uri }} style={styles.recentMemoryImage} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.recentMemoryPlaceholder} />
+                  )}
+                </Pressable>
               ))}
-            </View>
+            </ScrollView>
           )}
         </View>
 
@@ -585,6 +594,27 @@ function createStyles(colors: ReturnType<typeof useAppTheme>['colors']) {
     feedGrid: {
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
+    },
+    recentStrip: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.sm,
+    },
+    recentMemoryCard: {
+      width: 240,
+      height: 112,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceElevated,
+      borderWidth: borders.thin,
+      borderColor: colors.borderSoft,
+    },
+    recentMemoryImage: {
+      width: '100%',
+      height: '100%',
+    },
+    recentMemoryPlaceholder: {
+      flex: 1,
+      backgroundColor: colors.surfaceElevated,
     },
     emptyState: {
       marginHorizontal: spacing.lg,

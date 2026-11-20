@@ -19,7 +19,6 @@ import {
   layout,
   borders,
   type ThemeColors,
-  type ThemeMode,
 } from '@/constants/theme';
 import {
   clearLocalPhotoPosts,
@@ -35,7 +34,7 @@ import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { useAppTheme } from '@/providers/ThemeProvider';
 export default function SettingsScreen() {
-  const { colors, mode, setMode } = useAppTheme();
+  const { colors, mode } = useAppTheme();
   const styles = createStyles(colors);
   const { showToast } = useToast();
   const [confirmClear, setConfirmClear] = useState(false);
@@ -145,47 +144,7 @@ export default function SettingsScreen() {
         </ProfileSection>
         {/* Appearance */}
         <ProfileSection title="Appearance">
-          <View style={styles.appearanceControl}>
-            <Text style={styles.appearanceLabel}>Color theme</Text>
-            <Text style={styles.appearanceHint}>Choose how Memora looks on this device.</Text>
-            <View style={styles.appearanceOptions} accessibilityLabel="Color theme">
-              {(
-                [
-                  { value: 'dark', label: 'Dark', icon: '☾' },
-                  { value: 'light', label: 'Light', icon: '☼' },
-                ] as const
-              ).map((option) => (
-                <Pressable
-                  key={option.value}
-                  onPress={() => setMode(option.value as ThemeMode)}
-                  style={[
-                    styles.appearanceOption,
-                    mode === option.value && styles.appearanceOptionActive,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${option.label} theme`}
-                  accessibilityState={{ selected: mode === option.value }}
-                >
-                  <Text
-                    style={[
-                      styles.appearanceIcon,
-                      mode === option.value && styles.appearanceIconActive,
-                    ]}
-                  >
-                    {option.icon}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.appearanceOptionLabel,
-                      mode === option.value && styles.appearanceOptionLabelActive,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+          <ProfileRow label="Appearance" value="Dark" icon="picture" />
           <ProfileDivider />
           <ProfileRow label="App icon" value="Default" icon="picture" />
         </ProfileSection>

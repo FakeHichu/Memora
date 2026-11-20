@@ -108,4 +108,20 @@ export class ClassController {
       next(err);
     }
   }
+
+  static async leaveClass(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const classId = Array.isArray(req.params.classId)
+        ? req.params.classId[0]
+        : req.params.classId;
+      await ClassService.leaveClass(classId, req.userId);
+      return res.json({ ok: true, message: "Successfully left the class." });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

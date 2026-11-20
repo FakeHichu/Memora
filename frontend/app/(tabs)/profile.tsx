@@ -1,12 +1,12 @@
 import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, spacing, typography, layout, borders } from '@/constants/theme';
 import { useAppTheme } from '@/providers/ThemeProvider';
 import type { ThemeColors } from '@/constants/theme';
-import { getLocalPhotoPosts, clearLocalPhotoPosts } from '@/lib/photo-draft';
+import { getLocalPhotoPosts, clearLocalPhotoPosts, type LocalPhotoPost } from '@/lib/photo-draft';
 import { ProfileSection, ProfileRow, ProfileDivider } from '@/components/ui/ProfileSection';
 import { signOut } from '@/lib/supabase/auth';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase/client';
@@ -14,20 +14,23 @@ import { BackgroundPattern } from '@/components/ui/BackgroundPattern';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar } from '@/components/ui/Avatar';
 import { useUnifiedCircle } from '@/contexts/CircleContext';
+import { IconButton } from '@/components/ui/IconButton';
 
 export default function ProfileScreen() {
-  const { colors, mode, setMode } = useAppTheme();
+  const { colors, mode } = useAppTheme();
   const styles = createStyles(colors);
   const { session, isLoading: isAuthLoading } = useAuth();
   const { circles } = useUnifiedCircle();
 
   const [photoCount, setPhotoCount] = useState(0);
   const [reactionCount, setReactionCount] = useState(0);
+  const [profilePosts, setProfilePosts] = useState<LocalPhotoPost[]>([]);
   const [supabaseProfile, setSupabaseProfile] = useState<{
     display_name?: string;
     email?: string;
     username?: string;
     bio?: string;
+    avatar_path?: string | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,7 +43,9 @@ export default function ProfileScreen() {
         try {
           const posts = await getLocalPhotoPosts();
           if (isActive) {
-            setPhotoCount(posts.filter((p) => !p.isArchived).length);
+            const visiblePosts = posts.filter((p) => !p.isArchived);
+            setProfilePosts(visiblePosts);
+            setPhotoCount(visiblePosts.length);
             const totalReactions = posts.reduce((sum, p) => {
               return sum + Object.values(p.reactions || {}).reduce((s, v) => s + (v as number), 0);
             }, 0);
@@ -77,6 +82,10 @@ export default function ProfileScreen() {
     'Memory Keeper';
   const displayEmail = session?.user?.email || '';
   const username = supabaseProfile?.username || displayName.toLowerCase().replace(/\s+/g, '_');
+  const avatarUri =
+    (supabaseProfile?.avatar_path?.startsWith('http') ? supabaseProfile.avatar_path : null) ||
+    (session?.user?.user_metadata?.avatar_url as string | undefined) ||
+    (session?.user?.user_metadata?.picture as string | undefined);
 
   const handleSignOut = async () => {
     if (hasSupabaseConfig) {
@@ -103,14 +112,25 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
+          <IconButton
+            icon="cog"
+            onPress={() => router.push('/settings')}
+            variant="overlay"
+            size="sm"
+            accessibilityLabel="Open settings"
+          />
         </View>
 
         {/* Profile Hero Card */}
         <View style={styles.profileCard}>
-          {/* Avatar + Name */}
+          <View style={styles.coverPhoto}>
+            {profilePosts[0]?.uri ? (
+              <Image source={{ uri: profilePosts[0].uri }} style={styles.coverImage} resizeMode="cover" />
+            ) : null}
+          </View>
           <View style={styles.avatarSection}>
             <View style={styles.avatarWrapper}>
-              <Avatar name={displayName} size={72} ring />
+              <Avatar name={displayName} size={72} ring photoUri={avatarUri} />
             </View>
             <View style={styles.nameSection}>
               <Text style={styles.displayName}>{displayName}</Text>
@@ -146,6 +166,27 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.memoryGridSection}>
+          <Text style={styles.gridTitle}>Memories</Text>
+          {profilePosts.length ? (
+            <View style={styles.memoryGrid}>
+              {profilePosts.slice(0, 12).map((post) => (
+                <Pressable
+                  key={post.id}
+                  style={styles.memoryTile}
+                  onPress={() => router.push(`/post/${post.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open memory${post.caption ? `: ${post.caption}` : ''}`}
+                >
+                  <Image source={{ uri: post.uri }} style={styles.memoryTileImage} resizeMode="cover" />
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.emptyMemories}>Your shared memories will appear here.</Text>
+          )}
+        </View>
+
         {/* Account Section */}
         <ProfileSection title="Account">
           {isSignedIn ? (
@@ -172,27 +213,7 @@ export default function ProfileScreen() {
 
         {/* Appearance */}
         <ProfileSection title="Appearance">
-          <View style={styles.themeRow}>
-            <Text style={styles.themeLabel}>Theme</Text>
-            <View style={styles.themeOptions}>
-              <Pressable
-                onPress={() => setMode('dark')}
-                style={[styles.themePill, mode === 'dark' && styles.themePillActive]}
-              >
-                <Text style={[styles.themePillText, mode === 'dark' && styles.themePillTextActive]}>
-                  🌙 Dark
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setMode('light')}
-                style={[styles.themePill, mode === 'light' && styles.themePillActive]}
-              >
-                <Text style={[styles.themePillText, mode === 'light' && styles.themePillTextActive]}>
-                  ☀️ Latte
-                </Text>
-              </Pressable>
-            </View>
-          </View>
+          <ProfileRow label="Appearance" value="Dark" icon="picture" />
         </ProfileSection>
 
         {/* Settings */}
@@ -275,6 +296,9 @@ function createStyles(colors: ThemeColors) {
     header: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     headerTitle: {
       ...typography.sans.title2,
@@ -289,15 +313,24 @@ function createStyles(colors: ThemeColors) {
       borderWidth: borders.thin,
       borderColor: colors.borderSoft,
       gap: spacing.lg,
+      overflow: 'hidden',
     },
+    coverPhoto: {
+      height: 118,
+      marginTop: -spacing.lg,
+      marginHorizontal: -spacing.lg,
+      backgroundColor: colors.surfaceElevated,
+    },
+    coverImage: { width: '100%', height: '100%' },
     avatarSection: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       alignItems: 'center',
       gap: spacing.md,
+      marginTop: -52,
     },
     avatarWrapper: {},
     nameSection: {
-      flex: 1,
+      alignItems: 'center',
     },
     displayName: {
       ...typography.sans.title3,
@@ -350,6 +383,34 @@ function createStyles(colors: ThemeColors) {
       ...typography.sans.callout,
       color: colors.textPrimary,
       fontWeight: '600',
+    },
+    memoryGridSection: {
+      marginHorizontal: spacing.lg,
+      gap: spacing.sm,
+    },
+    gridTitle: {
+      ...typography.sans.title3,
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    memoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 5,
+    },
+    memoryTile: {
+      width: '32%',
+      aspectRatio: 1,
+      borderRadius: radius.sm,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceElevated,
+    },
+    memoryTileImage: { width: '100%', height: '100%' },
+    emptyMemories: {
+      ...typography.sans.footnote,
+      color: colors.textMuted,
+      textAlign: 'center',
+      paddingVertical: spacing.xl,
     },
     themeRow: {
       flexDirection: 'row',
