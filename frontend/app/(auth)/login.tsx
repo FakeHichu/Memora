@@ -74,6 +74,14 @@ export default function LoginScreen() {
           setErrorMessage('Invalid email or password. Please try again.');
         } else if (error.message.includes('Email not confirmed')) {
           setErrorMessage('Please verify your email before signing in.');
+        } else if (
+          error.message.includes('UnknownHostException') ||
+          error.message.includes('Unable to resolve host') ||
+          error.message.includes('No address associated with hostname')
+        ) {
+          setErrorMessage(
+            'Cannot reach Supabase (UnknownHostException). Check your internet connection or verify if your Supabase project is paused.',
+          );
         } else if (error.message.includes('fetch')) {
           setErrorMessage('Network error. Please check your internet connection and try again.');
         } else {
@@ -124,7 +132,15 @@ export default function LoginScreen() {
     } catch (err) {
       console.error('Login exception:', err);
       const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
-      if (errorMsg.includes('fetch') || errorMsg.includes('network')) {
+      if (
+        errorMsg.includes('UnknownHostException') ||
+        errorMsg.includes('Unable to resolve host') ||
+        errorMsg.includes('No address associated with hostname')
+      ) {
+        setErrorMessage(
+          'Cannot reach Supabase (UnknownHostException). Check your internet connection or verify if your Supabase project is paused.',
+        );
+      } else if (errorMsg.includes('fetch') || errorMsg.includes('network')) {
         setErrorMessage('Network error. Please check your internet connection and try again.');
       } else {
         setErrorMessage(errorMsg);
@@ -284,6 +300,15 @@ export default function LoginScreen() {
                 {errorMessage ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorMessage}>{errorMessage}</Text>
+                    <Pressable
+                      onPress={continueLocally}
+                      style={styles.offlineFallbackBtn}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.offlineFallbackText}>
+                        Continue in Demo / Offline Mode →
+                      </Text>
+                    </Pressable>
                   </View>
                 ) : null}
 
@@ -321,6 +346,17 @@ export default function LoginScreen() {
                     </Text>
                   </Pressable>
                 </Link>
+
+                <Pressable
+                  onPress={continueLocally}
+                  disabled={isSubmitting || isGoogleLoading}
+                  style={styles.demoModeLink}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.demoModeText}>
+                    Explore app in offline demo mode →
+                  </Text>
+                </Pressable>
               </>
             ) : (
               <View style={styles.localAccess}>
@@ -536,6 +572,30 @@ function createStyles(colors: ThemeColors, mode: 'dark' | 'light') {
       color: colors.error,
       textAlign: 'center',
       lineHeight: 18,
+    },
+    offlineFallbackBtn: {
+      marginTop: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      backgroundColor: isDark ? 'rgba(180, 190, 254, 0.15)' : 'rgba(114, 135, 253, 0.12)',
+      borderRadius: 8,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(180, 190, 254, 0.3)' : 'rgba(114, 135, 253, 0.25)',
+    },
+    offlineFallbackText: {
+      fontSize: 12.5,
+      fontWeight: '600',
+      color: colors.accent,
+    },
+    demoModeLink: {
+      alignSelf: 'center',
+      paddingVertical: 6,
+    },
+    demoModeText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.accent,
     },
     rememberMeContainer: {
       flexDirection: 'row',
